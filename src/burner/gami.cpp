@@ -7,7 +7,7 @@ TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("")
 
 // Mapping of PC inputs to game inputs
 struct GameInp* GameInp = NULL;
-UINT32 nGameInpCount = 0;
+UINT32 nGameInpCount = 0;							// The number of buttons/analog/other inputs.
 UINT32 nMacroCount = 0;
 UINT32 nMaxMacro = 0;
 

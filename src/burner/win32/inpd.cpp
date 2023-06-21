@@ -1,9 +1,11 @@
 // Burner Input Editor Dialog module
+// NOTE: This is the <strike>really lousy</strike> war crime of a mapping + preset dialog that comes with the emulator.
+// This is where we will make the UI less stupid.
 #include "burner.h"
 
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
-static unsigned short *LastVal = NULL;			// Last input values/defined
+static unsigned short* LastVal = NULL;			// Last input values/defined
 static int bLastValDefined = 0;					//
 
 static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
@@ -70,8 +72,8 @@ static int InpdUseUpdate()
 int InpdUpdate()
 {
 	unsigned int i, j = 0;
-	struct GameInp* pgi = NULL;
-	unsigned short* plv = NULL;
+	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
+	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
 	unsigned short nThisVal;
 	if (hInpdList == NULL) {
 		return 1;
@@ -80,75 +82,84 @@ int InpdUpdate()
 		return 1;
 	}
 
-	// Update the values of all the inputs
-	for (i = 0, pgi = GameInp, plv = LastVal; i < nGameInpCount; i++, pgi++, plv++) {
+	// Update the values of all the inputs.
+	// Note that this loop is incrementing the pointer addresses to enumerate.  'i' is only used as a control.
+	for (i = 0, pGameInput = GameInp, pLastVal = LastVal; i < nGameInpCount; i++, pGameInput++, pLastVal++) {
 		LVITEM LvItem;
 		TCHAR szVal[16];
 
-		if (pgi->nType == 0) {
+		if (pGameInput->nType == 0) {
 			continue;
 		}
 
-		if (pgi->nType & BIT_GROUP_ANALOG) {
+		if (pGameInput->nType & BIT_GROUP_ANALOG) {
 			if (bRunPause) {														// Update LastVal
-				nThisVal = pgi->Input.nVal;
-			} else {
-				nThisVal = *pgi->Input.pShortVal;
+				nThisVal = pGameInput->Input.nVal;
+			}
+			else {
+				nThisVal = *pGameInput->Input.pShortVal;
 			}
 
-			if (bLastValDefined && (pgi->nType != BIT_ANALOG_REL || nThisVal) && pgi->Input.nVal == *plv) {
+			// Continue if input state hasn't changed.
+			if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
 				j++;
 				continue;
 			}
 
-			*plv = nThisVal;
-		} else {
+			*pLastVal = nThisVal;
+		}
+		else {
 			if (bRunPause) {														// Update LastVal
-				nThisVal = pgi->Input.nVal;
-			} else {
-				nThisVal = *pgi->Input.pVal;
+				nThisVal = pGameInput->Input.nVal;
+			}
+			else {
+				nThisVal = *pGameInput->Input.pVal;
 			}
 
-			if (bLastValDefined && pgi->Input.nVal == *plv) {						// hasn't changed
+			// Continue if input state hasn't changed.
+			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {						
 				j++;
 				continue;
 			}
 
-			*plv = nThisVal;
+			*pLastVal = nThisVal;
 		}
 
-		switch (pgi->nType) {
-			case BIT_DIGITAL: {
-				if (nThisVal == 0) {
-					szVal[0] = 0;
-				} else {
-					if (nThisVal == 1) {
-						_tcscpy(szVal, _T("ON"));
-					} else {
-						_stprintf(szVal, _T("0x%02X"), nThisVal);
-					}
-				}
-				break;
+		switch (pGameInput->nType) {
+		case BIT_DIGITAL: {
+			if (nThisVal == 0) {
+				szVal[0] = 0;
 			}
-			case BIT_ANALOG_ABS: {
-				_stprintf(szVal, _T("0x%02X"), nThisVal >> 8);
-				break;
-			}
-			case BIT_ANALOG_REL: {
-				if (nThisVal == 0) {
-					szVal[0] = 0;
+			else {
+				if (nThisVal == 1) {
+					// NOTE: This is where the input check method appears....
+					_tcscpy(szVal, _T("ON"));
 				}
-				if ((short)nThisVal < 0) {
-					_stprintf(szVal, _T("%d"), ((short)nThisVal) >> 8);
+				else {
+					_stprintf(szVal, _T("0x%02X"), nThisVal);
 				}
-				if ((short)nThisVal > 0) {
-					_stprintf(szVal, _T("+%d"), ((short)nThisVal) >> 8);
-				}
-				break;
 			}
-			default: {
-				_stprintf(szVal, _T("0x%02X"), nThisVal);
+			break;
+		}
+		case BIT_ANALOG_ABS: {
+			_stprintf(szVal, _T("0x%02X"), nThisVal >> 8);
+			break;
+		}
+		case BIT_ANALOG_REL: {
+			if (nThisVal == 0) {
+				szVal[0] = 0;
 			}
+			if ((short)nThisVal < 0) {
+				_stprintf(szVal, _T("%d"), ((short)nThisVal) >> 8);
+			}
+			if ((short)nThisVal > 0) {
+				_stprintf(szVal, _T("+%d"), ((short)nThisVal) >> 8);
+			}
+			break;
+		}
+		default: {
+			_stprintf(szVal, _T("0x%02X"), nThisVal);
+		}
 		}
 
 		memset(&LvItem, 0, sizeof(LvItem));
@@ -206,7 +217,7 @@ int InpdListMake(int bBuild)
 	}
 
 	bLastValDefined = 0;
-	if (bBuild)	{
+	if (bBuild) {
 		SendMessage(hInpdList, LVM_DELETEALLITEMS, 0, 0);
 	}
 
@@ -223,7 +234,7 @@ int InpdListMake(int bBuild)
 		if (bii.pVal == NULL) {
 			continue;
 		}
-		if (bii.szName == NULL)	{
+		if (bii.szName == NULL) {
 			bii.szName = "";
 		}
 
@@ -344,7 +355,7 @@ static int InpdExit()
 	hInpdList = NULL;
 	hInpdDlg = NULL;
 	if (!bAltPause && bRunPause) {
-		bRunPause=0;
+		bRunPause = 0;
 	}
 	GameInpCheckMouse();
 
@@ -354,42 +365,42 @@ static int InpdExit()
 static void GameInpConfigOne(int nPlayer, int nPcDev, int nAnalog, struct GameInp* pgi, char* szi)
 {
 	switch (nPcDev) {
-		case  0:
-			GamcPlayer(pgi, szi, nPlayer, -1);						// Keyboard
-			GamcAnalogKey(pgi, szi, nPlayer, nAnalog);
-			GamcMisc(pgi, szi, nPlayer);
-			break;
-		case  1:
-			GamcPlayer(pgi, szi, nPlayer, 0);						// Joystick 1
-			GamcAnalogJoy(pgi, szi, nPlayer, 0, nAnalog);
-			GamcMisc(pgi, szi, nPlayer);
-			break;
-		case  2:
-			GamcPlayer(pgi, szi, nPlayer, 1);						// Joystick 2
-			GamcAnalogJoy(pgi, szi, nPlayer, 1, nAnalog);
-			GamcMisc(pgi, szi, nPlayer);
-			break;
-		case  3:
-			GamcPlayer(pgi, szi, nPlayer, 2);						// Joystick 3
-			GamcAnalogJoy(pgi, szi, nPlayer, 2, nAnalog);
-			GamcMisc(pgi, szi, nPlayer);
-			break;
-		case  4:
-			GamcPlayerHotRod(pgi, szi, nPlayer, 0x10, nAnalog);		// X-Arcade left side
-			GamcMisc(pgi, szi, -1);
-			break;
-		case  5:
-			GamcPlayerHotRod(pgi, szi, nPlayer, 0x11, nAnalog);		// X-Arcade right side
-			GamcMisc(pgi, szi, -1);
-			break;
-		case  6:
-			GamcPlayerHotRod(pgi, szi, nPlayer, 0x00, nAnalog);		// HotRod left side
-			GamcMisc(pgi, szi, -1);
-			break;
-		case  7:
-			GamcPlayerHotRod(pgi, szi, nPlayer, 0x01, nAnalog);		// HotRod right size
-			GamcMisc(pgi, szi, -1);
-			break;
+	case  0:
+		GamcPlayer(pgi, szi, nPlayer, -1);						// Keyboard
+		GamcAnalogKey(pgi, szi, nPlayer, nAnalog);
+		GamcMisc(pgi, szi, nPlayer);
+		break;
+	case  1:
+		GamcPlayer(pgi, szi, nPlayer, 0);						// Joystick 1
+		GamcAnalogJoy(pgi, szi, nPlayer, 0, nAnalog);
+		GamcMisc(pgi, szi, nPlayer);
+		break;
+	case  2:
+		GamcPlayer(pgi, szi, nPlayer, 1);						// Joystick 2
+		GamcAnalogJoy(pgi, szi, nPlayer, 1, nAnalog);
+		GamcMisc(pgi, szi, nPlayer);
+		break;
+	case  3:
+		GamcPlayer(pgi, szi, nPlayer, 2);						// Joystick 3
+		GamcAnalogJoy(pgi, szi, nPlayer, 2, nAnalog);
+		GamcMisc(pgi, szi, nPlayer);
+		break;
+	case  4:
+		GamcPlayerHotRod(pgi, szi, nPlayer, 0x10, nAnalog);		// X-Arcade left side
+		GamcMisc(pgi, szi, -1);
+		break;
+	case  5:
+		GamcPlayerHotRod(pgi, szi, nPlayer, 0x11, nAnalog);		// X-Arcade right side
+		GamcMisc(pgi, szi, -1);
+		break;
+	case  6:
+		GamcPlayerHotRod(pgi, szi, nPlayer, 0x00, nAnalog);		// HotRod left side
+		GamcMisc(pgi, szi, -1);
+		break;
+	case  7:
+		GamcPlayerHotRod(pgi, szi, nPlayer, 0x01, nAnalog);		// HotRod right size
+		GamcMisc(pgi, szi, -1);
+		break;
 	}
 }
 
@@ -460,17 +471,19 @@ static int ListItemActivate()
 		// Dip switch is a constant - change it
 		nInpcInput = nSel;
 		InpcCreate();
-	} else {
+	}
+	else {
 		if (GameInp[nSel].nInput == GIT_MACRO_CUSTOM) {
 #if 0
 			InpMacroCreate(nSel);
 #endif
-		} else {
+	}
+		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-	}
+}
 
 	GameInpCheckLeftAlt();
 
@@ -502,7 +515,8 @@ static int NewMacroButton()
 		if (GameInp[nSel].nInput != GIT_MACRO_CUSTOM) {
 			nSel = -1;
 		}
-	} else {
+	}
+	else {
 		nSel = -1;
 	}
 
@@ -520,10 +534,12 @@ static int DeleteInput(unsigned int i)
 
 		if (i < nGameInpCount + nMacroCount) {	// Macro
 			GameInp[i].Macro.nMode = 0;
-		} else { 								// out of range
+		}
+		else { 								// out of range
 			return 1;
 		}
-	} else {									// "True" input
+	}
+	else {									// "True" input
 		bii.nType = BIT_DIGITAL;
 		BurnDrvGetInputInfo(&bii, i);
 		if (bii.pVal == NULL) {
@@ -577,7 +593,8 @@ static int InitAnalogOptions(int nGi, int nPci)
 	if (nPci >= 1 && nPci <= 3) {
 		// Absolute mode only for joysticks
 		SendMessage(hInpdAnalog, CB_ADDSTRING, 0, (LPARAM)(LPARAM)FBALoadStringEx(hAppInst, IDS_INPUT_ANALOG_ABS, true));
-	} else {
+	}
+	else {
 		if (nAnalog > 0) {
 			nAnalog--;
 		}
@@ -592,13 +609,13 @@ static int InitAnalogOptions(int nGi, int nPci)
 
 static void SaveHardwarePreset()
 {
-	TCHAR *szDefaultCpsFile = _T("config\\presets\\cps.ini");
-	TCHAR *szDefaultNeogeoFile = _T("config\\presets\\neogeo.ini");
-	TCHAR *szDefaultNESFile = _T("config\\presets\\nes.ini");
-	TCHAR *szDefaultFDSFile = _T("config\\presets\\fds.ini");
-	TCHAR *szDefaultPgmFile = _T("config\\presets\\pgm.ini");
-	TCHAR *szFileName = _T("config\\presets\\preset.ini");
-	TCHAR *szHardwareString = _T("Generic hardware");
+	TCHAR* szDefaultCpsFile = _T("config\\presets\\cps.ini");
+	TCHAR* szDefaultNeogeoFile = _T("config\\presets\\neogeo.ini");
+	TCHAR* szDefaultNESFile = _T("config\\presets\\nes.ini");
+	TCHAR* szDefaultFDSFile = _T("config\\presets\\fds.ini");
+	TCHAR* szDefaultPgmFile = _T("config\\presets\\pgm.ini");
+	TCHAR* szFileName = _T("config\\presets\\preset.ini");
+	TCHAR* szHardwareString = _T("Generic hardware");
 
 	int nHardwareFlag = (BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK);
 
@@ -627,7 +644,7 @@ static void SaveHardwarePreset()
 		szHardwareString = _T("PGM hardware");
 	}
 
-	FILE *fp = _tfopen(szFileName, _T("wt"));
+	FILE* fp = _tfopen(szFileName, _T("wt"));
 	if (fp) {
 		_ftprintf(fp, _T(APP_TITLE) _T(" - Hardware Default Preset\n\n"));
 		_ftprintf(fp, _T("%s\n\n"), szHardwareString);
@@ -674,7 +691,8 @@ int UsePreset(bool bMakeDefault)
 		}
 
 		GameInpConfig(nGi, nPci, nAnalog);			// Re-configure inputs
-	} else {
+	}
+	else {
 		// Find out the filename of the preset ini
 		SendMessage(hInpdPci, CB_GETLBTEXT, nPci, (LPARAM)(szFilename + _tcslen(szFilename)));
 		_tcscat(szFilename, _T(".ini"));
@@ -755,7 +773,8 @@ static void SliderUpdate()
 		nValue = _tcstol(szText, NULL, 0);
 		if (nValue < 25) {
 			nValue = 25;
-		} else {
+		}
+		else {
 			if (nValue > 400) {
 				nValue = 400;
 			}
@@ -777,7 +796,8 @@ static void SliderExit()
 	nVal = _tcstol(szText, NULL, 0);
 	if (nVal < 25) {
 		nVal = 25;
-	} else {
+	}
+	else {
 		if (nVal > 400) {
 			nVal = 400;
 		}
@@ -827,7 +847,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 
-//			NewMacroButton();
+			//			NewMacroButton();
 
 			return 0;
 		}
@@ -879,7 +899,8 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			if (nPci > 5) {
 				SendMessage(hInpdAnalog, CB_SETCURSEL, (WPARAM)-1, 0);
 				EnableWindow(hInpdAnalog, FALSE);
-			} else {
+			}
+			else {
 				InitAnalogOptions(nGi, nPci);
 				EnableWindow(hInpdAnalog, TRUE);
 			}
@@ -907,14 +928,16 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 				SendMessage(hInpdAnalog, CB_SETCURSEL, (WPARAM)-1, 0);
 				EnableWindow(hInpdAnalog, FALSE);
-			} else {
+			}
+			else {
 				EnableWindow(hInpdAnalog, TRUE);
 				InitAnalogOptions(nGi, nPci);
 
 				if (SendMessage(hInpdAnalog, CB_GETCURSEL, 0, 0) != CB_ERR) {
 					EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_DEFAULT), TRUE);
 					EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_USE), TRUE);
-				} else {
+				}
+				else {
 					EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_DEFAULT), FALSE);
 					EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_USE), FALSE);
 				}
@@ -936,25 +959,25 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 	if (Msg == WM_HSCROLL) { // Analog Slider updates
 		switch (LOWORD(wParam)) {
-			case TB_BOTTOM:
-			case TB_ENDTRACK:
-			case TB_LINEDOWN:
-			case TB_LINEUP:
-			case TB_PAGEDOWN:
-			case TB_PAGEUP:
-			case TB_THUMBPOSITION:
-			case TB_THUMBTRACK:
-			case TB_TOP: {
-				TCHAR szText[16] = _T("");
-				int nValue;
+		case TB_BOTTOM:
+		case TB_ENDTRACK:
+		case TB_LINEDOWN:
+		case TB_LINEUP:
+		case TB_PAGEDOWN:
+		case TB_PAGEUP:
+		case TB_THUMBPOSITION:
+		case TB_THUMBTRACK:
+		case TB_TOP: {
+			TCHAR szText[16] = _T("");
+			int nValue;
 
-				// Update the contents of the edit control
-				nValue = SendDlgItemMessage(hDlg, IDC_INPD_ANSLIDER, TBM_GETPOS, (WPARAM)0, (LPARAM)0);
-				nValue = (int)((double)nValue * 100.0 / 256.0 + 0.5);
-				_stprintf(szText, _T("%i"), nValue);
-				SendDlgItemMessage(hDlg, IDC_INPD_ANEDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)szText);
-				break;
-			}
+			// Update the contents of the edit control
+			nValue = SendDlgItemMessage(hDlg, IDC_INPD_ANSLIDER, TBM_GETPOS, (WPARAM)0, (LPARAM)0);
+			nValue = (int)((double)nValue * 100.0 / 256.0 + 0.5);
+			_stprintf(szText, _T("%i"), nValue);
+			SendDlgItemMessage(hDlg, IDC_INPD_ANEDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)szText);
+			break;
+		}
 		}
 
 		return 0;
@@ -968,7 +991,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			ListItemActivate();
 		}
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_KEYDOWN) {
-			NMLVKEYDOWN *pnmkd = (NMLVKEYDOWN*)lParam;
+			NMLVKEYDOWN* pnmkd = (NMLVKEYDOWN*)lParam;
 			if (pnmkd->wVKey == VK_DELETE) {
 				ListItemDelete();
 			}
@@ -978,40 +1001,41 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			NMLVCUSTOMDRAW* plvcd = (NMLVCUSTOMDRAW*)lParam;
 
 			switch (plvcd->nmcd.dwDrawStage) {
-				case CDDS_PREPAINT:
-                    SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
-					return 1;
-				case CDDS_ITEMPREPAINT:
-					if (plvcd->nmcd.dwItemSpec < nGameInpCount) {
-						if (GameInp[plvcd->nmcd.dwItemSpec].nType & BIT_GROUP_CONSTANT) {
+			case CDDS_PREPAINT:
+				SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+				return 1;
+			case CDDS_ITEMPREPAINT:
+				if (plvcd->nmcd.dwItemSpec < nGameInpCount) {
+					if (GameInp[plvcd->nmcd.dwItemSpec].nType & BIT_GROUP_CONSTANT) {
 
-							if (GameInp[plvcd->nmcd.dwItemSpec].nInput == 0) {
-								plvcd->clrTextBk = RGB(0xDF, 0xDF, 0xDF);
+						if (GameInp[plvcd->nmcd.dwItemSpec].nInput == 0) {
+							plvcd->clrTextBk = RGB(0xDF, 0xDF, 0xDF);
 
-								SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
-								return 1;
-							}
-
-							if (GameInp[plvcd->nmcd.dwItemSpec].nType == BIT_DIPSWITCH) {
-								plvcd->clrTextBk = RGB(0xFF, 0xEF, 0xD7);
-
-								SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
-								return 1;
-							}
-						}
-					}
-
-					if (plvcd->nmcd.dwItemSpec >= nGameInpCount) {
-						if (GameInp[plvcd->nmcd.dwItemSpec].Macro.nMode) {
-							plvcd->clrTextBk = RGB(0xFF, 0xCF, 0xCF);
-						} else {
-							plvcd->clrTextBk = RGB(0xFF, 0xEF, 0xEF);
+							SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
+							return 1;
 						}
 
-						SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
-						return 1;
+						if (GameInp[plvcd->nmcd.dwItemSpec].nType == BIT_DIPSWITCH) {
+							plvcd->clrTextBk = RGB(0xFF, 0xEF, 0xD7);
+
+							SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
+							return 1;
+						}
 					}
+				}
+
+				if (plvcd->nmcd.dwItemSpec >= nGameInpCount) {
+					if (GameInp[plvcd->nmcd.dwItemSpec].Macro.nMode) {
+						plvcd->clrTextBk = RGB(0xFF, 0xCF, 0xCF);
+					}
+					else {
+						plvcd->clrTextBk = RGB(0xFF, 0xEF, 0xEF);
+					}
+
+					SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);
 					return 1;
+				}
+				return 1;
 			}
 		}
 		return 0;

@@ -1691,8 +1691,8 @@ struct BurnDriver BurnDrvSfiii3jr1 = {
 
 struct BurnDriver BurnDrvSfiii3nr1 = {
 	"sfiii3nr1", "sfiii3", NULL, NULL, "1999",
-	"Street Fighter III 3rd Strike: Fight for the Future (Japan 990512, NO CD)\0", NULL, "Capcom", "CPS-3",
-	NULL, NULL, NULL, NULL,
+	"Street Fighter III 3rd Strike: Fight for the Future (Japan 990512, NO CD)\0", NULL, "Capcom", "CPS-3",	//ASCII
+	NULL, NULL, NULL, NULL,			// WIDE
 	BDF_GAME_WORKING | BDF_16BIT_ONLY | BDF_CLONE | BDF_HISCORE_SUPPORTED, 2, HARDWARE_CAPCOM_CPS3 | HARDWARE_CAPCOM_CPS3_NO_CD, GBF_VSFIGHT, FBF_SF,
 	NULL, sfiii3nr1RomInfo, sfiii3nr1RomName, NULL, NULL, NULL, NULL, cps3InputInfo, japanDIPInfo,
 	sfiii3Init, cps3Exit, cps3Frame, DrvCps3Draw, cps3Scan, &cps3_palette_change, 0x40000,

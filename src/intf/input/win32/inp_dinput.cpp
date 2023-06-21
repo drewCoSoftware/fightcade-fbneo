@@ -31,6 +31,7 @@ struct keyboardData {
 
 struct gamepadData {
 	IDirectInputDevice8W* lpdid;
+	GUID guidInstance;								// Per-Machine identifier for the gamepad.
 	DIJOYSTATE2 dijs;
 	DWORD dwAxisType[MAX_JOYAXIS];
 	DWORD dwAxisBaseline[MAX_JOYAXIS];
@@ -57,7 +58,7 @@ bool keyboardCooperativeModeForeground = false;
 IDirectInput8W* pDI;
 HWND hDinpWnd;
 	
-int gamepadInitSingle()
+int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
 {
 	gamepadData* gamepad = &gamepadProperties[gamepadCount];
 	if (gamepad->lpdid == NULL) {
@@ -75,6 +76,7 @@ int gamepadInitSingle()
 		return 1;
 	}
 
+	gamepad->guidInstance = instance->guidInstance;
 	gamepad->dwAxes = didcl.dwAxes;
 	gamepad->dwPOVs = didcl.dwPOVs;
 	gamepad->dwButtons = didcl.dwButtons;
@@ -149,7 +151,8 @@ bool gamepadEnumDevice(LPCDIDEVICEINSTANCE instance)
 		return DIENUM_CONTINUE;
 	}
 
-	if (gamepadInitSingle() == 0) {
+	// This function initializes the gamepad using the 'gamePadCount' variable below.  Not sloppy at all.
+	if (gamepadInitSingle(instance) == 0) {
 		gamepadCount++;
 	}
 
@@ -236,6 +239,7 @@ int setCooperativeLevel(bool exclusive, bool foreGround)
 	return 0;
 }
 
+// NOTE: This releases all devices + cleans up DX interfaces.
 int exit()
 {
 	// Release the keyboard interface
@@ -296,6 +300,9 @@ int init()
 	if (FAILED(pDI->EnumDevices(DI8DEVCLASS_GAMECTRL, gamepadEnumCallback, /*(void*)this*/pDI, DIEDFL_ATTACHEDONLY))) {
 		return 1;
 	}
+
+	// NOTE: This might be a good place to save data about our input devices.
+	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
 
 	return 0;
 }

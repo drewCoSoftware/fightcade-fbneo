@@ -126,15 +126,16 @@ inline static void SetCurrentFrame(const UINT32 n) {
 // Driver info structures
 
 // ROMs
+// BRF = ?Bios? Resource File?
+// See gameinfo.cpp:382 for a clue as to what these variable names mean.
+#define BRF_PRG				(1 << 20)			// Program
+#define BRF_GRA				(1 << 21)			// Graphics
+#define BRF_SND				(1 << 22)			// Sound
 
-#define BRF_PRG				(1 << 20)
-#define BRF_GRA				(1 << 21)
-#define BRF_SND				(1 << 22)
-
-#define BRF_ESS				(1 << 24)
-#define BRF_BIOS			(1 << 25)
+#define BRF_ESS				(1 << 24)			// Essential
+#define BRF_BIOS			(1 << 25)			// BIOS
 #define BRF_SELECT			(1 << 26)
-#define BRF_OPT				(1 << 27)
+#define BRF_OPT				(1 << 27)			// Optional
 #define BRF_NODUMP			(1 << 28)
 
 struct BurnRomInfo {

@@ -1009,6 +1009,7 @@ int ProcessCmdLine()
 				}
 				else {
 					// Command: load game
+					// Loop thorugh all of the defined ROMs until we get one that matches.  Very efficient!
 					bQuietLoading = true;
 					INT32 i;
 					for (i = 0; i < nBurnDrvCount; i++) {

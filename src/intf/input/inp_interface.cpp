@@ -3,7 +3,7 @@
 #include <vector>
 
 UINT32 nInputSelect = 0;
-bool bInputOkay = false;
+bool bInputOkay = false;			// Inidcates that the input system has been initialized.
 
 static bool bCinpOkay;
 
@@ -76,6 +76,7 @@ inline INT32 CinpMouseAxis(const INT32 i, const INT32 nAxis)
 }
 
 // Do one frames worth of keyboard input sliders
+// WTF are keyboard sliders???
 static INT32 InputTick()
 {
 	struct GameInp *pgi;
@@ -227,6 +228,9 @@ INT32 InputMake(bool bCopy)
 			continue;
 		}
 
+		// Since this goes through all inputs and does a merge on the state, I am pretty sure that multi-mapped buttons are already supported.....
+	// The only thing that will have to be modified is the analog / binary stuff as analog is handled first, then binary.
+	// We can overcome this by calling the if(bCopy)... code at the end of the GIT_SWITCH block.
 		switch (pgi->nInput) {
 			case 0:									// Undefined
 				pgi->Input.nVal = 0;
