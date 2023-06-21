@@ -1,3 +1,5 @@
+// NOTE: This resource file might not actually do anything......
+
 #ifdef APSTUDIO_INVOKED
  #error This file cannot be edited using the Visual C resource editor
 #endif
@@ -11,9 +13,9 @@
 #endif
 
 // For version macros
-#include "version.h"
+#include "../../Burn/version.h"
 // For APP_TITLE and APP_DESCRIPTION macros (both include quotes)
-#include "title.h"
+#include "../title.h"
 
 // String IDs
 #include "resource_string.h"
@@ -25,10 +27,11 @@
 #endif
 
 // Version resource
-#include "version.rc"
+//#include "version.rc"
 
 // Manifest for Windows XP in themed mode
-CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "resource/manifest.xml"
+// https://stackoverflow.com/questions/48642725/c-vs-2015-fatal-error-duplicate-resource-typemanifest-name1-language0
+// CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "resource/manifest.xml"
 
 // License (we need to use a custom resource type, since Windres doesn't understand rcdata strings
 ID_LICENSE 256 "license.rtf"

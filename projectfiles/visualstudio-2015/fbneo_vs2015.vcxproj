@@ -1525,6 +1525,17 @@ del build_details.exe
     </ResourceCompile>
     <ResourceCompile Include="..\..\src\dep\libs\lib7z\7zVersion.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\src\burner\resource\about.bmp" />
+    <Image Include="..\..\src\burner\resource\fba.ico" />
+    <Image Include="..\..\src\burner\resource\misc.bmp" />
+    <Image Include="..\..\src\burner\resource\splash.bmp" />
+    <Image Include="..\..\src\burner\resource\TV Minus.ico" />
+    <Image Include="..\..\src\burner\resource\TV Not Found Non Essential.ico" />
+    <Image Include="..\..\src\burner\resource\TV Not Found.ico" />
+    <Image Include="..\..\src\burner\resource\TV Not Working.ico" />
+    <Image Include="..\..\src\burner\resource\TV Plus.ico" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{86D06C32-A849-4988-A176-A38D014C36C1}</ProjectGuid>
     <RootNamespace>fbneo_vs2015</RootNamespace>
