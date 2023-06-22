@@ -577,6 +577,7 @@
     <ClCompile Include="..\..\src\intf\video\win32\vid_memorybuffer.cpp" />
     <ClCompile Include="..\..\src\intf\video\win32\vid_overlay.cpp" />
     <ClCompile Include="generated\m68kops.c" />
+    <ClCompile Include="..\..\src\burner\win32\input_devices.cpp" />
     <CustomBuild Include="..\..\src\burn\drv\capcom\ctv_make.cpp">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl ..\..\src\burn\drv\capcom\%(Filename).cpp 
 %(Filename).exe &gt; generated\ctv.h 
@@ -1632,6 +1633,9 @@ del build_details.exe
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
     </Xdcmake>
+    <CustomBuildStep>
+      <Message>Doing Custom Stuff!</Message>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

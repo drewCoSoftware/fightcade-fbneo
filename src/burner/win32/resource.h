@@ -2,7 +2,9 @@
 // Microsoft Visual C++ generated include file.
 // Used by app.rc
 //
+#define IDC_GAMEPAD_LIST                0
 #define BMP_SPLASH                      1
+#define ID_INPUT_INPUTDEVICES           1
 #define BMP_ABOUT                       2
 #define BMP_MISC                        3
 #define IDI_APP                         10
@@ -530,7 +532,7 @@
 #define MENU_AVISTART                   11827
 #define MENU_AVISTOP                    11828
 #define MENU_AVIINTAUD                  11829
-#define MENU_INPUTDEVICES				11830
+#define MENU_INPUTDEVICES               11830
 #define GAMESEL_MENU_PLAY               11900
 #define GAMESEL_MENU_GAMEINFO           11901
 #define GAMESEL_MENU_VIEWEMMA           11902
@@ -931,8 +933,8 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        3
-#define _APS_NEXT_COMMAND_VALUE         0
-#define _APS_NEXT_CONTROL_VALUE         0
+#define _APS_NEXT_COMMAND_VALUE         2
+#define _APS_NEXT_CONTROL_VALUE         1
 #define _APS_NEXT_SYMED_VALUE           0
 #endif
 #endif

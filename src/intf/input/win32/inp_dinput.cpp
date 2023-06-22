@@ -41,6 +41,9 @@ struct gamepadData {
 	unsigned char readStatus;
 } gamepadProperties[MAX_GAMEPAD];
 
+// Gamepad listing info.....
+GamePadInfo PadInfos[MAX_GAMEPAD];
+
 struct mouseData {
 	IDirectInputDevice8W* lpdid;
 	DIMOUSESTATE2 dims;
@@ -263,6 +266,21 @@ int exit()
 	// Release the DirectInput interface
 	RELEASE(pDI)
 
+	return 0;
+}
+
+INT32 getPadInfos(GamePadInfo* padInfos, INT32* nPadCount)
+{
+	for (int i = 0; i < gamepadCount; i++)
+	{
+		padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
+
+		// TODO: We will set friendly names here?
+	}
+	*nPadCount = gamepadCount;
+
+	//padInfos = NULL;
+	//nPadCount = 0;
 	return 0;
 }
 
@@ -847,4 +865,4 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getPadInfos, _T("DirectInput8 input") };

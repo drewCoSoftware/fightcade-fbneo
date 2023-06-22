@@ -178,6 +178,24 @@ int InpdUpdate()
 	return 0;
 }
 
+static int GamepadListBegin()
+{
+	int x = 10;
+	GamePadInfo pads[8];
+	INT32 nPadCount;
+
+	InputGetGamepads(pads, &nPadCount);
+	//InputInit();
+	return 0;
+}
+
+static int GamepadListMake()
+{
+	int x = 10;
+//	InputInit();
+	return 0;
+}
+
 static int InpdListBegin()
 {
 	LVCOLUMN LvCol;
@@ -207,7 +225,8 @@ static int InpdListBegin()
 	return 0;
 }
 
-// Make a list view of the game inputs
+// Make a list view of the game inputs.
+// These are all of the buttons that one could use.
 int InpdListMake(int bBuild)
 {
 	unsigned int j = 0;
@@ -329,6 +348,9 @@ static int InpdInit()
 
 	InpdListBegin();
 	InpdListMake(1);
+
+	GamepadListBegin();
+	//GamepadListMake(1);
 
 	// Init the Combo boxes
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);

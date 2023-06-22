@@ -67,6 +67,7 @@ UINT32 cps3_region_address, cps3_ncd_address;
 
 static UINT32 cps3_data_rom_size;
 
+// All of this data is copied over to Cps3Input each frame.
 UINT8 Cps3But1[16];
 UINT8 Cps3But2[16];
 UINT8 Cps3But3[16];
@@ -217,7 +218,7 @@ void cps3_flash_write(flash_chip * chip, UINT32 addr, UINT32 data)
 }
 
 // ------------------------------------------------------------------------
-
+// SOCD cleaning.
 inline static void Cps3ClearOpposites(UINT16* nJoystickInputs)
 {
 	if (cps3_clear_opposites) {

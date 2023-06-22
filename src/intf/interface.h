@@ -21,6 +21,11 @@ INT32 IntInfoInit(InterfaceInfo* pInfo);
 INT32 IntInfoAddStringInterface(InterfaceInfo* pInfo, TCHAR* szString);
 INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString);
 
+struct GamePadInfo
+{
+	GUID guidInstance;
+};
+
 // Input plugin:
 struct InputInOut {
 	INT32   (*Init)();
@@ -39,6 +44,9 @@ struct InputInOut {
 	INT32   (*GetControlName)(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 	// Get plugin info
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
+	// Get Device List.  Gamepads...
+	INT32 (*GetGamepadList)(GamePadInfo* padInfos, INT32* nPadCount);
+
 	const TCHAR* szModuleName;
 };
 
@@ -50,6 +58,8 @@ INT32 InputFind(const INT32 nFlags);
 INT32 InputGetControlName(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 InterfaceInfo* InputGetInfo();
 std::vector<const InputInOut *> InputGetInterfaces();
+
+INT32 InputGetGamepads(GamePadInfo* padInfos, INT32* nPadCount);
 
 extern bool bInputOkay;
 extern UINT32 nInputSelect;

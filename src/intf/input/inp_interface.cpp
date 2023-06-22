@@ -146,6 +146,19 @@ static INT32 InputTick()
 	return 0;
 }
 
+INT32 InputGetGamepads(GamePadInfo* padInfos, INT32* nPadCount)
+{
+	INT32 nRet = 0;
+
+	// Fail on index mismatch.
+	if (nInputSelect >= INPUT_LEN) {
+		return 1;
+	}
+
+	nRet = pInputInOut[nInputSelect]->GetGamepadList(padInfos, nPadCount);
+	return nRet;
+}
+
 INT32 InputInit()
 {
 	INT32 nRet;
