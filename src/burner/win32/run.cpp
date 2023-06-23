@@ -706,11 +706,15 @@ int RunMessageLoop()
 						}
 					} else {
 
-						if (cBurnerKeyCallback)
+						if (cBurnerKeyCallback) {
 							BurnerHandlerKeyCallback(&Msg, (Msg.message == WM_KEYDOWN) ? 1 : 0, 0);
+						}
 
+						// HACK: I don't want to handle these buttons if any of the menus/dialogs are active....
+						if (!bRunPause)
+						{
 						switch (Msg.wParam) {
-
+							
 #if 0	//defined (FBNEO_DEBUG)
 							case 'N':
 								counter--;
@@ -899,6 +903,11 @@ int RunMessageLoop()
 								}
 								break;
 							}
+						}
+						}
+						else
+						{
+							int x = 10;
 						}
 					}
 				} else {
