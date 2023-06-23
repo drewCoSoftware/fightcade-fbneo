@@ -4,7 +4,7 @@
 HWND hInpsDlg = NULL;						// Handle to the Input Set Dialog
 static HBRUSH hWhiteBGBrush;
 
-unsigned int nInpsInput = 0;				// The input number we are redefining
+unsigned int nInpsInput = 0;				// The input number (index) we are redefining
 static struct BurnInputInfo bii;			// Info about the input
 static int nDlgState = 0;
 static int nInputCode = -1;					// If in state 3, code N was nInputCode

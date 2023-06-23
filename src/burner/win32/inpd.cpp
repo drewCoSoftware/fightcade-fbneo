@@ -12,8 +12,9 @@ static int bLastValDefined = 0;					//
 
 static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
 
-// Get the currently plugged gamepads:
-static GamePadInfo padInfos[8];
+// Get the currently plugged gamepad data:
+// NOTE:  We should just get a pointer to this so that we can set the alias directly.
+static GamepadFileEntry padInfos[8];
 static INT32 nPadCount;
 static int nSelectedPadIndex = -1;
 
@@ -251,7 +252,7 @@ static int GamepadListMake(int bBuild) {
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nPadCount; i++) {
-		GamePadInfo& pad = padInfos[i];
+		GamepadFileEntry& pad = padInfos[i];
 
 
 		// Populate the ALIAS column (TODO)
@@ -278,7 +279,7 @@ static int GamepadListMake(int bBuild) {
 		LvItem.mask = LVIF_TEXT;
 		LvItem.iItem = i;
 		LvItem.iSubItem = GUID_INDEX;
-		LvItem.pszText = GUIDToTCHAR(&pad.guidInstance);
+		LvItem.pszText = GUIDToTCHAR(&pad.info.guidInstance);
 		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
 
 	}

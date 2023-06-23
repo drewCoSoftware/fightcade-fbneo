@@ -9,6 +9,8 @@
 // Key codes
 #include "inp_keys.h"
 
+#define MAX_ALIAS_CHARS 32
+
 // Interface info (used for all modules)
 struct InterfaceInfo {
 	const TCHAR* pszModuleName;
@@ -21,10 +23,41 @@ INT32 IntInfoInit(InterfaceInfo* pInfo);
 INT32 IntInfoAddStringInterface(InterfaceInfo* pInfo, TCHAR* szString);
 INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString);
 
-struct GamePadInfo
+struct GamepadInfo
 {
 	GUID guidInstance;
+	TCHAR Alias[MAX_ALIAS_CHARS];
 };
+
+// Gamepad listing info.....
+// NOTE: We will probably just start returning the whole file structure instead of just this little bit....
+// GamepadInfo PadInfos[MAX_GAMEPAD_INFOS];
+struct GamepadInput {
+	UINT16 nType;				// Type of input.  Switch, analog, etc.
+	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
+};
+
+// These are guesses....
+#define MAX_NAME 32
+#define MAX_INPUTS 16
+struct GamepadInputProfile {
+	TCHAR driverName[MAX_NAME];			// PLACEHOLDER: The game that this profile belongs to.
+	TCHAR profileName[MAX_NAME];		// PLACEHOLDER: The name of the profile.  In theory, there could be many.
+
+	GamepadInput inputs[MAX_INPUTS];	// PLACEHOLDER:
+	// TOOD
+};
+
+// There can be many entries per file, each of which would map to a game, and any number of input profiles
+// from there.
+struct GamepadFileEntry {
+	GamepadInfo info;
+	GamepadInputProfile profile;
+	// NOTE: All of the button mappings can go here.
+};
+
+
 
 // Input plugin:
 struct InputInOut {
@@ -45,7 +78,7 @@ struct InputInOut {
 	// Get plugin info
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
 	// Get Device List.  Gamepads...
-	INT32 (*GetGamepadList)(GamePadInfo* padInfos, INT32* nPadCount);
+	INT32 (*GetGamepadList)(GamepadFileEntry* padInfos, INT32* nPadCount);
 
 	const TCHAR* szModuleName;
 };
@@ -59,7 +92,7 @@ INT32 InputGetControlName(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlNa
 InterfaceInfo* InputGetInfo();
 std::vector<const InputInOut *> InputGetInterfaces();
 
-INT32 InputGetGamepads(GamePadInfo* padInfos, INT32* nPadCount);
+INT32 InputGetGamepads(GamepadFileEntry* padInfos, INT32* nPadCount);
 
 extern bool bInputOkay;
 extern UINT32 nInputSelect;

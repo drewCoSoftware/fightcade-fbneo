@@ -12,11 +12,12 @@
 
 #pragma comment(lib, "dinput8")
 
-#define MAX_KEYBOARD	(1)
-#define MAX_GAMEPAD		(8)
-#define MAX_JOYAXIS		(8)
-#define MAX_MOUSE		(4)
-#define MAX_MOUSEAXIS	(3)
+#define MAX_KEYBOARD		(1)
+#define MAX_GAMEPAD			(8)
+#define MAX_GAMEPAD_INFOS	(32)
+#define MAX_JOYAXIS			(8)
+#define MAX_MOUSE			(4)
+#define MAX_MOUSEAXIS		(3)
 
 static BOOL CALLBACK gamepadEnumAxesCallback(LPCDIDEVICEOBJECTINSTANCE, LPVOID);
 static BOOL CALLBACK mouseEnumAxesCallback(LPCDIDEVICEOBJECTINSTANCE, LPVOID);
@@ -41,8 +42,26 @@ struct gamepadData {
 	unsigned char readStatus;
 } gamepadProperties[MAX_GAMEPAD];
 
-// Gamepad listing info.....
-GamePadInfo PadInfos[MAX_GAMEPAD];
+
+struct GamepadFileData {
+	GamepadFileEntry entries[MAX_GAMEPAD_INFOS];
+	int entryCount;
+
+} gamepadFile;
+
+// Convenience:
+// Thanks internet!
+// https://stackoverflow.com/questions/29436835/guid-as-stdmap-key
+struct GUIDComparer
+{
+	bool operator()(const GUID& Left, const GUID& Right) const
+	{
+		// comparison logic goes here
+		return memcmp(&Left, &Right, sizeof(Right)) < 0;
+	}
+};
+std::map<GUID, GamepadFileEntry*, GUIDComparer> _entryMap;
+
 
 struct mouseData {
 	IDirectInputDevice8W* lpdid;
@@ -60,7 +79,7 @@ bool keyboardCooperativeModeForeground = false;
 
 IDirectInput8W* pDI;
 HWND hDinpWnd;
-	
+
 int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
 {
 	gamepadData* gamepad = &gamepadProperties[gamepadCount];
@@ -204,7 +223,8 @@ int setCooperativeLevel(bool exclusive, bool foreGround)
 		keyboardProperties[0].lpdid->Unacquire();
 		if (foreGround) {
 			keyboardProperties[0].lpdid->SetCooperativeLevel(hDinpWnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND | (nVidFullscreen ? DISCL_NOWINKEY : 0));
-		} else {
+		}
+		else {
 			keyboardProperties[0].lpdid->SetCooperativeLevel(hDinpWnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND | (nVidFullscreen ? DISCL_NOWINKEY : 0));
 		}
 		keyboardProperties[0].lpdid->Acquire();
@@ -225,8 +245,9 @@ int setCooperativeLevel(bool exclusive, bool foreGround)
 			SetForegroundWindow(hDinpWnd);
 			SetWindowPos(hDinpWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
 
-			mouseProperties[0].lpdid->SetCooperativeLevel(hDinpWnd, DISCL_EXCLUSIVE    | DISCL_FOREGROUND);
-		} else {
+			mouseProperties[0].lpdid->SetCooperativeLevel(hDinpWnd, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+		}
+		else {
 			mouseProperties[0].lpdid->SetCooperativeLevel(hDinpWnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
 		}
 		mouseProperties[0].lpdid->Acquire();
@@ -235,8 +256,9 @@ int setCooperativeLevel(bool exclusive, bool foreGround)
 	// Windows/DirectInput don't always hide the cursor for us
 	if (bDrvOkay && (exclusive || nVidFullscreen)) {
 		while (ShowCursor(FALSE) >= 0) {}
-	} else {
-		while (ShowCursor(TRUE)  <  0) {}
+	}
+	else {
+		while (ShowCursor(TRUE) < 0) {}
 	}
 
 	return 0;
@@ -266,16 +288,92 @@ int exit()
 	// Release the DirectInput interface
 	RELEASE(pDI)
 
+		return 0;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Save all of the gamepad data to disk.  Alias + button mappings.....
+INT32 saveGamepadMappings() {
+
+	if (gamepadCount == 0) { return 0; }
+
+	// Compose the mappings data.  This will end up being our source of data for 'getGamepadInfos'....
+	memset(&gamepadFile, 0, sizeof(GamepadFileData));
+	gamepadFile.entryCount = gamepadCount;
+
+	// TODO: Write the version info.....
+
+	for (int i = 0; i < gamepadCount; i++)
+	{
+		GamepadFileEntry& e = gamepadFile.entries[i];
+		e.info.guidInstance = gamepadProperties[i].guidInstance;
+
+		_entryMap[e.info.guidInstance] = &e;
+
+		//padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
+		//memset(padInfos[i].Alias, 0, MAX_ALIAS_CHARS);
+
+		// TODO: We will set friendly names here?
+		// Check the guid mappings.....
+	}
+	// *nPadCount = gamepadCount;
+
+	TCHAR* szFileName = _T("config/gamepads.dat");
+
+	// TEST: We are only going to save aliases 
+	// getGamepadInfos(
+
 	return 0;
 }
 
-INT32 getPadInfos(GamePadInfo* padInfos, INT32* nPadCount)
+// ---------------------------------------------------------------------------------------------------------
+INT32 loadGamepadMappings() {
+	TCHAR* szFileName = _T("config/gamepads.dat");
+
+	FILE* fp = _tfopen(szFileName, _T("r"));
+	if (fp) {
+		int z = 10;
+		//_ftprintf(fp, _T(APP_TITLE) _T(" - Hardware Default Preset\n\n"));
+		//_ftprintf(fp, _T("%s\n\n"), szHardwareString);
+		//_ftprintf(fp, _T("version 0x%06X\n\n"), nBurnVer);
+		//GameInpWrite(fp);
+		//fclose(fp);
+	}
+	else
+	{
+		// File doesn't exist?
+		// Maybe we should just create a default one?
+		int x = 10;
+	}
+
+	return 0;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+INT32 getGamepadInfos(GamepadFileEntry* padInfos, INT32* nPadCount)
 {
+	// This is where we will load our mapping information.
+	// loadGamepadMappings();
+
+	// NOTE: We only want data for plugged controllers, NOT all of them!
 	for (int i = 0; i < gamepadCount; i++)
 	{
-		padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
+		GUID& guid = gamepadProperties[i].guidInstance;
+		auto match = _entryMap.find(guid);
+		if (match == _entryMap.end())
+		{
+			// This is wrong!  Figure out what the normal error handler is?
+			throw "FAIL!";
+		}
+
+		// Just make a copy of the data!
+		padInfos[i] = *match->second;
+
+		//padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
+		//memset(padInfos[i].Alias, 0, MAX_ALIAS_CHARS);
 
 		// TODO: We will set friendly names here?
+		// Check the guid mappings.....
 	}
 	*nPadCount = gamepadCount;
 
@@ -318,6 +416,9 @@ int init()
 	if (FAILED(pDI->EnumDevices(DI8DEVCLASS_GAMECTRL, gamepadEnumCallback, /*(void*)this*/pDI, DIEDFL_ATTACHEDONLY))) {
 		return 1;
 	}
+
+	// TEMP: We will compose and write our gamepad data to disk....
+	saveGamepadMappings();
 
 	// NOTE: This might be a good place to save data about our input devices.
 	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
@@ -422,22 +523,22 @@ int gamepadState(gamepadData* gamepad, unsigned int subCode)
 		const int DEADZONE = 0x4000;
 
 		switch (subCode) {
-			case 0x00: return gamepad->dijs.lX < -DEADZONE;		// Left
-			case 0x01: return gamepad->dijs.lX > DEADZONE;		// Right
-			case 0x02: return gamepad->dijs.lY < -DEADZONE;		// Up
-			case 0x03: return gamepad->dijs.lY > DEADZONE;		// Down
-			case 0x04: return gamepad->dijs.lZ < -DEADZONE;
-			case 0x05: return gamepad->dijs.lZ > DEADZONE;
-			case 0x06: return gamepad->dijs.lRx < -DEADZONE;
-			case 0x07: return gamepad->dijs.lRx > DEADZONE;
-			case 0x08: return gamepad->dijs.lRy < -DEADZONE;
-			case 0x09: return gamepad->dijs.lRy > DEADZONE;
-			case 0x0A: return gamepad->dijs.lRz < -DEADZONE;
-			case 0x0B: return gamepad->dijs.lRz > DEADZONE;
-			case 0x0C: return gamepad->dijs.rglSlider[0] < -DEADZONE;
-			case 0x0D: return gamepad->dijs.rglSlider[0] > DEADZONE;
-			case 0x0E: return gamepad->dijs.rglSlider[1] < -DEADZONE;
-			case 0x0F: return gamepad->dijs.rglSlider[1] > DEADZONE;
+		case 0x00: return gamepad->dijs.lX < -DEADZONE;		// Left
+		case 0x01: return gamepad->dijs.lX > DEADZONE;		// Right
+		case 0x02: return gamepad->dijs.lY < -DEADZONE;		// Up
+		case 0x03: return gamepad->dijs.lY > DEADZONE;		// Down
+		case 0x04: return gamepad->dijs.lZ < -DEADZONE;
+		case 0x05: return gamepad->dijs.lZ > DEADZONE;
+		case 0x06: return gamepad->dijs.lRx < -DEADZONE;
+		case 0x07: return gamepad->dijs.lRx > DEADZONE;
+		case 0x08: return gamepad->dijs.lRy < -DEADZONE;
+		case 0x09: return gamepad->dijs.lRy > DEADZONE;
+		case 0x0A: return gamepad->dijs.lRz < -DEADZONE;
+		case 0x0B: return gamepad->dijs.lRz > DEADZONE;
+		case 0x0C: return gamepad->dijs.rglSlider[0] < -DEADZONE;
+		case 0x0D: return gamepad->dijs.rglSlider[0] > DEADZONE;
+		case 0x0E: return gamepad->dijs.rglSlider[1] < -DEADZONE;
+		case 0x0F: return gamepad->dijs.rglSlider[1] > DEADZONE;
 		}
 	}
 
@@ -445,14 +546,14 @@ int gamepadState(gamepadData* gamepad, unsigned int subCode)
 		DWORD hatDirection = gamepad->dijs.rgdwPOV[(subCode & 0x0F) >> 2];
 		if ((LOWORD(hatDirection) != 0xFFFF)) {
 			switch (subCode & 3) {
-				case 0:									// Left
-					return (hatDirection >= 22500 && hatDirection <= 31500);
-				case 1:									// Right
-					return (hatDirection >=  4500 && hatDirection <= 13500);
-				case 2:									// Up
-					return (hatDirection >= 31500 || hatDirection <=  4500);
-				case 3:									// Down
-					return (hatDirection >= 13500 && hatDirection <= 22500);
+			case 0:									// Left
+				return (hatDirection >= 22500 && hatDirection <= 31500);
+			case 1:									// Right
+				return (hatDirection >= 4500 && hatDirection <= 13500);
+			case 2:									// Up
+				return (hatDirection >= 31500 || hatDirection <= 4500);
+			case 3:									// Down
+				return (hatDirection >= 13500 && hatDirection <= 22500);
 			}
 		}
 		return 0;
@@ -574,22 +675,22 @@ int readGamepadAxis(int i, int axis)
 	}
 
 	switch (axis) {
-		case 0:
-			return gamepad->dijs.lX;
-		case 1:
-			return gamepad->dijs.lY;
-		case 2:
-			return gamepad->dijs.lZ;
-		case 3:
-			return gamepad->dijs.lRx;
-		case 4:
-			return gamepad->dijs.lRy;
-		case 5:
-			return gamepad->dijs.lRz;
-		case 6:
-			return gamepad->dijs.rglSlider[0];
-		case 7:
-			return gamepad->dijs.rglSlider[1];
+	case 0:
+		return gamepad->dijs.lX;
+	case 1:
+		return gamepad->dijs.lY;
+	case 2:
+		return gamepad->dijs.lZ;
+	case 3:
+		return gamepad->dijs.lRx;
+	case 4:
+		return gamepad->dijs.lRy;
+	case 5:
+		return gamepad->dijs.lRz;
+	case 6:
+		return gamepad->dijs.rglSlider[0];
+	case 7:
+		return gamepad->dijs.rglSlider[1];
 	}
 
 	return 0;
@@ -613,12 +714,12 @@ int readMouseAxis(int i, int axis)
 	}
 
 	switch (axis) {
-		case 0:
-			return mouse->dims.lX;
-		case 1:
-			return mouse->dims.lY;
-		case 2:
-			return mouse->dims.lZ / WHEEL_DELTA;
+	case 0:
+		return mouse->dims.lX;
+	case 1:
+		return mouse->dims.lY;
+	case 2:
+		return mouse->dims.lZ / WHEEL_DELTA;
 	}
 
 	return 0;
@@ -731,62 +832,62 @@ int getControlName(int code, wchar_t* deviceName, wchar_t* controlName)
 	}
 
 	switch (deviceType) {
-		case 0x0000: {
-			int i = (code >> 8) & 0x3F;
+	case 0x0000: {
+		int i = (code >> 8) & 0x3F;
 
-			if (i >= keyboardCount) {		// This keyboard isn't connected
-				return 0;
-			}
-			if (keyboardProperties[i].lpdid == NULL) {
-				return 1;
-			}
-
-			if (deviceName) {
-				DIDEVICEINSTANCE didi;
-
-				memset(&didi, 0, sizeof(didi));
-				didi.dwSize = sizeof(didi);
-
-				keyboardProperties[i].lpdid->GetDeviceInfo(&didi);
-				_snwprintf(deviceName, MAX_PATH, L"System keyboard: %s", didi.tszInstanceName);
-			}
-			if (controlName) {
-				DIDEVICEOBJECTINSTANCE didoi;
-
-				memset(&didoi, 0, sizeof(didoi));
-				didoi.dwSize = sizeof(didoi);
-
-				if (SUCCEEDED(keyboardProperties[i].lpdid->GetObjectInfo(&didoi, DIDFT_MAKEINSTANCE(code & 0xFF) | DIDFT_PSHBUTTON, DIPH_BYID))) {
-					wcsncpy(controlName, didoi.tszName, MAX_PATH);
-				}
-			}
-
+		if (i >= keyboardCount) {		// This keyboard isn't connected
 			return 0;
 		}
-		case 0x4000: {
-			int i = (code >> 8) & 0x3F;
-
-			if (i >= gamepadCount) {		// This gamepad isn't connected
-				return 0;
-			}
-			lpdid = gamepadProperties[i].lpdid;
-			pdwAxisType = gamepadProperties[i].dwAxisType;
-			dwPOVs = gamepadProperties[i].dwPOVs;
-			dwButtons = gamepadProperties[i].dwButtons;
-			break;
+		if (keyboardProperties[i].lpdid == NULL) {
+			return 1;
 		}
-		case 0x8000: {
-			int i = (code >> 8) & 0x3F;
 
-			if (i >= mouseCount) {			// This mouse isn't connected
-				return 0;
-			}
-			lpdid = mouseProperties[i].lpdid;
-			pdwAxisType = mouseProperties[i].dwAxisType;
-			dwMouseAxes = mouseProperties[i].dwAxes;
-			dwButtons = mouseProperties[i].dwButtons;
-			break;
+		if (deviceName) {
+			DIDEVICEINSTANCE didi;
+
+			memset(&didi, 0, sizeof(didi));
+			didi.dwSize = sizeof(didi);
+
+			keyboardProperties[i].lpdid->GetDeviceInfo(&didi);
+			_snwprintf(deviceName, MAX_PATH, L"System keyboard: %s", didi.tszInstanceName);
 		}
+		if (controlName) {
+			DIDEVICEOBJECTINSTANCE didoi;
+
+			memset(&didoi, 0, sizeof(didoi));
+			didoi.dwSize = sizeof(didoi);
+
+			if (SUCCEEDED(keyboardProperties[i].lpdid->GetObjectInfo(&didoi, DIDFT_MAKEINSTANCE(code & 0xFF) | DIDFT_PSHBUTTON, DIPH_BYID))) {
+				wcsncpy(controlName, didoi.tszName, MAX_PATH);
+			}
+		}
+
+		return 0;
+	}
+	case 0x4000: {
+		int i = (code >> 8) & 0x3F;
+
+		if (i >= gamepadCount) {		// This gamepad isn't connected
+			return 0;
+		}
+		lpdid = gamepadProperties[i].lpdid;
+		pdwAxisType = gamepadProperties[i].dwAxisType;
+		dwPOVs = gamepadProperties[i].dwPOVs;
+		dwButtons = gamepadProperties[i].dwButtons;
+		break;
+	}
+	case 0x8000: {
+		int i = (code >> 8) & 0x3F;
+
+		if (i >= mouseCount) {			// This mouse isn't connected
+			return 0;
+		}
+		lpdid = mouseProperties[i].lpdid;
+		pdwAxisType = mouseProperties[i].dwAxisType;
+		dwMouseAxes = mouseProperties[i].dwAxes;
+		dwButtons = mouseProperties[i].dwButtons;
+		break;
+	}
 	}
 
 	if (lpdid == NULL) {
@@ -804,7 +905,8 @@ int getControlName(int code, wchar_t* deviceName, wchar_t* controlName)
 			// Special treatment for the system mouse
 			if ((code & 0xFF00) == 0x8000) {
 				_snwprintf(deviceName, MAX_PATH, L"System mouse: %s", didi.tszInstanceName);
-			} else {
+			}
+			else {
 				wcsncpy(deviceName, didi.tszInstanceName, MAX_PATH);
 			}
 		}
@@ -840,29 +942,29 @@ int getControlName(int code, wchar_t* deviceName, wchar_t* controlName)
 // Callback that evaluates and sets up each gamepad axis
 static BOOL CALLBACK gamepadEnumAxesCallback(LPCDIDEVICEOBJECTINSTANCE instance, LPVOID /*p*/)
 {
-//	return ((InputDI*)p)->gamepadEnumObject(instance);
+	//	return ((InputDI*)p)->gamepadEnumObject(instance);
 	return gamepadEnumObject(instance);
 }
 
 // Callback that evaluates and sets up each mouse axis
 static BOOL CALLBACK mouseEnumAxesCallback(LPCDIDEVICEOBJECTINSTANCE instance, LPVOID /*p*/)
 {
-//	return ((InputDI*)p)->mouseEnumObject(instance);
+	//	return ((InputDI*)p)->mouseEnumObject(instance);
 	return mouseEnumObject(instance);
 }
 
 // Callback that evaluates each gamepad DirectInput device
 static BOOL CALLBACK gamepadEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*/)
 {
-//	return ((InputDI*)p)->gamepadEnumDevice(instance);
+	//	return ((InputDI*)p)->gamepadEnumDevice(instance);
 	return gamepadEnumDevice(instance);
 }
 
 // Callback that evaluates each mouse DirectInput device
 static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*/)
 {
-//	return ((InputDI*)p)->mouseEnumDevice(instance);
+	//	return ((InputDI*)p)->mouseEnumDevice(instance);
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getPadInfos, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, _T("DirectInput8 input") };

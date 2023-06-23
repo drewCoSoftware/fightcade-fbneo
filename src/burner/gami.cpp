@@ -1381,8 +1381,9 @@ TCHAR* InputCodeDesc(INT32 c)
 	}
 
 	// Joystick
+	// NOTE: If formatting for aliases, we would replace 'Joy' below with the alias name!
 	if (c >= 0x4000 && c < 0x8000) {
-		INT32 nJoy = (c >> 8) & 0x3F;
+		INT32 nJoy = (c >> 8) & 0x3F;			// Translate the index of the joystick.
 		INT32 nCode = c & 0xFF;
 		if (nCode >= 0x80) {
 			_stprintf(szString, _T("Joy %d Button %d"), nJoy, nCode & 0x7F);
@@ -1423,6 +1424,7 @@ TCHAR* InputCodeDesc(INT32 c)
 	return szString;
 }
 
+// NOTE: This could be updated to reflected aliased gamepad names, if we wanted.
 TCHAR* InpToDesc(struct GameInp* pgi)
 {
 	static TCHAR szInputName[64] = _T("");
