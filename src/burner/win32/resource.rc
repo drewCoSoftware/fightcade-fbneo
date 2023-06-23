@@ -42,6 +42,9 @@ ID_DX9EFFECT RCDATA	"resource/bicubic.fx"
 //#endif
 
 // GUI strings
+// NOTE: This file is located at src/burner/win32/string.rc
+// It is not included in the project b/c doing so will cause build to fail.  Not 100% sure if this is
+// because of VS2022, or because of other weird, hacky approaches to making software.
 #include "string.rc"
 
 

@@ -4227,6 +4227,7 @@
     <ClCompile Include="..\..\src\intf\audio\win32\aud_wasapi.cpp">
       <Filter>interfaces\audio\win32</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\burner\win32\input_devices.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Burn">

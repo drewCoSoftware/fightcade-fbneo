@@ -5,10 +5,17 @@
 
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
+static HWND hGamepadList = NULL;
+
 static unsigned short* LastVal = NULL;			// Last input values/defined
 static int bLastValDefined = 0;					//
 
 static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
+
+// Get the currently plugged gamepads:
+static GamePadInfo padInfos[8];
+static INT32 nPadCount;
+
 
 // Update which input is using which PC input
 static int InpdUseUpdate()
@@ -178,24 +185,124 @@ int InpdUpdate()
 	return 0;
 }
 
+#define ALIAS_INDEX 0
+#define STATE_INDEX 1
+#define GUID_INDEX 2
+
+// ---------------------------------------------------------------------------------------------------------
 static int GamepadListBegin()
 {
-	int x = 10;
-	GamePadInfo pads[8];
-	INT32 nPadCount;
+	if (hGamepadList == NULL) {
+		return 1;
+	}
 
-	InputGetGamepads(pads, &nPadCount);
+	// Full row select style:
+	SendMessage(hGamepadList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+
+
+	// Make column headers
+	LVCOLUMN LvCol;
+	memset(&LvCol, 0, sizeof(LvCol));
+	LvCol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+
+
+
+	LvCol.cx = 0x95;		// Column Width.
+	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
+	SendMessage(hGamepadList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
+
+	LvCol.cx = 0x38;
+	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_INPUT_STATE, true);
+	SendMessage(hGamepadList, LVM_INSERTCOLUMN, STATE_INDEX, (LPARAM)&LvCol);
+
+	LvCol.cx = 0xa5;		// Column Width.
+	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_GUID, true);
+	SendMessage(hGamepadList, LVM_INSERTCOLUMN, GUID_INDEX, (LPARAM)&LvCol);
+
+
 	//InputInit();
 	return 0;
 }
 
-static int GamepadListMake()
-{
-	int x = 10;
-//	InputInit();
+// ---------------------------------------------------------------------------------------------------------
+static int GamepadListMake(int bBuild) {
+//	return 0; //
+
+	HWND& list = hGamepadList;
+	if (list == NULL) {
+		return 1;
+	}
+
+	if (bBuild) {
+		SendMessage(list, LVM_DELETEALLITEMS, 0, 0);
+	}
+
+	// Populate the list:
+	for(unsigned int i = 0; i < nPadCount; i++) {
+		GamePadInfo& pad = padInfos[i];
+
+
+		// Populate the ALIAS column (TODO)
+		LVITEM LvItem;
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
+		LvItem.iItem = i;
+		LvItem.iSubItem = ALIAS_INDEX;
+		LvItem.pszText = _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
+		LvItem.lParam = (LPARAM)i;
+		SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
+
+		// Populate the STATE column (empty is fine!)
+		// This gets set when we detect input from an attached gamepad!
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT;
+		LvItem.iItem = i;
+		LvItem.iSubItem = STATE_INDEX;
+		LvItem.pszText = _T("");
+		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+		// Populate the GUID column
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT;
+		LvItem.iItem = i;
+		LvItem.iSubItem = GUID_INDEX;
+		LvItem.pszText = GUIDToTCHAR(&pad.guidInstance);
+		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+	}
+
+
 	return 0;
 }
 
+
+// ------------------------------------------------------------------------------------------------------
+static int ActivateGamepadListItem()
+{
+	HWND& list = hGamepadList;
+	LVITEM LvItem;
+	memset(&LvItem, 0, sizeof(LvItem));
+	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	if (nSel < 0) {
+		return 1;
+	}
+
+	// Get the corresponding input
+	LvItem.mask = LVIF_TEXT;
+	LvItem.iItem = nSel;
+	LvItem.iSubItem = 0;
+	SendMessage(list, LVM_GETITEM, GUID_INDEX, (LPARAM)&LvItem);
+	nSel = LvItem.lParam;
+
+	if (nSel >= nPadCount) {
+		return 1;
+	}
+
+
+
+}
+
+// ---------------------------------------------------------------------------------------------------------
 static int InpdListBegin()
 {
 	LVCOLUMN LvCol;
@@ -225,6 +332,7 @@ static int InpdListBegin()
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
 // Make a list view of the game inputs.
 // These are all of the buttons that one could use.
 int InpdListMake(int bBuild)
@@ -240,7 +348,7 @@ int InpdListMake(int bBuild)
 		SendMessage(hInpdList, LVM_DELETEALLITEMS, 0, 0);
 	}
 
-	// Add all the input names to the list
+	// Add all the (normal) input names to the list
 	for (unsigned int i = 0; i < nGameInpCount; i++) {
 		struct BurnInputInfo bii;
 		LVITEM LvItem;
@@ -269,6 +377,7 @@ int InpdListMake(int bBuild)
 		j++;
 	}
 
+	// Populate the macro related data.
 	struct GameInp* pgi = GameInp + nGameInpCount;
 	for (unsigned int i = 0; i < nMacroCount; i++, pgi++) {
 		LVITEM LvItem;
@@ -337,6 +446,7 @@ static int InpdInit()
 	int nMemLen;
 
 	hInpdList = GetDlgItem(hInpdDlg, IDC_INPD_LIST);
+	hGamepadList = GetDlgItem(hInpdDlg, IDC_GAMEPAD_LIST);
 
 	// Allocate a last val array for the last input values
 	nMemLen = nGameInpCount * sizeof(char);
@@ -349,8 +459,9 @@ static int InpdInit()
 	InpdListBegin();
 	InpdListMake(1);
 
+	InputGetGamepads(padInfos, &nPadCount);
 	GamepadListBegin();
-	//GamepadListMake(1);
+	GamepadListMake(1);
 
 	// Init the Combo boxes
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);
@@ -375,6 +486,7 @@ static int InpdExit()
 		LastVal = NULL;
 	}
 	hInpdList = NULL;
+	hGamepadList = NULL;
 	hInpdDlg = NULL;
 	if (!bAltPause && bRunPause) {
 		bRunPause = 0;
@@ -456,14 +568,17 @@ static int GameInpConfig(int nPlayer, int nPcDev, int nAnalog)
 	return 0;
 }
 
+// ------------------------------------------------------------------------------------------------------
 // List item activated; find out which one
-static int ListItemActivate()
+static int ActivateInputListItem()
 {
+	HWND& list = hInpdList;
+
 	struct BurnInputInfo bii;
 	LVITEM LvItem;
 
 	memset(&LvItem, 0, sizeof(LvItem));
-	int nSel = SendMessage(hInpdList, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
 	if (nSel < 0) {
 		return 1;
 	}
@@ -472,7 +587,7 @@ static int ListItemActivate()
 	LvItem.mask = LVIF_PARAM;
 	LvItem.iItem = nSel;
 	LvItem.iSubItem = 0;
-	SendMessage(hInpdList, LVM_GETITEM, 0, (LPARAM)&LvItem);
+	SendMessage(list, LVM_GETITEM, 0, (LPARAM)&LvItem);
 	nSel = LvItem.lParam;
 
 	if (nSel >= (int)(nGameInpCount + nMacroCount)) {	// out of range
@@ -859,7 +974,8 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		int Notify = HIWORD(wParam);
 
 		if (Id == IDOK && Notify == BN_CLICKED) {
-			ListItemActivate();
+			ActivateInputListItem();
+			ActivateGamepadListItem();
 			return 0;
 		}
 		if (Id == IDCANCEL && Notify == BN_CLICKED) {
@@ -1010,8 +1126,12 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		NMHDR* pnm = (NMHDR*)lParam;
 
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_ITEMACTIVATE) {
-			ListItemActivate();
+			ActivateInputListItem();
 		}
+		if (Id == IDC_GAMEPAD_LIST && pnm->code == LVN_ITEMCHANGED) {
+			ActivateGamepadListItem();
+		}
+
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_KEYDOWN) {
 			NMLVKEYDOWN* pnmkd = (NMLVKEYDOWN*)lParam;
 			if (pnmkd->wVKey == VK_DELETE) {

@@ -2,11 +2,13 @@
 // Microsoft Visual C++ generated include file.
 // Used by app.rc
 //
-#define IDC_GAMEPAD_LIST                0
 #define BMP_SPLASH                      1
 #define ID_INPUT_INPUTDEVICES           1
+#define IDC_EDIT1                       1
+#define IDC_ALIAS_EDIT                  1
 #define BMP_ABOUT                       2
 #define BMP_MISC                        3
+#define IDSAVEALIAS                     3
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
 #define IDI_TV_MINUS                    12
@@ -756,6 +758,7 @@
 #define IDC_TAB1                        20500
 #define IDC_SPATH_TAB                   20501
 #define IDC_ROMPATH_TAB                 20502
+#define IDC_GAMEPAD_LIST                20503
 #define IDROM                           20600
 #define IDRESCAN                        20601
 #define IDGAMEINFO                      20602
@@ -934,7 +937,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        3
 #define _APS_NEXT_COMMAND_VALUE         2
-#define _APS_NEXT_CONTROL_VALUE         1
+#define _APS_NEXT_CONTROL_VALUE         4
 #define _APS_NEXT_SYMED_VALUE           0
 #endif
 #endif

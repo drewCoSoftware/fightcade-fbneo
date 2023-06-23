@@ -126,6 +126,7 @@ extern OPENFILENAME ofn;
 // Used to convert strings when possibly needed
 /* const */ char* TCHARToANSI(const TCHAR* pszInString, char* pszOutString, int nOutSize);
 /* const */ TCHAR* ANSIToTCHAR(const char* pszString, TCHAR* pszOutString, int nOutSize);
+/* const */ TCHAR* GUIDToTCHAR(const GUID * guid);
 
 CHAR *astring_from_utf8(const char *s);
 char *utf8_from_astring(const CHAR *s);

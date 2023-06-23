@@ -1,7 +1,7 @@
 // Burner Input Constant dialog module
 #include "burner.h"
 
-HWND hInpcDlg = NULL;								// Handle to the Input Dialog
+HWND hInpcDlg = NULL;								// Handle to the Input Constant Dialog
 unsigned int nInpcInput = 0;						// The input number we are redefining
 
 static HWND hValue = NULL;							// Handle to value edit control

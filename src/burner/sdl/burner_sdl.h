@@ -48,6 +48,7 @@ extern TCHAR* GetIsoPath();
 
 TCHAR* ANSIToTCHAR(const char* pszInString, TCHAR* pszOutString, int nOutSize);
 char* TCHARToANSI(const TCHAR* pszInString, char* pszOutString, int nOutSize);
+TCHAR* GUIDToTCHAR(const GUID* guid);
 
 #define _TtoA(a)    TCHARToANSI(a, NULL, 0)
 #define _AtoT(a)    ANSIToTCHAR(a, NULL, 0)

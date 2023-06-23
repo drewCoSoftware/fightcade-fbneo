@@ -325,6 +325,9 @@ BEGIN
 	IDS_EMPTY					"Empty"
 	IDS_UNIDENTIFIED_CD			"Unidentified CD"
 	IDS_RUNAHEAD_WARNING		"Run ahead is a CPU intensive feature! Make sure you have a decent CPU with good single core performace (i5 or better) if you plan to use it online. Otherwise netplay will be affected and you can get not so smooth online games, even with good connections."
+	
+	IDS_GAMEPAD_GUID			"GUID"
+	IDS_GAMEPAD_ALIAS			"ALIAS"
 
 	IDS_ERR_ERROR				"Error"
     IDS_ERR_WARNING				"Warning"

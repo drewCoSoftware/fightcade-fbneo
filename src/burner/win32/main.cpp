@@ -7,23 +7,23 @@
 //#define APP_DEBUG_LOG			// log debug messages to zzBurnDebug.html
 
 #ifdef USE_SDL
- #include "SDL.h"
+#include "SDL.h"
 #endif
 
 #include "burner.h"
 
 #ifdef _MSC_VER
 //  #include <winable.h>
- #ifdef _DEBUG
-  #include <crtdbg.h>
- #endif
+#ifdef _DEBUG
+#include <crtdbg.h>
+#endif
 #endif
 
 #include <wininet.h>
 #include <winsock.h>
 
 #if defined (FBNEO_DEBUG)
- bool bDisableDebugConsole = true;
+bool bDisableDebugConsole = true;
 #endif
 
 #include "version.h"
@@ -78,6 +78,8 @@ char* TCHARToANSI(const TCHAR* pszInString, char* pszOutString, int nOutSize)
 	return NULL;
 }
 
+
+
 TCHAR* ANSIToTCHAR(const char* pszInString, TCHAR* pszOutString, int nOutSize)
 {
 	static TCHAR szStringBuffer[1024];
@@ -113,20 +115,40 @@ TCHAR* ANSIToTCHAR(const char* pszInString, TCHAR* pszOutString, int /*nOutSize*
 }
 #endif
 
-CHAR *astring_from_utf8(const char *utf8string)
+
+// ------------------------------------------------------------------------------------
+TCHAR* GUIDToTCHAR(const GUID* guid)
 {
-	WCHAR *wstring;
+	// We could use the appropriate TCHAR version of the snprintf
+	// function below, but I didn't feel like it at the time.
+	// Thanks anyway: https://stackoverflow.com/questions/1672677/print-a-guid-variable
+	CHAR guid_string[37];
+	snprintf(
+		guid_string, sizeof(guid_string),
+		"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		guid->Data1, guid->Data2, guid->Data3,
+		guid->Data4[0], guid->Data4[1], guid->Data4[2],
+		guid->Data4[3], guid->Data4[4], guid->Data4[5],
+		guid->Data4[6], guid->Data4[7]);
+
+	TCHAR* res = ANSIToTCHAR(guid_string, NULL, 0);
+	return res;
+}
+
+CHAR* astring_from_utf8(const char* utf8string)
+{
+	WCHAR* wstring;
 	int char_count;
-	CHAR *result;
+	CHAR* result;
 
 	// convert MAME string (UTF-8) to UTF-16
 	char_count = MultiByteToWideChar(CP_UTF8, 0, utf8string, -1, NULL, 0);
-	wstring = (WCHAR *)malloc(char_count * sizeof(*wstring));
+	wstring = (WCHAR*)malloc(char_count * sizeof(*wstring));
 	MultiByteToWideChar(CP_UTF8, 0, utf8string, -1, wstring, char_count);
 
 	// convert UTF-16 to "ANSI code page" string
 	char_count = WideCharToMultiByte(CP_ACP, 0, wstring, -1, NULL, 0, NULL, NULL);
-	result = (CHAR *)malloc(char_count * sizeof(*result));
+	result = (CHAR*)malloc(char_count * sizeof(*result));
 	if (result != NULL)
 		WideCharToMultiByte(CP_ACP, 0, wstring, -1, result, char_count, NULL, NULL);
 
@@ -137,20 +159,20 @@ CHAR *astring_from_utf8(const char *utf8string)
 	return result;
 }
 
-char *utf8_from_astring(const CHAR *astring)
+char* utf8_from_astring(const CHAR* astring)
 {
-	WCHAR *wstring;
+	WCHAR* wstring;
 	int char_count;
-	CHAR *result;
+	CHAR* result;
 
 	// convert "ANSI code page" string to UTF-16
 	char_count = MultiByteToWideChar(CP_ACP, 0, astring, -1, NULL, 0);
-	wstring = (WCHAR *)malloc(char_count * sizeof(*wstring));
+	wstring = (WCHAR*)malloc(char_count * sizeof(*wstring));
 	MultiByteToWideChar(CP_ACP, 0, astring, -1, wstring, char_count);
 
 	// convert UTF-16 to MAME string (UTF-8)
 	char_count = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, NULL, 0, NULL, NULL);
-	result = (CHAR *)malloc(char_count * sizeof(*result));
+	result = (CHAR*)malloc(char_count * sizeof(*result));
 	if (result != NULL)
 		WideCharToMultiByte(CP_UTF8, 0, wstring, -1, result, char_count, NULL, NULL);
 
@@ -161,28 +183,28 @@ char *utf8_from_astring(const CHAR *astring)
 	return result;
 }
 
-WCHAR *wstring_from_utf8(const char *utf8string)
+WCHAR* wstring_from_utf8(const char* utf8string)
 {
 	int char_count;
-	WCHAR *result;
+	WCHAR* result;
 
 	// convert MAME string (UTF-8) to UTF-16
 	char_count = MultiByteToWideChar(CP_UTF8, 0, utf8string, -1, NULL, 0);
-	result = (WCHAR *)malloc(char_count * sizeof(*result));
+	result = (WCHAR*)malloc(char_count * sizeof(*result));
 	if (result != NULL)
 		MultiByteToWideChar(CP_UTF8, 0, utf8string, -1, result, char_count);
 
 	return result;
 }
 
-char *utf8_from_wstring(const WCHAR *wstring)
+char* utf8_from_wstring(const WCHAR* wstring)
 {
 	int char_count;
-	char *result;
+	char* result;
 
 	// convert UTF-16 to MAME string (UTF-8)
 	char_count = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, NULL, 0, NULL, NULL);
-	result = (char *)malloc(char_count * sizeof(*result));
+	result = (char*)malloc(char_count * sizeof(*result));
 	if (result != NULL)
 		WideCharToMultiByte(CP_UTF8, 0, wstring, -1, result, char_count, NULL, NULL);
 
@@ -190,42 +212,44 @@ char *utf8_from_wstring(const WCHAR *wstring)
 }
 
 #if defined (FBNEO_DEBUG)
- static TCHAR szConsoleBuffer[1024];
- static int nPrevConsoleStatus = -1;
+static TCHAR szConsoleBuffer[1024];
+static int nPrevConsoleStatus = -1;
 
- static HANDLE DebugBuffer;
- static FILE *DebugLog = NULL;
- static bool bEchoLog = true; // false;
+static HANDLE DebugBuffer;
+static FILE* DebugLog = NULL;
+static bool bEchoLog = true; // false;
 #endif
 
-void tcharstrreplace(TCHAR *pszSRBuffer, const TCHAR *pszFind, const TCHAR *pszReplace)
+void tcharstrreplace(TCHAR* pszSRBuffer, const TCHAR* pszFind, const TCHAR* pszReplace)
 {
 	if (pszSRBuffer == NULL || pszFind == NULL || pszReplace == NULL)
 		return;
 
 	int lenFind = _tcslen(pszFind);
 	int lenReplace = _tcslen(pszReplace);
-	int lenSRBuffer = _tcslen(pszSRBuffer)+1;
+	int lenSRBuffer = _tcslen(pszSRBuffer) + 1;
 
 	for (int i = 0; (lenSRBuffer > lenFind) && (i < lenSRBuffer - lenFind); i++) {
 		if (!memcmp(pszFind, &pszSRBuffer[i], lenFind * sizeof(TCHAR))) {
 			if (lenFind == lenReplace) {
 				memcpy(&pszSRBuffer[i], pszReplace, lenReplace * sizeof(TCHAR));
 				i += lenReplace - 1;
-			} else if (lenFind > lenReplace) {
+			}
+			else if (lenFind > lenReplace) {
 				memcpy(&pszSRBuffer[i], pszReplace, lenReplace * sizeof(TCHAR));
 				i += lenReplace;
 				int delta = lenFind - lenReplace;
 				lenSRBuffer -= delta;
 				memmove(&pszSRBuffer[i], &pszSRBuffer[i + delta], (lenSRBuffer - i) * sizeof(TCHAR));
 				i--;
-			} else { /* this part only works on dynamic buffers - the replacement string length must be smaller or equal to the find string length if this is commented out!
-				int delta = lenReplace - lenFind;
-				pszSRBuffer = (TCHAR *)realloc(pszSRBuffer, (lenSRBuffer + delta) * sizeof(TCHAR));
-				memmove(&pszSRBuffer[i + lenReplace], &pszSRBuffer[i + lenFind], (lenSRBuffer - i - lenFind) * sizeof(TCHAR));
-				lenSRBuffer += delta;
-				memcpy(&pszSRBuffer[i], pszReplace, lenReplace * sizeof(TCHAR));
-				i += lenReplace - 1; */
+			}
+			else { /* this part only works on dynamic buffers - the replacement string length must be smaller or equal to the find string length if this is commented out!
+			 int delta = lenReplace - lenFind;
+			 pszSRBuffer = (TCHAR *)realloc(pszSRBuffer, (lenSRBuffer + delta) * sizeof(TCHAR));
+			 memmove(&pszSRBuffer[i + lenReplace], &pszSRBuffer[i + lenFind], (lenSRBuffer - i - lenFind) * sizeof(TCHAR));
+			 lenSRBuffer += delta;
+			 memcpy(&pszSRBuffer[i], pszReplace, lenReplace * sizeof(TCHAR));
+			 i += lenReplace - 1; */
 			}
 		}
 	}
@@ -243,44 +267,44 @@ static int __cdecl AppDebugPrintf(int nStatus, TCHAR* pszFormat, ...)
 
 		if (nStatus != nPrevConsoleStatus) {
 			switch (nStatus) {
-				case PRINT_ERROR:
-					_ftprintf(DebugLog, _T("</div><div class=\"error\">"));
-					break;
-				case PRINT_IMPORTANT:
-					_ftprintf(DebugLog, _T("</div><div class=\"important\">"));
-					break;
-				case PRINT_LEVEL1:
-					_ftprintf(DebugLog, _T("</div><div class=\"level1\">"));
-					break;
-				case PRINT_LEVEL2:
-					_ftprintf(DebugLog, _T("</div><div class=\"level2\">"));
-					break;
-				case PRINT_LEVEL3:
-					_ftprintf(DebugLog, _T("</div><div class=\"level3\">"));
-					break;
-				case PRINT_LEVEL4:
-					_ftprintf(DebugLog, _T("</div><div class=\"level4\">"));
-					break;
-				case PRINT_LEVEL5:
-					_ftprintf(DebugLog, _T("</div><div class=\"level5\">"));
-					break;
-				case PRINT_LEVEL6:
-					_ftprintf(DebugLog, _T("</div><div class=\"level6\">"));
-					break;
-				case PRINT_LEVEL7:
-					_ftprintf(DebugLog, _T("</div><div class=\"level7\">"));
-					break;
-				case PRINT_LEVEL8:
-					_ftprintf(DebugLog, _T("</div><div class=\"level8\">"));
-					break;
-				case PRINT_LEVEL9:
-					_ftprintf(DebugLog, _T("</div><div class=\"level9\">"));
-					break;
-				case PRINT_LEVEL10:
-					_ftprintf(DebugLog, _T("</div><div class=\"level10\">"));
-					break;
-				default:
-					_ftprintf(DebugLog, _T("</div><div class=\"normal\">"));
+			case PRINT_ERROR:
+				_ftprintf(DebugLog, _T("</div><div class=\"error\">"));
+				break;
+			case PRINT_IMPORTANT:
+				_ftprintf(DebugLog, _T("</div><div class=\"important\">"));
+				break;
+			case PRINT_LEVEL1:
+				_ftprintf(DebugLog, _T("</div><div class=\"level1\">"));
+				break;
+			case PRINT_LEVEL2:
+				_ftprintf(DebugLog, _T("</div><div class=\"level2\">"));
+				break;
+			case PRINT_LEVEL3:
+				_ftprintf(DebugLog, _T("</div><div class=\"level3\">"));
+				break;
+			case PRINT_LEVEL4:
+				_ftprintf(DebugLog, _T("</div><div class=\"level4\">"));
+				break;
+			case PRINT_LEVEL5:
+				_ftprintf(DebugLog, _T("</div><div class=\"level5\">"));
+				break;
+			case PRINT_LEVEL6:
+				_ftprintf(DebugLog, _T("</div><div class=\"level6\">"));
+				break;
+			case PRINT_LEVEL7:
+				_ftprintf(DebugLog, _T("</div><div class=\"level7\">"));
+				break;
+			case PRINT_LEVEL8:
+				_ftprintf(DebugLog, _T("</div><div class=\"level8\">"));
+				break;
+			case PRINT_LEVEL9:
+				_ftprintf(DebugLog, _T("</div><div class=\"level9\">"));
+				break;
+			case PRINT_LEVEL10:
+				_ftprintf(DebugLog, _T("</div><div class=\"level10\">"));
+				break;
+			default:
+				_ftprintf(DebugLog, _T("</div><div class=\"normal\">"));
 			}
 		}
 		_vftprintf(DebugLog, pszFormat, vaFormat);
@@ -292,27 +316,27 @@ static int __cdecl AppDebugPrintf(int nStatus, TCHAR* pszFormat, ...)
 
 		if (nStatus != nPrevConsoleStatus) {
 			switch (nStatus) {
-				case PRINT_UI:
-					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_INTENSITY);
-					break;
-				case PRINT_IMPORTANT:
-				case PRINT_LEVEL1:
-				case PRINT_LEVEL2:
-				case PRINT_LEVEL3:
-				case PRINT_LEVEL4:
-				case PRINT_LEVEL5:
-				case PRINT_LEVEL6:
-				case PRINT_LEVEL7:
-				case PRINT_LEVEL8:
-				case PRINT_LEVEL9:
-				case PRINT_LEVEL10:
-					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-					break;
-				case PRINT_ERROR:
-					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-					break;
-				default:
-					SetConsoleTextAttribute(DebugBuffer, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			case PRINT_UI:
+				SetConsoleTextAttribute(DebugBuffer, FOREGROUND_INTENSITY);
+				break;
+			case PRINT_IMPORTANT:
+			case PRINT_LEVEL1:
+			case PRINT_LEVEL2:
+			case PRINT_LEVEL3:
+			case PRINT_LEVEL4:
+			case PRINT_LEVEL5:
+			case PRINT_LEVEL6:
+			case PRINT_LEVEL7:
+			case PRINT_LEVEL8:
+			case PRINT_LEVEL9:
+			case PRINT_LEVEL10:
+				SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+				break;
+			case PRINT_ERROR:
+				SetConsoleTextAttribute(DebugBuffer, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+				break;
+			default:
+				SetConsoleTextAttribute(DebugBuffer, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			}
 		}
 
@@ -388,7 +412,7 @@ void CloseDebugLog()
 int OpenDebugLog()
 {
 #if defined (FBNEO_DEBUG)
- #if defined (APP_DEBUG_LOG)
+#if defined (APP_DEBUG_LOG)
 
 	time_t nTime;
 	tm* tmTime;
@@ -399,7 +423,7 @@ int OpenDebugLog()
 	{
 		// Initialise the debug log file
 
-  #ifdef _UNICODE
+#ifdef _UNICODE
 		DebugLog = _tfopen(_T("zzBurnDebug.html"), _T("wb"));
 
 		if (ftell(DebugLog) == 0) {
@@ -410,14 +434,14 @@ int OpenDebugLog()
 			_ftprintf(DebugLog, _T("<style>body{color:#333333;}.error,.error_chb{color:#ff3f3f;}.important,.important_chb{color:#000000;}.normal,.level1,.level2,.level3,.level4,.level5,.level6,.level7,.level8,.level9,.level10,.normal_chb,.level1_chb,.level2_chb,.level3_chb,.level4_chb,.level5_chb,.level6_chb,.level7_chb,.level8_chb,.level9_chb,.level10_chb{color:#009f00;}.ui{color:9f9f9f;}</style>"));
 			_ftprintf(DebugLog, _T("</head><body><pre>"));
 		}
-  #else
+#else
 		DebugLog = _tfopen(_T("zzBurnDebug.html"), _T("wt"));
 
 		if (ftell(DebugLog) == 0) {
 			_ftprintf(DebugLog, _T("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">"));
 			_ftprintf(DebugLog, _T("<html><head><meta http-equiv=Content-Type content=\"text/html; charset=windows-%i\"></head><body><pre>"), GetACP());
 		}
-  #endif
+#endif
 
 		_ftprintf(DebugLog, _T("<div style=\"font-size:16px;font-weight:bold;\">"));
 		_ftprintf(DebugLog, _T("Debug log created by ") _T(APP_TITLE) _T(" v%.20s on %s"), szAppBurnVer, _tasctime(tmTime));
@@ -438,7 +462,7 @@ int OpenDebugLog()
 		_ftprintf(DebugLog, _T("</div><div><input type=\"checkbox\" id=\"chb_level9\" onclick=\"if(this.checked==true){$(\'.level9\').show();}else{$(\'.level9\').hide();}\" checked>&nbsp;<label for=\"chb_level9\" class=\"level9_chb\">Level 9</label>"));
 		_ftprintf(DebugLog, _T("</div><div style=\"margin-bottom:20px;\"><input type=\"checkbox\" id=\"chb_level10\" onclick=\"if(this.checked==true){$(\'.level10\').show();}else{$(\'.level10\').hide();}\" checked>&nbsp;<label for=\"chb_level10\" class=\"level10_chb\">Level 10</label>"));
 	}
- #endif
+#endif
 
 	if (!bDisableDebugConsole)
 	{
@@ -458,28 +482,29 @@ int OpenDebugLog()
 #else
 
 #ifdef ATTACH_PARENT_PROCESS
- #undef ATTACH_PARENT_PROCESS
+#undef ATTACH_PARENT_PROCESS
 #endif
 #define ATTACH_PARENT_PROCESS ((DWORD)-1)
 
-			BOOL (WINAPI* pAttachConsole)(DWORD dwProcessId) = NULL;
+			BOOL(WINAPI * pAttachConsole)(DWORD dwProcessId) = NULL;
 			HINSTANCE hKernel32DLL = LoadLibrary(_T("kernel32.dll"));
 
 			if (hKernel32DLL) {
-				pAttachConsole = (BOOL (WINAPI*)(DWORD))GetProcAddress(hKernel32DLL, "AttachConsole");
+				pAttachConsole = (BOOL(WINAPI*)(DWORD))GetProcAddress(hKernel32DLL, "AttachConsole");
 			}
 			if (pAttachConsole) {
 				if (!pAttachConsole(ATTACH_PARENT_PROCESS)) {
 					AllocConsole();
 				}
-			} else {
+			}
+			else {
 				AllocConsole();
 			}
 			if (hKernel32DLL) {
 				FreeLibrary(hKernel32DLL);
 			}
 
- #undef ATTACH_PARENT_PROCESS
+#undef ATTACH_PARENT_PROCESS
 #endif
 
 		}
@@ -500,7 +525,8 @@ int OpenDebugLog()
 				_sntprintf(szConsoleBuffer + _tcslen(szConsoleBuffer), 1024 - _tcslen(szConsoleBuffer), _T(", and echod to this console"));
 			}
 			_sntprintf(szConsoleBuffer + _tcslen(szConsoleBuffer), 1024 - _tcslen(szConsoleBuffer), _T(".\n\n"));
-		} else {
+		}
+		else {
 			_sntprintf(szConsoleBuffer, 1024, _T("Debug messages are echod to this console.\n\n"));
 		}
 		WriteConsole(DebugBuffer, szConsoleBuffer, _tcslen(szConsoleBuffer), NULL, NULL);
@@ -514,49 +540,49 @@ int OpenDebugLog()
 	return 0;
 }
 
-void GetAspectRatio(int x, int y, int *AspectX, int *AspectY)
+void GetAspectRatio(int x, int y, int* AspectX, int* AspectY)
 {
 	float aspect_ratio = (float)x / (float)y;
 
 	// Horizontal
 
 	// 4:3
-	if (fabs(aspect_ratio - 4.f/3.f) < 0.01f) {
+	if (fabs(aspect_ratio - 4.f / 3.f) < 0.01f) {
 		*AspectX = 4;
 		*AspectY = 3;
 		return;
 	}
 
 	// 5:4
-	if (fabs(aspect_ratio - 5.f/4.f) < 0.01f) {
+	if (fabs(aspect_ratio - 5.f / 4.f) < 0.01f) {
 		*AspectX = 5;
 		*AspectY = 4;
 		return;
 	}
 
 	// 16:9
-	if (fabs(aspect_ratio - 16.f/9.f) < 0.1f) {
+	if (fabs(aspect_ratio - 16.f / 9.f) < 0.1f) {
 		*AspectX = 16;
 		*AspectY = 9;
 		return;
 	}
 
 	// 16:10
-	if (fabs(aspect_ratio - 16.f/10.f) < 0.1f) {
+	if (fabs(aspect_ratio - 16.f / 10.f) < 0.1f) {
 		*AspectX = 16;
 		*AspectY = 10;
 		return;
 	}
 
 	// 21:9
-	if (fabs(aspect_ratio - 21.f/9.f) < 0.1f) {
+	if (fabs(aspect_ratio - 21.f / 9.f) < 0.1f) {
 		*AspectX = 21;
 		*AspectY = 9;
 		return;
 	}
 
 	// 32:9
-	if (fabs(aspect_ratio - 32.f/9.f) < 0.1f) {
+	if (fabs(aspect_ratio - 32.f / 9.f) < 0.1f) {
 		*AspectX = 32;
 		*AspectY = 9;
 		return;
@@ -565,42 +591,42 @@ void GetAspectRatio(int x, int y, int *AspectX, int *AspectY)
 	// Vertical
 
 	// 3:4
-	if (fabs(aspect_ratio - 3.f/4.f) < 0.01f) {
+	if (fabs(aspect_ratio - 3.f / 4.f) < 0.01f) {
 		*AspectX = 3;
 		*AspectY = 4;
 		return;
 	}
 
 	// 4:5
-	if (fabs(aspect_ratio - 4.f/5.f) < 0.01f) {
+	if (fabs(aspect_ratio - 4.f / 5.f) < 0.01f) {
 		*AspectX = 4;
 		*AspectY = 5;
 		return;
 	}
 
 	// 9:16
-	if (fabs(aspect_ratio - 9.f/16.f) < 0.1f) {
+	if (fabs(aspect_ratio - 9.f / 16.f) < 0.1f) {
 		*AspectX = 9;
 		*AspectY = 16;
 		return;
 	}
 
 	// 10:16
-	if (fabs(aspect_ratio - 9.f/16.f) < 0.1f) {
+	if (fabs(aspect_ratio - 9.f / 16.f) < 0.1f) {
 		*AspectX = 10;
 		*AspectY = 16;
 		return;
 	}
 
 	// 9:21
-	if (fabs(aspect_ratio - 9.f/21.f) < 0.1f) {
+	if (fabs(aspect_ratio - 9.f / 21.f) < 0.1f) {
 		*AspectX = 9;
 		*AspectY = 21;
 		return;
 	}
 
 	// 9:32
-	if (fabs(aspect_ratio - 9.f/32.f) < 0.1f) {
+	if (fabs(aspect_ratio - 9.f / 32.f) < 0.1f) {
 		*AspectX = 9;
 		*AspectY = 32;
 		return;
@@ -680,7 +706,8 @@ void MonitorAutoCheck()
 		GetAspectRatio(x, y, &nVidScrnAspectX, &nVidScrnAspectY);
 		nVidVerScrnAspectX = nVidScrnAspectX;
 		nVidVerScrnAspectY = nVidScrnAspectY;
-	} else {
+	}
+	else {
 		EnumDisplayMonitors(NULL, NULL, MonInfoProc, 0);
 	}
 }
@@ -744,7 +771,7 @@ static int AppInit()
 	if (bMonitorAutoCheck)
 		MonitorAutoCheck();
 
-//#if 1 || !defined (FBNEO_DEBUG)
+	//#if 1 || !defined (FBNEO_DEBUG)
 #if 0
 	// print a warning if we're running for the 1st time
 	if (nIniVersion < nBurnVer) {
@@ -851,7 +878,7 @@ void AppCleanup()
 	AppExit();
 }
 
-int AppMessage(MSG *pMsg)
+int AppMessage(MSG* pMsg)
 {
 	if (IsDialogMessage(hInpdDlg, pMsg))	 return 0;
 	if (IsDialogMessage(hInpCheatDlg, pMsg)) return 0;
@@ -877,8 +904,8 @@ bool AppProcessKeyboardInput()
 int ProcessCmdLine()
 {
 	INT32 len = wcslen(szCmdLine);
-	TCHAR *szEnd = szCmdLine + len;
-	TCHAR *szCommand = szCmdLine;
+	TCHAR* szEnd = szCmdLine + len;
+	TCHAR* szCommand = szCmdLine;
 	TCHAR szOption[MAX_PATH];
 
 	while (szCommand < szEnd) {
@@ -886,7 +913,7 @@ int ProcessCmdLine()
 		if (szCommand[0] == _T('"')) {
 			// quotes command
 			size++;
-			while (szCommand[size] != _T('"') && (szCommand+size) < szEnd) {
+			while (szCommand[size] != _T('"') && (szCommand + size) < szEnd) {
 				size++;
 			}
 			wcsncpy(szOption, szCommand + 1, size - 2);
@@ -895,7 +922,7 @@ int ProcessCmdLine()
 		}
 		else {
 			// regular command
-			while (szCommand[size] != _T(' ') && (szCommand+size) < szEnd) {
+			while (szCommand[size] != _T(' ') && (szCommand + size) < szEnd) {
 				size++;
 			}
 			wcsncpy(szOption, szCommand, size);
@@ -1087,7 +1114,7 @@ static void CreateSupportFolders()
 		{_T("\0")} // END of list
 	};
 
-	for(int x = 0; szSupportDirs[x][0] != '\0'; x++) {
+	for (int x = 0; szSupportDirs[x][0] != '\0'; x++) {
 		CreateDirectory(szSupportDirs[x], NULL);
 	}
 }
@@ -1110,7 +1137,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 	if (nBurnVer & 0xFF) {
 		// private version (alpha)
 		_stprintf(szAppBurnVer, _T("%x.%x.%x.%02x-%d"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF, nBurnVer & 0xFF, FIGHTCADE_VERSION);
-	} else {
+	}
+	else {
 		// public version
 		_stprintf(szAppBurnVer, _T("%x.%x.%x-%d"), nBurnVer >> 20, (nBurnVer >> 16) & 0x0F, (nBurnVer >> 8) & 0xFF, FIGHTCADE_VERSION);
 	}
@@ -1137,7 +1165,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 		{_T("\0")} // END of list
 	};
 
-	for(int x = 0; szDirs[x][0] != '\0'; x++) {
+	for (int x = 0; szDirs[x][0] != '\0'; x++) {
 		CreateDirectory(szDirs[x], NULL);
 	}
 
