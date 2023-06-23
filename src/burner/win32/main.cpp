@@ -122,6 +122,8 @@ TCHAR* GUIDToTCHAR(const GUID* guid)
 	// We could use the appropriate TCHAR version of the snprintf
 	// function below, but I didn't feel like it at the time.
 	// Thanks anyway: https://stackoverflow.com/questions/1672677/print-a-guid-variable
+	
+	// NOTE:  _stprintf is used in other places in the application!
 	CHAR guid_string[37];
 	snprintf(
 		guid_string, sizeof(guid_string),

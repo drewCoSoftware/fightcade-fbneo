@@ -17,6 +17,11 @@ static GamePadInfo padInfos[8];
 static INT32 nPadCount;
 
 
+// Text buffer for the gamepad alias.
+#define BUF_SIZE  40
+static TCHAR aliasBuffer[BUF_SIZE];
+
+
 // Update which input is using which PC input
 static int InpdUseUpdate()
 {
@@ -124,7 +129,7 @@ int InpdUpdate()
 			}
 
 			// Continue if input state hasn't changed.
-			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {						
+			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {
 				j++;
 				continue;
 			}
@@ -226,7 +231,7 @@ static int GamepadListBegin()
 
 // ---------------------------------------------------------------------------------------------------------
 static int GamepadListMake(int bBuild) {
-//	return 0; //
+	//	return 0; //
 
 	HWND& list = hGamepadList;
 	if (list == NULL) {
@@ -238,7 +243,7 @@ static int GamepadListMake(int bBuild) {
 	}
 
 	// Populate the list:
-	for(unsigned int i = 0; i < nPadCount; i++) {
+	for (unsigned int i = 0; i < nPadCount; i++) {
 		GamePadInfo& pad = padInfos[i];
 
 
@@ -258,7 +263,7 @@ static int GamepadListMake(int bBuild) {
 		LvItem.mask = LVIF_TEXT;
 		LvItem.iItem = i;
 		LvItem.iSubItem = STATE_INDEX;
-		LvItem.pszText = _T("");
+		LvItem.pszText = _T("STATE");
 		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the GUID column
@@ -277,13 +282,23 @@ static int GamepadListMake(int bBuild) {
 
 
 // ------------------------------------------------------------------------------------------------------
-static int ActivateGamepadListItem()
+static int OnGamepadListDeselect()
+{
+	// Clear the alias input box.
+	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
+
+	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+static int SelectGamepadListItem()
 {
 	HWND& list = hGamepadList;
 	LVITEM LvItem;
 	memset(&LvItem, 0, sizeof(LvItem));
 	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
 	if (nSel < 0) {
+		OnGamepadListDeselect();
 		return 1;
 	}
 
@@ -291,12 +306,23 @@ static int ActivateGamepadListItem()
 	LvItem.mask = LVIF_TEXT;
 	LvItem.iItem = nSel;
 	LvItem.iSubItem = 0;
-	SendMessage(list, LVM_GETITEM, GUID_INDEX, (LPARAM)&LvItem);
+	LvItem.pszText = aliasBuffer;
+	LvItem.cchTextMax = BUF_SIZE;
+
+	SendMessage(list, LVM_GETITEM, 0, (LPARAM)&LvItem);
 	nSel = LvItem.lParam;
 
 	if (nSel >= nPadCount) {
+		OnGamepadListDeselect();
 		return 1;
 	}
+
+	// Now we can set the text in the alias text box!
+	// Set the edit control to current value
+//	TCHAR szText[16];
+//	_stprintf(szText, _T("%i"), nAnalogSpeed * 100 / 256);
+	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)aliasBuffer);
+
 
 
 
@@ -975,7 +1001,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDOK && Notify == BN_CLICKED) {
 			ActivateInputListItem();
-			ActivateGamepadListItem();
+			SelectGamepadListItem();
 			return 0;
 		}
 		if (Id == IDCANCEL && Notify == BN_CLICKED) {
@@ -1129,7 +1155,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			ActivateInputListItem();
 		}
 		if (Id == IDC_GAMEPAD_LIST && pnm->code == LVN_ITEMCHANGED) {
-			ActivateGamepadListItem();
+			SelectGamepadListItem();
 		}
 
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_KEYDOWN) {
