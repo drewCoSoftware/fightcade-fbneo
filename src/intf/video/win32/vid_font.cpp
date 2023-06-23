@@ -147,7 +147,7 @@ int CFont::Init(const char *fontFile, const char *shaderfile, CDynRender *render
 
 		return r;
 	}
-	return 0;
+	return 0;		// NOTE: If you get here text overlays will crash the emulator.
 }
 
 void CFont::End()
