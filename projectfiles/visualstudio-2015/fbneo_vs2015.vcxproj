@@ -1626,6 +1626,8 @@ del build_details.exe
     <PreBuildEvent>
       <Command>
       </Command>
+      <Message>
+      </Message>
     </PreBuildEvent>
     <Manifest>
       <VerboseOutput>false</VerboseOutput>
@@ -1636,6 +1638,13 @@ del build_details.exe
     <CustomBuildStep>
       <Message>Doing Custom Stuff!</Message>
     </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)..\..\ui" "$(OutDir)ui" /E /I /Y /D
+xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Make sure ui/ folder + data is available.</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -1654,6 +1663,12 @@ del build_details.exe
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <OutputFile>..\..\build\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
+    <PreBuildEvent>
+      <Command>xcopy </Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Make sure ui/ folder + data is available.</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
