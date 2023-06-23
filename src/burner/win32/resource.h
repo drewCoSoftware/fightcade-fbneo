@@ -4,11 +4,11 @@
 //
 #define BMP_SPLASH                      1
 #define ID_INPUT_INPUTDEVICES           1
-#define IDC_EDIT1                       1
 #define IDC_ALIAS_EDIT                  1
 #define BMP_ABOUT                       2
 #define BMP_MISC                        3
 #define IDSAVEALIAS                     3
+#define ID_REFRESH_PADS                 4
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
 #define IDI_TV_MINUS                    12

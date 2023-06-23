@@ -15,6 +15,7 @@ static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
 // Get the currently plugged gamepads:
 static GamePadInfo padInfos[8];
 static INT32 nPadCount;
+static int nSelectedPadIndex = -1;
 
 
 // Text buffer for the gamepad alias.
@@ -286,6 +287,7 @@ static int OnGamepadListDeselect()
 {
 	// Clear the alias input box.
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
+	nSelectedPadIndex = -1;
 
 	return 0;
 }
@@ -319,8 +321,12 @@ static int SelectGamepadListItem()
 
 	// Now we can set the text in the alias text box!
 	// Set the edit control to current value
-//	TCHAR szText[16];
-//	_stprintf(szText, _T("%i"), nAnalogSpeed * 100 / 256);
+	nSelectedPadIndex = nSel;
+	
+	// Enable the save alias button....
+	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
+	//hBtn->
+
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)aliasBuffer);
 
 
@@ -1008,6 +1014,26 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			return 0;
 		}
+
+		if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
+			int x = 10;
+			return 0;
+		}
+
+		if (Id == ID_REFRESH_PADS && Notify == BN_CLICKED) {
+			// TODO: Disable button on init.
+			OnGamepadListDeselect();
+			InputInit();
+
+			// Repopulate the gamepad list....
+//			GamepadListBegin();
+			InputGetGamepads(padInfos, &nPadCount);
+			GamepadListMake(1);
+
+		// TODO: Enable button after init.
+		}
+
+//		if (
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 
