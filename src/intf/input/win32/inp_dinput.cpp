@@ -291,23 +291,68 @@ int exit()
 		return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// IDK a good name for this.....
+template <typename T>
+void WriteData_G(FILE* f, T data)  {
+	fwrite(&data, sizeof(T), 1, f);
+}
 
 // ---------------------------------------------------------------------------------------------------------
-void WriteData(FILE* f, UINT16 data)
-{
+// IDK a good name for this.....
+template <typename T>
+T ReadData_G(FILE* f) {
+	T res;
+	fread(&res, sizeof(T), 1, f);
+	return res;
+}
+//
+//
+//// ---------------------------------------------------------------------------------------------------------
+//void WriteData(FILE* f, GUID g) {
+//	WriteData_G(f, g.Data1);
+//	WriteData_G(f, g.Data2);
+//	WriteData_G(f, g.Data3);
+//	WriteData_G(f, g.Data4);
+//}
+//
+//// ---------------------------------------------------------------------------------------------------------
+//GUID ReadGUID(FILE* f) {
+//	GUID res;
+//	res.Data1 = 
+//}
+
+// ---------------------------------------------------------------------------------------------------------
+void WriteData(FILE* f, UINT16 data) {
 	fwrite(&data, sizeof(UINT16), 1, f);
 }
 
 // ---------------------------------------------------------------------------------------------------------
-void WriteData(FILE* f, TCHAR* data, int len)
-{
+void WriteTCHAR(FILE* f, TCHAR* data, int len) {
 	fwrite(data, sizeof(TCHAR), len, f);
 }
 
 // ---------------------------------------------------------------------------------------------------------
-void WriteData(FILE* f, CHAR* data, int len)
-{
+void WriteData(FILE* f, CHAR* data, int len) {
 	fwrite(data, sizeof(CHAR), len, f);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+void ReadData(FILE* f, CHAR* data, int len) {
+	fread(data, sizeof(CHAR), len, f);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+void ReadTCHAR(FILE* f, TCHAR* data, int len) {
+	fread(data, sizeof(TCHAR), len, f);
+}
+
+
+// ---------------------------------------------------------------------------------------------------------
+UINT16 ReadUint16(FILE* f) {
+	UINT16 buf;
+	fread(&buf, sizeof(UINT16), 1, f);
+	return buf;
 }
 
 
@@ -315,7 +360,7 @@ void WriteData(FILE* f, CHAR* data, int len)
 
 // ---------------------------------------------------------------------------------------------------------
 void WriteButtonData(FILE* fp, GamepadInputProfile& profile) {
-	
+
 	for (size_t i = 0; i < MAX_INPUTS; i++)
 	{
 		GamepadInput& input = profile.inputs[i];
@@ -328,16 +373,30 @@ void WriteButtonData(FILE* fp, GamepadInputProfile& profile) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Save all of the gamepad data to disk.  Alias + button mappings.....
-INT32 saveGamepadMappings() {
+void ReadButtonData(FILE* fp, GamepadInputProfile& profile) {
 
-	if (gamepadCount == 0) { return 0; }
+	for (size_t i = 0; i < MAX_INPUTS; i++)
+	{
+		GamepadInput& input = profile.inputs[i];
 
+		// NOTE: I am not supporting macros at this time.
+		input.nType = ReadUint16(fp);
+		input.nCode = ReadUint16(fp);
+	}
+
+}
+
+// ---------------------------------------------------------------------------------------------------------
+void clearGamepadMappingData() {
 	// Compose the mappings data.  This will end up being our source of data for 'getGamepadInfos'....
 	memset(&gamepadFile, 0, sizeof(GamepadFileData));
-	gamepadFile.entryCount = gamepadCount;
+}
 
-	// TODO: Write the version info.....
+// ---------------------------------------------------------------------------------------------------------
+void createGamepadMappingData() {
+
+	// NOTE: This should happen during the merge step.....	
+	gamepadFile.entryCount = gamepadCount;
 	for (int i = 0; i < gamepadCount; i++)
 	{
 		GamepadFileEntry& e = gamepadFile.entries[i];
@@ -346,6 +405,13 @@ INT32 saveGamepadMappings() {
 		// Set our nice, internal alias.
 		_entryMap[e.info.guidInstance] = &e;
 	}
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Save all of the gamepad data to disk.  Alias + button mappings.....
+INT32 saveGamepadMappings() {
+
+	if (gamepadFile.entryCount == 0 || gamepadCount == 0) { return 0; }
 
 	TCHAR* szFileName = _T("config/gamepads.dat");
 	FILE* fp = _tfopen(szFileName, _T("wb"));
@@ -357,28 +423,26 @@ INT32 saveGamepadMappings() {
 	else
 	{
 		// Write the file header..
-		WriteData(fp, "GP-MAP", 6);
-
 		UINT16 version = 1;
+		WriteData(fp, "GP-MAP", 6);
 		WriteData(fp, version);
-
 
 		// Entry Count
 		WriteData(fp, gamepadFile.entryCount);
 
 		// Write all entries.
-		CHAR guidBuffer[GUID_BUFFER_SIZE];
+		//CHAR guidBuffer[GUID_BUFFER_SIZE];
 		for (size_t i = 0; i < gamepadFile.entryCount; i++)
 		{
 			GamepadFileEntry& e = gamepadFile.entries[i];
-			FormatGUID(&e.info.guidInstance, guidBuffer, GUID_BUFFER_SIZE);
+		//	FormatGUID(&e.info.guidInstance, guidBuffer, GUID_BUFFER_SIZE);
 
 			// Write out the info....
-			WriteData(fp, guidBuffer, GUID_BUFFER_SIZE);
-			WriteData(fp, e.info.Alias, MAX_ALIAS_CHARS);
+			WriteData_G(fp, e.info.guidInstance);
+			WriteTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
 
-			// Now we can include the mapping data....
-			UINT16 profileCount = e.profileCount;
+			// Now we can include the profile data....
+			UINT16 profileCount = 1; //e.profileCount;
 			WriteData(fp, profileCount);
 
 			// NOTE: We are only serializing one profile at this time....
@@ -387,8 +451,8 @@ INT32 saveGamepadMappings() {
 			GamepadInputProfile& p = e.profile; //[j];
 			// }
 
-			WriteData(fp, p.driverName, MAX_NAME);
-			WriteData(fp, p.profileName, MAX_NAME);
+			WriteTCHAR(fp, p.driverName, MAX_NAME);
+			WriteTCHAR(fp, p.profileName, MAX_NAME);
 
 			WriteButtonData(fp, p);
 		}
@@ -401,6 +465,67 @@ INT32 saveGamepadMappings() {
 }
 
 
+// ---------------------------------------------------------------------------------------------------------
+void addGamepadEntry(gamepadData& props){
+	
+	UINT16 index = gamepadFile.entryCount;
+	if (index >= MAX_GAMEPAD_INFOS) {
+		throw "TOO MANY PROFILES!";
+	}
+	gamepadFile.entryCount += 1;
+
+	// This is all we need, just to add the guid....
+	GamepadFileEntry& e = gamepadFile.entries[index];
+	e.info.guidInstance = props.guidInstance;
+
+	// This is refreshed in a subsequent step....
+	// _entryMap[e.info.guidInstance] = &e;
+
+	//strcpy(e.info.Alias, _T("
+	//e.info.
+	// Set our nice, internal alias.
+
+}
+
+
+// ---------------------------------------------------------------------------------------------------------
+void refreshEntryMap() {
+	// Create our convenient guid map..
+	_entryMap.clear();
+	size_t len = gamepadFile.entryCount;
+	for (size_t i = 0; i < len; i++)
+	{
+		auto& e = gamepadFile.entries[i];
+		_entryMap[e.info.guidInstance] = &e;
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Merge any *new* gamepads that have been detected with the current data file.
+void mergeGamepadMappings() {
+
+	// NOTE: This should happen during the merge step.....	
+	bool saveData = false;
+	//gamepadFile.entryCount = gamepadCount;
+	for (int i = 0; i < gamepadCount; i++)
+	{
+		// Check for entry.  If there isn't one, we will create something new!
+		auto match = _entryMap.find(gamepadProperties[i].guidInstance);
+		if (match == _entryMap.end())
+		{
+			// This is a new entry!
+			addGamepadEntry(gamepadProperties[i]);
+			saveData = true;
+		}
+	}
+	if (saveData)
+	{
+		saveGamepadMappings();
+		refreshEntryMap();
+	}
+
+}
+
 
 // ---------------------------------------------------------------------------------------------------------
 INT32 loadGamepadMappings() {
@@ -408,19 +533,46 @@ INT32 loadGamepadMappings() {
 
 	FILE* fp = _tfopen(szFileName, _T("r"));
 	if (fp) {
-		int z = 10;
-		//_ftprintf(fp, _T(APP_TITLE) _T(" - Hardware Default Preset\n\n"));
-		//_ftprintf(fp, _T("%s\n\n"), szHardwareString);
-		//_ftprintf(fp, _T("version 0x%06X\n\n"), nBurnVer);
-		//GameInpWrite(fp);
-		//fclose(fp);
+		clearGamepadMappingData();
+
+		// LOAD + CHECK HEADER:
+		CHAR header[7];
+		ReadData(fp, header, 6);
+		header[6] = 0;	// Null terminate!
+		UINT16 version = ReadUint16(fp);
+
+		if (strcmp(header, "GP-MAP") != 0 || version != 1){
+			throw "INVALID HEADER DATA!";
+		}
+		
+		UINT16 entryCount = ReadUint16(fp);
+		gamepadFile.entryCount = entryCount;
+		for (size_t i = 0; i < entryCount; i++)
+		{
+			GamepadFileEntry& e = gamepadFile.entries[i];
+			e.info.guidInstance = ReadData_G<GUID>(fp);
+			ReadTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
+
+			UINT16 profileCount = ReadUint16(fp);
+			if (profileCount != 1) { throw "INVALID PROFILE COUNT!"; }
+
+			// Read all of the profiles (in a loop (future))
+			GamepadInputProfile& p = e.profile; //[j];
+			ReadTCHAR(fp, p.driverName, MAX_NAME);
+			ReadTCHAR(fp, p.profileName, MAX_NAME);
+
+			ReadButtonData(fp, p);
+		}
+
 	}
 	else
 	{
 		// File doesn't exist?
-		// Maybe we should just create a default one?
-		int x = 10;
+		// We will set some default data.  Any new gamepads will be added during the merge step!
+		clearGamepadMappingData();
 	}
+
+	refreshEntryMap();
 
 	return 0;
 }
@@ -450,6 +602,7 @@ INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
 int init()
 {
 	hDinpWnd = hScrnWnd;
@@ -486,7 +639,9 @@ int init()
 	}
 
 	// TEMP: We will compose and write our gamepad data to disk....
-	saveGamepadMappings();
+	loadGamepadMappings();
+	mergeGamepadMappings();
+	// saveGamepadMappings();
 
 	// NOTE: This might be a good place to save data about our input devices.
 	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
