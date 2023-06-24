@@ -81,6 +81,9 @@ struct InputInOut {
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
 	// Get Device List.  Gamepads...
 	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
+	
+	// Save the current set of mapping data!
+	INT32 (*SaveGamepadMappings)();
 
 	const TCHAR* szModuleName;
 };
@@ -93,6 +96,7 @@ INT32 InputFind(const INT32 nFlags);
 INT32 InputGetControlName(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 InterfaceInfo* InputGetInfo();
 std::vector<const InputInOut *> InputGetInterfaces();
+INT32 InputSaveGamepadMappings();
 
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 

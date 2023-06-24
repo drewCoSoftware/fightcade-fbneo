@@ -80,7 +80,7 @@ bool keyboardCooperativeModeForeground = false;
 IDirectInput8W* pDI;
 HWND hDinpWnd;
 
-bool firstInit = false;
+bool firstInit = true;
 
 int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
 {
@@ -1198,4 +1198,4 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, _T("DirectInput8 input") };

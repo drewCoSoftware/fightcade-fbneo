@@ -20,9 +20,8 @@ static int nSelectedPadIndex = -1;
 
 
 // Text buffer for the gamepad alias.
-#define BUF_SIZE  40
-static TCHAR aliasBuffer[BUF_SIZE];
-
+static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
+GamepadFileEntry* selectedPadEntry = NULL;
 
 // Update which input is using which PC input
 static int InpdUseUpdate()
@@ -238,6 +237,34 @@ static int GamepadListBegin()
 }
 
 // ---------------------------------------------------------------------------------------------------------
+void SetStrBuffer(TCHAR* buffer, int bufLen, TCHAR* data) {
+	int len = wcslen(data);
+	memset(buffer, 0, bufLen);
+	if (len >= bufLen) {
+		len = bufLen - 1;
+	}
+	for (size_t i = 0; i < len; i++)
+	{
+		buffer[i] = data[i];
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------
+static void updateListboxAlias(HWND& list, int index, TCHAR* buffer, int bufSize, bool insertNew) {
+
+	// TODO: Make sure the index exists....
+	LVITEM LvItem;
+	memset(&LvItem, 0, sizeof(LvItem));
+	LvItem.mask = LVIF_TEXT | LVIF_PARAM;
+	LvItem.iItem = index;
+	LvItem.iSubItem = ALIAS_INDEX;
+	LvItem.pszText = buffer; // _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
+	LvItem.lParam = (LPARAM)index;
+	SendMessage(list, insertNew ? LVM_INSERTITEM : LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+}
+
+// ---------------------------------------------------------------------------------------------------------
 static int GamepadListMake(int bBuild) {
 	//	return 0; //
 
@@ -250,20 +277,32 @@ static int GamepadListMake(int bBuild) {
 		SendMessage(list, LVM_DELETEALLITEMS, 0, 0);
 	}
 
+
 	// Populate the list:
 	for (unsigned int i = 0; i < nPadCount; i++) {
 		GamepadFileEntry* pad = padInfos[i];
 
 
+		if (pad->info.Alias == 0 || wcscmp(_T(""), pad->info.Alias) == 0) {
+			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
+		}
+		else
+		{
+			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
+		}
+
 		// Populate the ALIAS column (TODO)
+		updateListboxAlias(list, i, aliasBuffer, MAX_ALIAS_CHARS, true);
+
+
 		LVITEM LvItem;
-		memset(&LvItem, 0, sizeof(LvItem));
-		LvItem.mask = LVIF_TEXT | LVIF_PARAM;
-		LvItem.iItem = i;
-		LvItem.iSubItem = ALIAS_INDEX;
-		LvItem.pszText = _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
-		LvItem.lParam = (LPARAM)i;
-		SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
+		//memset(&LvItem, 0, sizeof(LvItem));
+		//LvItem.mask = LVIF_TEXT | LVIF_PARAM;
+		//LvItem.iItem = i;
+		//LvItem.iSubItem = ALIAS_INDEX;
+		//LvItem.pszText = aliasBuffer; // _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
+		//LvItem.lParam = (LPARAM)i;
+		//SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the STATE column (empty is fine!)
 		// This gets set when we detect input from an attached gamepad!
@@ -295,9 +334,21 @@ static int OnGamepadListDeselect()
 	// Clear the alias input box.
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
 	nSelectedPadIndex = -1;
+	selectedPadEntry = NULL;
 	SetEnabled(IDSAVEALIAS, FALSE);
-
 	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+void getListItemData(HWND& list, int index, LVITEM& item) {
+
+	item.mask = LVIF_TEXT;
+	item.iItem = index;
+	item.iSubItem = 0;
+	item.pszText = aliasBuffer;
+	item.cchTextMax = MAX_ALIAS_CHARS;
+	SendMessage(list, LVM_GETITEM, 0, (LPARAM)&item);
+
 }
 
 // ------------------------------------------------------------------------------------------------------
@@ -313,13 +364,8 @@ static int SelectGamepadListItem()
 	}
 
 	// Get the corresponding input
-	LvItem.mask = LVIF_TEXT;
-	LvItem.iItem = nSel;
-	LvItem.iSubItem = 0;
-	LvItem.pszText = aliasBuffer;
-	LvItem.cchTextMax = BUF_SIZE;
+	getListItemData(list, nSel, LvItem);
 
-	SendMessage(list, LVM_GETITEM, 0, (LPARAM)&LvItem);
 	nSel = LvItem.lParam;
 
 	if (nSel >= nPadCount) {
@@ -335,9 +381,8 @@ static int SelectGamepadListItem()
 	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
 	SetEnabled(IDSAVEALIAS, TRUE);
 
-	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)aliasBuffer);
-
-
+	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
+	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)useBuffer);
 
 
 }
@@ -648,19 +693,19 @@ static int ActivateInputListItem()
 		// Dip switch is a constant - change it
 		nInpcInput = nSel;
 		InpcCreate();
-	}
+}
 	else {
 		if (GameInp[nSel].nInput == GIT_MACRO_CUSTOM) {
 #if 0
 			InpMacroCreate(nSel);
 #endif
-	}
+		}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-}
+	}
 
 	GameInpCheckLeftAlt();
 
@@ -700,7 +745,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-}
+		}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -984,6 +1029,28 @@ static void SliderExit()
 	bprintf(0, _T("  * Analog Speed: %X\n"), nAnalogSpeed);
 }
 
+
+// ---------------------------------------------------------------------------------------------------------
+static void saveAliasInfo() {
+	if (nSelectedPadIndex == -1) { return; }
+
+	selectedPadEntry = padInfos[nSelectedPadIndex];
+
+	//LVITEM item;
+	//getListItemData(hGamepadList, nSelectedPadIndex, item);
+//	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
+	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
+	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
+
+	// Update the list box item....
+	updateListboxAlias(hGamepadList, nSelectedPadIndex, aliasBuffer, MAX_ALIAS_CHARS, false);
+
+	SetStrBuffer(selectedPadEntry->info.Alias, MAX_ALIAS_CHARS, aliasBuffer);
+
+	// Write out the data to disk....
+	InputSaveGamepadMappings();
+}
+
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	if (Msg == WM_INITDIALOG) {
@@ -1024,7 +1091,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		}
 
 		if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
-			int x = 10;
+			saveAliasInfo();
 			return 0;
 		}
 
