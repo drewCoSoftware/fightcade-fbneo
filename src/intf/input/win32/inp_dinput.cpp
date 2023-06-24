@@ -80,6 +80,8 @@ bool keyboardCooperativeModeForeground = false;
 IDirectInput8W* pDI;
 HWND hDinpWnd;
 
+bool firstInit = false;
+
 int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
 {
 	gamepadData* gamepad = &gamepadProperties[gamepadCount];
@@ -294,7 +296,7 @@ int exit()
 // ---------------------------------------------------------------------------------------------------------
 // IDK a good name for this.....
 template <typename T>
-void WriteData_G(FILE* f, T data)  {
+void WriteData_G(FILE* f, T data) {
 	fwrite(&data, sizeof(T), 1, f);
 }
 
@@ -435,9 +437,9 @@ INT32 saveGamepadMappings() {
 		for (size_t i = 0; i < gamepadFile.entryCount; i++)
 		{
 			GamepadFileEntry& e = gamepadFile.entries[i];
-		//	FormatGUID(&e.info.guidInstance, guidBuffer, GUID_BUFFER_SIZE);
+			//	FormatGUID(&e.info.guidInstance, guidBuffer, GUID_BUFFER_SIZE);
 
-			// Write out the info....
+				// Write out the info....
 			WriteData_G(fp, e.info.guidInstance);
 			WriteTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
 
@@ -458,16 +460,15 @@ INT32 saveGamepadMappings() {
 		}
 	}
 
-	// TEST: We are only going to save aliases 
-	// getGamepadInfos(
+	fclose(fp);
 
 	return 0;
 }
 
 
 // ---------------------------------------------------------------------------------------------------------
-void addGamepadEntry(gamepadData& props){
-	
+void addGamepadEntry(gamepadData& props) {
+
 	UINT16 index = gamepadFile.entryCount;
 	if (index >= MAX_GAMEPAD_INFOS) {
 		throw "TOO MANY PROFILES!";
@@ -541,10 +542,10 @@ INT32 loadGamepadMappings() {
 		header[6] = 0;	// Null terminate!
 		UINT16 version = ReadUint16(fp);
 
-		if (strcmp(header, "GP-MAP") != 0 || version != 1){
+		if (strcmp(header, "GP-MAP") != 0 || version != 1) {
 			throw "INVALID HEADER DATA!";
 		}
-		
+
 		UINT16 entryCount = ReadUint16(fp);
 		gamepadFile.entryCount = entryCount;
 		for (size_t i = 0; i < entryCount; i++)
@@ -564,6 +565,7 @@ INT32 loadGamepadMappings() {
 			ReadButtonData(fp, p);
 		}
 
+		fclose(fp);
 	}
 	else
 	{
@@ -590,7 +592,9 @@ INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
 		auto match = _entryMap.find(guid);
 		if (match == _entryMap.end())
 		{
-			// This is wrong!  Figure out what the normal error handler is?
+			// This is wrong!  
+			// We should not be here as any newly detected controls should have been merged into the data by now.
+			// TODO: Figure out how to throw exceptions properly in FBNEO.
 			throw "FAIL!";
 		}
 
@@ -639,13 +643,17 @@ int init()
 	}
 
 	// TEMP: We will compose and write our gamepad data to disk....
-	loadGamepadMappings();
+	// We only need to read disk data the first time around.
+	if (firstInit)
+	{
+		loadGamepadMappings();
+	}
 	mergeGamepadMappings();
-	// saveGamepadMappings();
 
 	// NOTE: This might be a good place to save data about our input devices.
 	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
 
+	firstInit = false;
 	return 0;
 }
 
