@@ -147,7 +147,7 @@ static INT32 InputTick()
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
-INT32 InputGetGamepads(GamepadFileEntry* padInfos, INT32* nPadCount)
+INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
 {
 	INT32 nRet = 0;
 
@@ -156,7 +156,7 @@ INT32 InputGetGamepads(GamepadFileEntry* padInfos, INT32* nPadCount)
 		return 1;
 	}
 
-	nRet = pInputInOut[nInputSelect]->GetGamepadList(padInfos, nPadCount);
+	nRet = pInputInOut[nInputSelect]->GetGamepadList(ppPadInfos, nPadCount);
 	return nRet;
 }
 

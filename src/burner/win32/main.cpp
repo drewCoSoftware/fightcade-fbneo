@@ -115,10 +115,21 @@ TCHAR* ANSIToTCHAR(const char* pszInString, TCHAR* pszOutString, int /*nOutSize*
 }
 #endif
 
+// ------------------------------------------------------------------------------------
+void FormatGUID(const GUID* guid, CHAR* buffer, int bufferSize) {
+
+	snprintf(
+		buffer, bufferSize,
+		"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		guid->Data1, guid->Data2, guid->Data3,
+		guid->Data4[0], guid->Data4[1], guid->Data4[2],
+		guid->Data4[3], guid->Data4[4], guid->Data4[5],
+		guid->Data4[6], guid->Data4[7]);
+
+}
 
 // ------------------------------------------------------------------------------------
-TCHAR* GUIDToTCHAR(const GUID* guid)
-{
+TCHAR* GUIDToTCHAR(const GUID* guid) {
 	// We could use the appropriate TCHAR version of the snprintf
 	// function below, but I didn't feel like it at the time.
 	// Thanks anyway: https://stackoverflow.com/questions/1672677/print-a-guid-variable

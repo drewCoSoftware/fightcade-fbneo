@@ -53,8 +53,10 @@ struct GamepadInputProfile {
 // from there.
 struct GamepadFileEntry {
 	GamepadInfo info;
+
+	// NOTE: We just assume a single profile for now.  NBD.
+	UINT16 profileCount = 1;
 	GamepadInputProfile profile;
-	// NOTE: All of the button mappings can go here.
 };
 
 
@@ -78,7 +80,7 @@ struct InputInOut {
 	// Get plugin info
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
 	// Get Device List.  Gamepads...
-	INT32 (*GetGamepadList)(GamepadFileEntry* padInfos, INT32* nPadCount);
+	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 
 	const TCHAR* szModuleName;
 };
@@ -92,7 +94,7 @@ INT32 InputGetControlName(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlNa
 InterfaceInfo* InputGetInfo();
 std::vector<const InputInOut *> InputGetInterfaces();
 
-INT32 InputGetGamepads(GamepadFileEntry* padInfos, INT32* nPadCount);
+INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 
 extern bool bInputOkay;
 extern UINT32 nInputSelect;

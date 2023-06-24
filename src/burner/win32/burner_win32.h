@@ -127,6 +127,7 @@ extern OPENFILENAME ofn;
 /* const */ char* TCHARToANSI(const TCHAR* pszInString, char* pszOutString, int nOutSize);
 /* const */ TCHAR* ANSIToTCHAR(const char* pszString, TCHAR* pszOutString, int nOutSize);
 /* const */ TCHAR* GUIDToTCHAR(const GUID * guid);
+void FormatGUID(const GUID * guid, CHAR * buffer, int bufferSize);
 
 CHAR *astring_from_utf8(const char *s);
 char *utf8_from_astring(const CHAR *s);

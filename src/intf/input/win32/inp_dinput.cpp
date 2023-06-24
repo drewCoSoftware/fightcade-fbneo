@@ -45,7 +45,7 @@ struct gamepadData {
 
 struct GamepadFileData {
 	GamepadFileEntry entries[MAX_GAMEPAD_INFOS];
-	int entryCount;
+	UINT16 entryCount;
 
 } gamepadFile;
 
@@ -291,6 +291,42 @@ int exit()
 		return 0;
 }
 
+
+// ---------------------------------------------------------------------------------------------------------
+void WriteData(FILE* f, UINT16 data)
+{
+	fwrite(&data, sizeof(UINT16), 1, f);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+void WriteData(FILE* f, TCHAR* data, int len)
+{
+	fwrite(data, sizeof(TCHAR), len, f);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+void WriteData(FILE* f, CHAR* data, int len)
+{
+	fwrite(data, sizeof(CHAR), len, f);
+}
+
+
+#define GUID_BUFFER_SIZE 40
+
+// ---------------------------------------------------------------------------------------------------------
+void WriteButtonData(FILE* fp, GamepadInputProfile& profile) {
+	
+	for (size_t i = 0; i < MAX_INPUTS; i++)
+	{
+		GamepadInput& input = profile.inputs[i];
+
+		// NOTE: I am not supporting macros at this time.
+		WriteData(fp, input.nType);
+		WriteData(fp, input.nCode);
+	}
+
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Save all of the gamepad data to disk.  Alias + button mappings.....
 INT32 saveGamepadMappings() {
@@ -302,29 +338,69 @@ INT32 saveGamepadMappings() {
 	gamepadFile.entryCount = gamepadCount;
 
 	// TODO: Write the version info.....
-
 	for (int i = 0; i < gamepadCount; i++)
 	{
 		GamepadFileEntry& e = gamepadFile.entries[i];
 		e.info.guidInstance = gamepadProperties[i].guidInstance;
 
+		// Set our nice, internal alias.
 		_entryMap[e.info.guidInstance] = &e;
-
-		//padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
-		//memset(padInfos[i].Alias, 0, MAX_ALIAS_CHARS);
-
-		// TODO: We will set friendly names here?
-		// Check the guid mappings.....
 	}
-	// *nPadCount = gamepadCount;
 
 	TCHAR* szFileName = _T("config/gamepads.dat");
+	FILE* fp = _tfopen(szFileName, _T("wb"));
+	if (!fp)
+	{
+		// TODO: Handle this better!
+		throw ("File save failed!");
+	}
+	else
+	{
+		// Write the file header..
+		WriteData(fp, "GP-MAP", 6);
+
+		UINT16 version = 1;
+		WriteData(fp, version);
+
+
+		// Entry Count
+		WriteData(fp, gamepadFile.entryCount);
+
+		// Write all entries.
+		CHAR guidBuffer[GUID_BUFFER_SIZE];
+		for (size_t i = 0; i < gamepadFile.entryCount; i++)
+		{
+			GamepadFileEntry& e = gamepadFile.entries[i];
+			FormatGUID(&e.info.guidInstance, guidBuffer, GUID_BUFFER_SIZE);
+
+			// Write out the info....
+			WriteData(fp, guidBuffer, GUID_BUFFER_SIZE);
+			WriteData(fp, e.info.Alias, MAX_ALIAS_CHARS);
+
+			// Now we can include the mapping data....
+			UINT16 profileCount = e.profileCount;
+			WriteData(fp, profileCount);
+
+			// NOTE: We are only serializing one profile at this time....
+			//for (size_t j = 0; j < profileCount; j++)
+			//{
+			GamepadInputProfile& p = e.profile; //[j];
+			// }
+
+			WriteData(fp, p.driverName, MAX_NAME);
+			WriteData(fp, p.profileName, MAX_NAME);
+
+			WriteButtonData(fp, p);
+		}
+	}
 
 	// TEST: We are only going to save aliases 
 	// getGamepadInfos(
 
 	return 0;
 }
+
+
 
 // ---------------------------------------------------------------------------------------------------------
 INT32 loadGamepadMappings() {
@@ -350,7 +426,7 @@ INT32 loadGamepadMappings() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-INT32 getGamepadInfos(GamepadFileEntry* padInfos, INT32* nPadCount)
+INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
 {
 	// This is where we will load our mapping information.
 	// loadGamepadMappings();
@@ -366,19 +442,11 @@ INT32 getGamepadInfos(GamepadFileEntry* padInfos, INT32* nPadCount)
 			throw "FAIL!";
 		}
 
-		// Just make a copy of the data!
-		padInfos[i] = *match->second;
-
-		//padInfos[i].guidInstance = gamepadProperties[i].guidInstance;
-		//memset(padInfos[i].Alias, 0, MAX_ALIAS_CHARS);
-
-		// TODO: We will set friendly names here?
-		// Check the guid mappings.....
+		// Set the pointer.
+		ppPadInfos[i] = match->second;
 	}
 	*nPadCount = gamepadCount;
 
-	//padInfos = NULL;
-	//nPadCount = 0;
 	return 0;
 }
 
