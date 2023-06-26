@@ -9,6 +9,7 @@
 #define BMP_MISC                        3
 #define IDSAVEALIAS                     3
 #define ID_REFRESH_PADS                 4
+#define ID_SAVE_MAPPINGS                5
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
 #define IDI_TV_MINUS                    12

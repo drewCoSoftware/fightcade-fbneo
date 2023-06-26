@@ -33,8 +33,10 @@ struct GamepadInfo
 // NOTE: We will probably just start returning the whole file structure instead of just this little bit....
 // GamepadInfo PadInfos[MAX_GAMEPAD_INFOS];
 struct GamepadInput {
-	UINT16 nType;				// Type of input.  Switch, analog, etc.
+	UINT16 nInput;				// Type of input.  Switch, analog, etc.
 	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	//UINT8 nAxis;
+	//UINT8 nRange;
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
 };
 
@@ -332,3 +334,25 @@ void VidSKillOSDMsg();
 
 // overlay for dx9Alt
 #include "vid_overlay.h"
+
+
+
+// These map onto the 'BurnInputInfo' lists that are used to populate the input dialog.
+// For example, see cps3InputList[] in d_cps3.cpp:32
+struct playerInputs {
+	UINT16 p1Index;			// Starting index of the player1 buttons.
+	UINT16 p2Index;			// Starting index of the player2 buttons.
+
+	//GamepadInput buttons[MAX_INPUTS];
+	UINT16 buttonCount;				// Total number of mapped buttons.
+};
+
+//
+//struct sfiii3nPlayerInputs{
+//}
+//
+//// Per-Player input mappings definitions.
+//// NOTE: We only have this for sfiii since I don't care about other games rn.
+//static struct sfiii3nPlayerInputs x[] = {
+//
+//}

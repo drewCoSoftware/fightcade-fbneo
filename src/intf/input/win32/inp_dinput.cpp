@@ -368,7 +368,7 @@ void WriteButtonData(FILE* fp, GamepadInputProfile& profile) {
 		GamepadInput& input = profile.inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		WriteData(fp, input.nType);
+		WriteData(fp, input.nInput);
 		WriteData(fp, input.nCode);
 	}
 
@@ -382,7 +382,7 @@ void ReadButtonData(FILE* fp, GamepadInputProfile& profile) {
 		GamepadInput& input = profile.inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		input.nType = ReadUint16(fp);
+		input.nInput = ReadUint16(fp);
 		input.nCode = ReadUint16(fp);
 	}
 
@@ -505,9 +505,7 @@ void refreshEntryMap() {
 // Merge any *new* gamepads that have been detected with the current data file.
 void mergeGamepadMappings() {
 
-	// NOTE: This should happen during the merge step.....	
 	bool saveData = false;
-	//gamepadFile.entryCount = gamepadCount;
 	for (int i = 0; i < gamepadCount; i++)
 	{
 		// Check for entry.  If there isn't one, we will create something new!

@@ -23,6 +23,8 @@ static int nSelectedPadIndex = -1;
 static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
 GamepadFileEntry* selectedPadEntry = NULL;
 
+static playerInputs sfiii3nPlayerInputs;
+
 // Update which input is using which PC input
 static int InpdUseUpdate()
 {
@@ -296,13 +298,6 @@ static int GamepadListMake(int bBuild) {
 
 
 		LVITEM LvItem;
-		//memset(&LvItem, 0, sizeof(LvItem));
-		//LvItem.mask = LVIF_TEXT | LVIF_PARAM;
-		//LvItem.iItem = i;
-		//LvItem.iSubItem = ALIAS_INDEX;
-		//LvItem.pszText = aliasBuffer; // _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
-		//LvItem.lParam = (LPARAM)i;
-		//SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the STATE column (empty is fine!)
 		// This gets set when we detect input from an attached gamepad!
@@ -336,6 +331,7 @@ static int OnGamepadListDeselect()
 	nSelectedPadIndex = -1;
 	selectedPadEntry = NULL;
 	SetEnabled(IDSAVEALIAS, FALSE);
+	SetEnabled(ID_SAVE_MAPPINGS, FALSE);
 	return 0;
 }
 
@@ -380,6 +376,7 @@ static int SelectGamepadListItem()
 	// Enable the save alias button....
 	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
 	SetEnabled(IDSAVEALIAS, TRUE);
+	SetEnabled(ID_SAVE_MAPPINGS, TRUE);
 
 	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)useBuffer);
@@ -528,6 +525,13 @@ static void InitComboboxes()
 
 static int InpdInit()
 {
+	// We are just going to hard-code this mapping for now.
+	// All of this is for playing 3rd strike in a group setting, so it will be OK for now.
+	auto& pi = sfiii3nPlayerInputs;
+	pi.p1Index = 0;
+	pi.p2Index = 12;
+	pi.buttonCount = 12;
+
 	int nMemLen;
 
 	hInpdList = GetDlgItem(hInpdDlg, IDC_INPD_LIST);
@@ -693,7 +697,7 @@ static int ActivateInputListItem()
 		// Dip switch is a constant - change it
 		nInpcInput = nSel;
 		InpcCreate();
-}
+	}
 	else {
 		if (GameInp[nSel].nInput == GIT_MACRO_CUSTOM) {
 #if 0
@@ -745,7 +749,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-		}
+}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -1029,6 +1033,58 @@ static void SliderExit()
 	bprintf(0, _T("  * Analog Speed: %X\n"), nAnalogSpeed);
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Given the current set of input mappings for p1, we will save them to the selected gamepad.
+// This is a bit weird in that if you don't currently have the buttons correctly mapped on the p1
+// inputs, you may not get what you expect.
+// Long term we will come up with a way for the user to be able to set all of the buttons at one time,
+// probably by borrowing functionality from the inps.cpp dialog....
+static void saveMappingsInfo() {
+	if (nSelectedPadIndex == -1) { return; }
+
+	GamepadFileEntry* pad = padInfos[nSelectedPadIndex];
+
+	// We will copy + translate the values from the p1 inputs.....
+	unsigned int i, j = 0;
+	struct GameInp* pgi = NULL;
+	for (i = 0, pgi = GameInp; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
+		if (pgi->Input.pVal == NULL) {
+			continue;
+		}
+
+		GamepadInput& pi = pad->profile.inputs[i];
+		pi.nInput = pgi->nInput;
+
+		UINT16 code = 0; //pgi->Input.nVal;
+
+
+		if (pi.nInput == GIT_SWITCH) {
+			code = pgi->Input.Switch.nCode;
+		}
+		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
+			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
+		}
+		else {
+			// Not supported?
+			continue;
+		}
+
+		// NOTE: This is where we need to translated gamepad codes....
+		if (code >= 0x4000 && code < 0x8000) {
+			INT32 index = (code >> 8) & 0x3F;
+			code = code & 0xFF;
+
+			// We are going to put in a gamepad bit as this is how the input coding system works...
+			code |= 0x4000;
+		}
+		pi.nCode = code;
+
+
+	}
+
+
+	InputSaveGamepadMappings();
+}
 
 // ---------------------------------------------------------------------------------------------------------
 static void saveAliasInfo() {
@@ -1036,9 +1092,6 @@ static void saveAliasInfo() {
 
 	selectedPadEntry = padInfos[nSelectedPadIndex];
 
-	//LVITEM item;
-	//getListItemData(hGamepadList, nSelectedPadIndex, item);
-//	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
 	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
 
@@ -1092,6 +1145,11 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
 			saveAliasInfo();
+			return 0;
+		}
+
+		if (Id == ID_SAVE_MAPPINGS && Notify == BN_CLICKED) {
+			saveMappingsInfo();
 			return 0;
 		}
 
