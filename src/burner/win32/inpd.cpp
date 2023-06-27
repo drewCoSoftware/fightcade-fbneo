@@ -16,7 +16,8 @@ static HWND hP2Select;
 
 // Get the currently plugged gamepad data:
 // NOTE:  We should just get a pointer to this so that we can set the alias directly.
-static GamepadFileEntry* padInfos[8];
+#define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
+static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
 static int nSelectedPadIndex = -1;
 
@@ -235,8 +236,6 @@ static int GamepadListBegin()
 	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_GUID, true);
 	SendMessage(hGamepadList, LVM_INSERTCOLUMN, GUID_INDEX, (LPARAM)&LvCol);
 
-
-	//InputInit();
 	return 0;
 }
 
@@ -373,7 +372,7 @@ static int SetInputMappings(int padIndex, int inputIndexOffset)
 		if (pi.nInput == 0) { continue; }		// Not set.
 
 		UINT16 code = pi.nCode;
-		if (code & 0x4000)
+		if (code >= 0x4000 && code < 0x8000)
 		{
 			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
 			code = code | (padIndex << 8);
@@ -1212,6 +1211,9 @@ static void saveAliasInfo() {
 
 	// Write out the data to disk....
 	InputSaveGamepadMappings();
+
+	// Refresh the gamepad names in the mapper....
+	InpdUseUpdate();
 }
 
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -1285,8 +1287,6 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			SetPlayerMappings();
 			return 0;
 		}
-
-
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 

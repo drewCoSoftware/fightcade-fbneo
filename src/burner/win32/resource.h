@@ -10,7 +10,6 @@
 #define IDSAVEALIAS                     3
 #define ID_REFRESH_PADS                 4
 #define ID_SET_PLAYER_MAPPINGS          5
-#define ID_SAVE_MAPPINGS2               6
 #define ID_SAVE_MAPPINGS                6
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
@@ -52,7 +51,6 @@
 #define IDD_DOWNLOAD_LOCAL              82
 #define IDD_CHOOSEMONITOR               83
 #define IDD_LUA                         84
-#define IDD_INPUTDEVICES                90
 #define IDR_MENU                        100
 #define IDR_MENU_BLITTER_1              110
 #define IDR_MENU_BLITTER_2              111

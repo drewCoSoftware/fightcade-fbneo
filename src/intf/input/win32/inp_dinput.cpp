@@ -581,7 +581,10 @@ INT32 loadGamepadMappings() {
 INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
 {
 	// This is where we will load our mapping information.
-	// loadGamepadMappings();
+	for (size_t i = 0; i < MAX_GAMEPAD; i++)
+	{
+		ppPadInfos[i] = NULL;
+	}
 
 	// NOTE: We only want data for plugged controllers, NOT all of them!
 	for (int i = 0; i < gamepadCount; i++)
