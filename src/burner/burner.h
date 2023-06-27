@@ -101,8 +101,8 @@ extern bool bLeftAltkeyMapped;
 
 INT32 GameInpInit();
 INT32 GameInpExit();
-TCHAR* InputCodeDesc(INT32 c);
-TCHAR* InpToDesc(struct GameInp* pgi);
+TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos);
+TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos);
 TCHAR* InpMacroToDesc(struct GameInp* pgi);
 #ifndef __LIBRETRO__
 void GameInpCheckLeftAlt();

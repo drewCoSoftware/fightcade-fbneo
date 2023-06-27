@@ -45,7 +45,7 @@ static int InpdUseUpdate()
 			continue;
 		}
 
-		pszVal = InpToDesc(pgi);
+		pszVal = InpToDesc(pgi, padInfos);
 
 		if (_tcscmp(pszVal, _T("code 0x00")) == 0)
 			pszVal = _T("Unassigned (locked)");
@@ -651,10 +651,11 @@ static int InpdInit()
 	}
 	memset(LastVal, 0, nMemLen * sizeof(unsigned short));
 
-	InpdListBegin();
-	InpdListMake(1);
 
 	InputGetGamepads(padInfos, &nPadCount);
+
+	InpdListBegin();
+	InpdListMake(1);
 	GamepadListBegin();
 	GamepadListMake(1);
 
@@ -1272,6 +1273,10 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			GamepadListMake(1);
 
 			RefreshPlayerSelectComboBoxes();
+
+			// Update the labels in the UI.
+			InpdUseUpdate();
+
 			SetEnabled(ID_REFRESH_PADS, TRUE);
 			return 0;
 		}

@@ -2,7 +2,7 @@
 #include "burner.h"
 
 // Player Default Controls
-INT32 nPlayerDefaultControls[5] = {0, 1, 2, 3, 4};
+INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
 TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("") };
 
 // Mapping of PC inputs to game inputs
@@ -113,22 +113,22 @@ void GameInpCheckLeftAlt()
 		}
 
 		switch (pgi->nInput) {
-			case GIT_SWITCH:
-				if (pgi->Input.Switch.nCode == FBK_LALT) {
+		case GIT_SWITCH:
+			if (pgi->Input.Switch.nCode == FBK_LALT) {
+				bLeftAltkeyMapped = true;
+			}
+			break;
+		case GIT_MACRO_AUTO:
+		case GIT_MACRO_CUSTOM:
+			if (pgi->Macro.nMode) {
+				if (pgi->Macro.Switch.nCode == FBK_LALT) {
 					bLeftAltkeyMapped = true;
 				}
-				break;
-			case GIT_MACRO_AUTO:
-			case GIT_MACRO_CUSTOM:
-				if (pgi->Macro.nMode) {
-					if (pgi->Macro.Switch.nCode == FBK_LALT) {
-						bLeftAltkeyMapped = true;
-					}
-				}
-				break;
+			}
+			break;
 
-			default:
-				continue;
+		default:
+			continue;
 		}
 	}
 }
@@ -147,37 +147,39 @@ void GameInpCheckMouse()
 		}
 
 		switch (pgi->nInput) {
-			case GIT_SWITCH:
-				if ((pgi->Input.Switch.nCode & 0xFF00) == 0x8000) {
+		case GIT_SWITCH:
+			if ((pgi->Input.Switch.nCode & 0xFF00) == 0x8000) {
+				bMouseMapped = true;
+			}
+			break;
+		case GIT_MOUSEAXIS:
+			if (pgi->Input.MouseAxis.nMouse == 0) {
+				bMouseMapped = true;
+			}
+			break;
+		case GIT_MACRO_AUTO:
+		case GIT_MACRO_CUSTOM:
+			if (pgi->Macro.nMode) {
+				if ((pgi->Macro.Switch.nCode & 0xFF00) == 0x8000) {
 					bMouseMapped = true;
 				}
-				break;
-			case GIT_MOUSEAXIS:
-				if (pgi->Input.MouseAxis.nMouse == 0) {
-					bMouseMapped = true;
-				}
-				break;
-			case GIT_MACRO_AUTO:
-			case GIT_MACRO_CUSTOM:
-				if (pgi->Macro.nMode) {
-					if ((pgi->Macro.Switch.nCode & 0xFF00) == 0x8000) {
-						bMouseMapped = true;
-					}
-				}
-				break;
+			}
+			break;
 
-			default:
-				continue;
+		default:
+			continue;
 		}
 	}
 
 	if (bDrvOkay) {
 		if (!bRunPause) {
 			InputSetCooperativeLevel(bMouseMapped, bAlwaysProcessKeyboardInput);
-		} else {
+		}
+		else {
 			InputSetCooperativeLevel(false, bAlwaysProcessKeyboardInput);
 		}
-	} else {
+	}
+	else {
 		InputSetCooperativeLevel(false, false);
 	}
 }
@@ -232,11 +234,11 @@ static void GameInpInitMacros()
 	struct GameInp* pgi;
 	struct BurnInputInfo bii;
 
-	INT32 nPunchx3[5] = {0, 0, 0, 0, 0};
+	INT32 nPunchx3[5] = { 0, 0, 0, 0, 0 };
 	INT32 nPunchInputs[5][3];
-	INT32 nKickx3[5] = {0, 0, 0, 0, 0};
+	INT32 nKickx3[5] = { 0, 0, 0, 0, 0 };
 	INT32 nKickInputs[5][3];
-	INT32 nAttackx3[5] = {0, 0, 0, 0, 0};
+	INT32 nAttackx3[5] = { 0, 0, 0, 0, 0 };
 	INT32 nAttackInputs[5][3];
 
 	INT32 nNeogeoButtons[5][4];
@@ -358,109 +360,112 @@ static void GameInpInitMacros()
 	pgi = GameInp + nGameInpCount;
 
 	{ // Mappable system macros -dink
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System Pause");
+		pgi->Macro.pVal[0] = &macroSystemPause;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System FFWD");
+		pgi->Macro.pVal[0] = &macroSystemFFWD;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System Frame");
+		pgi->Macro.pVal[0] = &macroSystemFrame;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System Load State");
+		pgi->Macro.pVal[0] = &macroSystemLoadState;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System Save State");
+		pgi->Macro.pVal[0] = &macroSystemSaveState;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->nType = BIT_DIGITAL;
+		pgi->Macro.nMode = 0;
+		pgi->Macro.nSysMacro = 1;
+		sprintf(pgi->Macro.szName, "System UNDO State");
+		pgi->Macro.pVal[0] = &macroSystemUNDOState;
+		pgi->Macro.nVal[0] = 1;
+		nMacroCount++;
+		pgi++;
+
+		for (UINT32 hotkey_num = 0; hotkey_num < lua_hotkeys.size(); hotkey_num++) {
+			char hotkey_name[20];
+			sprintf(hotkey_name, "Lua Hotkey %d", (hotkey_num + 1));
 			pgi->nInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System Pause");
-			pgi->Macro.pVal[0] = &macroSystemPause;
+			sprintf(pgi->Macro.szName, hotkey_name);
+			pgi->Macro.pVal[0] = lua_hotkeys[hotkey_num];
 			pgi->Macro.nVal[0] = 1;
 			nMacroCount++;
 			pgi++;
+		}
+	}
 
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System FFWD");
-			pgi->Macro.pVal[0] = &macroSystemFFWD;
-			pgi->Macro.nVal[0] = 1;
-			nMacroCount++;
-			pgi++;
-
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System Frame");
-			pgi->Macro.pVal[0] = &macroSystemFrame;
-			pgi->Macro.nVal[0] = 1;
-			nMacroCount++;
-			pgi++;
-
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System Load State");
-			pgi->Macro.pVal[0] = &macroSystemLoadState;
-			pgi->Macro.nVal[0] = 1;
-			nMacroCount++;
-			pgi++;
-
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System Save State");
-			pgi->Macro.pVal[0] = &macroSystemSaveState;
-			pgi->Macro.nVal[0] = 1;
-			nMacroCount++;
-			pgi++;
-
-			pgi->nInput = GIT_MACRO_AUTO;
-			pgi->nType = BIT_DIGITAL;
-			pgi->Macro.nMode = 0;
-			pgi->Macro.nSysMacro = 1;
-			sprintf(pgi->Macro.szName, "System UNDO State");
-			pgi->Macro.pVal[0] = &macroSystemUNDOState;
-			pgi->Macro.nVal[0] = 1;
-			nMacroCount++;
-			pgi++;
-
-			for (UINT32 hotkey_num = 0; hotkey_num < lua_hotkeys.size(); hotkey_num++) {
-				char hotkey_name[20];
-				sprintf(hotkey_name, "Lua Hotkey %d", (hotkey_num + 1));
+	if (!kNetGame)
+	{ // Autofire!!!
+		for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
+			for (INT32 i = 0; i < nFireButtons; i++) {
 				pgi->nInput = GIT_MACRO_AUTO;
 				pgi->nType = BIT_DIGITAL;
 				pgi->Macro.nMode = 0;
-				pgi->Macro.nSysMacro = 1;
-				sprintf(pgi->Macro.szName, hotkey_name);
-				pgi->Macro.pVal[0] = lua_hotkeys[hotkey_num];
+				pgi->Macro.nSysMacro = 15; // 15 = Auto-Fire mode
+				if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SEGA_MEGADRIVE) {
+					if (i < 3) {
+						sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %c", nPlayer + 1, i + 'A'); // A,B,C
+					}
+					else {
+						sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %c", nPlayer + 1, i + 'X' - 3); // X,Y,Z
+					}
+				}
+				else {
+					sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %d", nPlayer + 1, i + 1);
+				}
+				if (HW_NEOGEO) {
+					BurnDrvGetInputInfo(&bii, nNeogeoButtons[nPlayer][i]);
+				}
+				else {
+					BurnDrvGetInputInfo(&bii, nPgmButtons[nPlayer][i]);
+				}
+				pgi->Macro.pVal[0] = bii.pVal;
 				pgi->Macro.nVal[0] = 1;
 				nMacroCount++;
 				pgi++;
 			}
-	}
-	
-	if (!kNetGame)
-	{ // Autofire!!!
-			for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
-				for (INT32 i = 0; i < nFireButtons; i++) {
-					pgi->nInput = GIT_MACRO_AUTO;
-					pgi->nType = BIT_DIGITAL;
-					pgi->Macro.nMode = 0;
-					pgi->Macro.nSysMacro = 15; // 15 = Auto-Fire mode
-					if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SEGA_MEGADRIVE) {
-						if (i < 3) {
-							sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %c", nPlayer+1, i+'A'); // A,B,C
-						} else {
-							sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %c", nPlayer+1, i+'X'-3); // X,Y,Z
-						}
-					} else {
-						sprintf(pgi->Macro.szName, "P%d Auto-Fire Button %d", nPlayer+1, i+1);
-					}
-					if (HW_NEOGEO) {
-						BurnDrvGetInputInfo(&bii, nNeogeoButtons[nPlayer][i]);
-					} else {
-						BurnDrvGetInputInfo(&bii, nPgmButtons[nPlayer][i]);
-					}
-					pgi->Macro.pVal[0] = bii.pVal;
-					pgi->Macro.nVal[0] = 1;
-					nMacroCount++;
-					pgi++;
-				}
-			}
+		}
 	}
 
 	for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
@@ -858,7 +863,7 @@ INT32 GameInpInit()
 	nMaxMacro = nMaxPlayers * 52;
 
 	for (UINT32 i = 0; i < 0x1000; i++) {
-		nRet = BurnDrvGetInputInfo(NULL,i);
+		nRet = BurnDrvGetInputInfo(NULL, i);
 		if (nRet) {														// end of input list
 			nGameInpCount = i;
 			break;
@@ -880,13 +885,13 @@ INT32 GameInpInit()
 	for (UINT32 i = 0; i < nGameInpCount; i++) {
 		BurnDrvGetInputInfo(&bii, i);
 		if (!_stricmp(bii.szName, "p1 up")) InpDirections[0][UP] = i; else
-		if (!_stricmp(bii.szName, "p1 down")) InpDirections[0][DOWN] = i; else
-		if (!_stricmp(bii.szName, "p1 left")) InpDirections[0][LEFT] = i; else
-		if (!_stricmp(bii.szName, "p1 right")) InpDirections[0][RIGHT] = i; else
-		if (!_stricmp(bii.szName, "p2 up")) InpDirections[1][UP] = i; else
-		if (!_stricmp(bii.szName, "p2 down")) InpDirections[1][DOWN] = i; else
-		if (!_stricmp(bii.szName, "p2 left")) InpDirections[1][LEFT] = i; else
-		if (!_stricmp(bii.szName, "p2 right")) InpDirections[1][RIGHT] = i;
+			if (!_stricmp(bii.szName, "p1 down")) InpDirections[0][DOWN] = i; else
+				if (!_stricmp(bii.szName, "p1 left")) InpDirections[0][LEFT] = i; else
+					if (!_stricmp(bii.szName, "p1 right")) InpDirections[0][RIGHT] = i; else
+						if (!_stricmp(bii.szName, "p2 up")) InpDirections[1][UP] = i; else
+							if (!_stricmp(bii.szName, "p2 down")) InpDirections[1][DOWN] = i; else
+								if (!_stricmp(bii.szName, "p2 left")) InpDirections[1][LEFT] = i; else
+									if (!_stricmp(bii.szName, "p2 right")) InpDirections[1][RIGHT] = i;
 	}
 
 	GameInpBlank(1);
@@ -952,7 +957,7 @@ static TCHAR* SliderInfo(struct GameInp* pgi, TCHAR* s)
 	}
 	pgi->Input.Slider.nSliderSpeed = (INT16)_tcstol(s, &szRet, 0);
 	s = szRet;
-	if (s==NULL) {
+	if (s == NULL) {
 		return s;
 	}
 	szRet = LabelCheck(s, _T("center"));
@@ -1028,7 +1033,7 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 	if (szRet) {
 		pgi->nInput = GIT_CONSTANT;
 		s = szRet;
-		pgi->Input.Constant.nConst=(UINT8)_tcstol(s, &szRet, 0);
+		pgi->Input.Constant.nConst = (UINT8)_tcstol(s, &szRet, 0);
 		*(pgi->Input.pVal) = pgi->Input.Constant.nConst;
 		return 0;
 	}
@@ -1181,7 +1186,8 @@ static TCHAR* InpMacroToString(struct GameInp* pgi)
 
 		if (pgi->Macro.nMode) {
 			_stprintf(szString, _T("switch 0x%.2X"), pgi->Macro.Switch.nCode);
-		} else {
+		}
+		else {
 			_stprintf(szString, _T("undefined"));
 		}
 
@@ -1355,7 +1361,8 @@ static struct { INT32 nCode; TCHAR* szName; } KeyNames[] = {
 	{ 0,				NULL }
 };
 
-TCHAR* InputCodeDesc(INT32 c)
+// NOTE: padInfos should be contained in gami.cpp!  Not in the indp.cpp file!
+TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 {
 	static TCHAR szString[64];
 	TCHAR* szName = _T("");
@@ -1373,7 +1380,8 @@ TCHAR* InputCodeDesc(INT32 c)
 			TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
 			if (nCode < 4) {
 				_stprintf(szString, _T("Mouse %d %s (%s %s)"), nMouse, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-			} else {
+			}
+			else {
 				_stprintf(szString, _T("Mouse %d %s %s"), nMouse, szAxis[nCode >> 1], szDir[nCode & 1]);
 			}
 			return szString;
@@ -1383,25 +1391,40 @@ TCHAR* InputCodeDesc(INT32 c)
 	// Joystick
 	// NOTE: If formatting for aliases, we would replace 'Joy' below with the alias name!
 	if (c >= 0x4000 && c < 0x8000) {
+
+
 		INT32 nJoy = (c >> 8) & 0x3F;			// Translate the index of the joystick.
 		INT32 nCode = c & 0xFF;
+
+		// Determine the name to use for the 
+		TCHAR gpName[MAX_ALIAS_CHARS];
+		if (padInfos && nJoy >= 0 && nJoy < 8 && padInfos[nJoy]) { // && nJoy > 0 && nJoy < ) {		// LATER: Bounds Check!
+			wcscpy(gpName, padInfos[nJoy]->info.Alias);
+		}
+		else
+		{
+			_stprintf(gpName, _T("Joy % d"), nJoy);
+		}
+
+
 		if (nCode >= 0x80) {
-			_stprintf(szString, _T("Joy %d Button %d"), nJoy, nCode & 0x7F);
+			_stprintf(szString, _T("%s Button %d"), gpName, nCode & 0x7F);
 			return szString;
 		}
 		if (nCode < 0x10) {
 			TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 			TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
 			if (nCode < 4) {
-				_stprintf(szString, _T("Joy %d %s (%s %s)"), nJoy, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-			} else {
-				_stprintf(szString, _T("Joy %d %s %s"), nJoy, szAxis[nCode >> 1], szDir[nCode & 1]);
+				_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+			}
+			else {
+				_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
 			}
 			return szString;
 		}
 		if (nCode < 0x20) {
 			TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			_stprintf(szString, _T("Joy %d POV-hat %d %s"), nJoy, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+			_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
 			return szString;
 		}
 	}
@@ -1417,7 +1440,8 @@ TCHAR* InputCodeDesc(INT32 c)
 
 	if (szName[0]) {
 		_stprintf(szString, _T("%s"), szName);
-	} else {
+	}
+	else {
 		_stprintf(szString, _T("code 0x%.2X"), c);
 	}
 
@@ -1425,7 +1449,7 @@ TCHAR* InputCodeDesc(INT32 c)
 }
 
 // NOTE: This could be updated to reflected aliased gamepad names, if we wanted.
-TCHAR* InpToDesc(struct GameInp* pgi)
+TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 {
 	static TCHAR szInputName[64] = _T("");
 
@@ -1447,20 +1471,20 @@ TCHAR* InpToDesc(struct GameInp* pgi)
 		}
 	}
 	if (pgi->nInput == GIT_SWITCH) {
-		return InputCodeDesc(pgi->Input.Switch.nCode);
+		return InputCodeDesc(pgi->Input.Switch.nCode, padInfos);
 	}
 	if (pgi->nInput == GIT_MOUSEAXIS) {
 		TCHAR nAxis = _T('?');
 		switch (pgi->Input.MouseAxis.nAxis) {
-			case 0:
-				nAxis = _T('X');
-				break;
-			case 1:
-				nAxis = _T('Y');
-				break;
-			case 2:
-				nAxis = _T('Z');
-				break;
+		case 0:
+			nAxis = _T('X');
+			break;
+		case 1:
+			nAxis = _T('Y');
+			break;
+		case 2:
+			nAxis = _T('Z');
+			break;
 		}
 		_stprintf(szInputName, _T("Mouse %i %c axis"), pgi->Input.MouseAxis.nMouse, nAxis);
 		return szInputName;
@@ -1470,18 +1494,22 @@ TCHAR* InpToDesc(struct GameInp* pgi)
 		TCHAR szRange[4][16] = { _T("unknown"), _T("full"), _T("negative"), _T("positive") };
 		INT32 nRange = 0;
 		switch (pgi->nInput) {
-			case GIT_JOYAXIS_FULL:
-				nRange = 1;
-				break;
-			case GIT_JOYAXIS_NEG:
-				nRange = 2;
-				break;
-			case GIT_JOYAXIS_POS:
-				nRange = 3;
-				break;
+		case GIT_JOYAXIS_FULL:
+			nRange = 1;
+			break;
+		case GIT_JOYAXIS_NEG:
+			nRange = 2;
+			break;
+		case GIT_JOYAXIS_POS:
+			nRange = 3;
+			break;
 		}
 
-		_stprintf(szInputName, _T("Joy %d %s axis (%s range)"), pgi->Input.JoyAxis.nJoy, szAxis[pgi->Input.JoyAxis.nAxis], szRange[nRange]);
+		// Get the name of our input first....
+		TCHAR gpName[MAX_ALIAS_CHARS];
+		_stprintf(gpName, _T("Joy % d"), pgi->Input.JoyAxis.nJoy);
+
+		_stprintf(szInputName, _T("%s %s axis (%s range)"), gpName, szAxis[pgi->Input.JoyAxis.nAxis], szRange[nRange]);
 		return szInputName;
 	}
 
@@ -1492,7 +1520,7 @@ TCHAR* InpMacroToDesc(struct GameInp* pgi)
 {
 	if (pgi->nInput & GIT_GROUP_MACRO) {
 		if (pgi->Macro.nMode) {
-			return InputCodeDesc(pgi->Macro.Switch.nCode);
+			return InputCodeDesc(pgi->Macro.Switch.nCode, NULL);
 		}
 	}
 
@@ -1566,44 +1594,44 @@ static INT32 GameInpAutoOne(struct GameInp* pgi, char* szi)
 	for (INT32 i = 0; i < nMaxPlayers; i++) {
 		INT32 nSlide = nPlayerDefaultControls[i] >> 4;
 		switch (nPlayerDefaultControls[i] & 0x0F) {
-			case 0:										// Keyboard
-				GamcAnalogKey(pgi, szi, i, nSlide);
-				GamcPlayer(pgi, szi, i, -1);
-				GamcMisc(pgi, szi, i);
-				break;
-			case 1:										// Joystick 1
-				GamcAnalogJoy(pgi, szi, i, 0, nSlide);
-				GamcPlayer(pgi, szi, i, 0);
-				GamcMisc(pgi, szi, i);
-				break;
-			case 2:										// Joystick 2
-				GamcAnalogJoy(pgi, szi, i, 1, nSlide);
-				GamcPlayer(pgi, szi, i, 1);
-				GamcMisc(pgi, szi, i);
-				break;
-			case 3:										// Joystick 3
-				GamcAnalogJoy(pgi, szi, i, 2, nSlide);
-				GamcPlayer(pgi, szi, i, 2);
-				GamcMisc(pgi, szi, i);
-				break;
-			case 4:										// X-Arcade left side
-				GamcMisc(pgi, szi, i);
-				GamcPlayerHotRod(pgi, szi, i, 0x10, nSlide);
-				break;
-			case 5:										// X-Arcade right side
-				GamcMisc(pgi, szi, i);
-				GamcPlayerHotRod(pgi, szi, i, 0x11, nSlide);
-				break;
-			case 6:										// Hot Rod left side
-				GamcMisc(pgi, szi, i);
-				GamcPlayerHotRod(pgi, szi, i, 0x00, nSlide);
-				break;
-			case 7:										// Hot Rod right side
-				GamcMisc(pgi, szi, i);
-				GamcPlayerHotRod(pgi, szi, i, 0x01, nSlide);
-				break;
-			default:
-				GamcMisc(pgi, szi, i);
+		case 0:										// Keyboard
+			GamcAnalogKey(pgi, szi, i, nSlide);
+			GamcPlayer(pgi, szi, i, -1);
+			GamcMisc(pgi, szi, i);
+			break;
+		case 1:										// Joystick 1
+			GamcAnalogJoy(pgi, szi, i, 0, nSlide);
+			GamcPlayer(pgi, szi, i, 0);
+			GamcMisc(pgi, szi, i);
+			break;
+		case 2:										// Joystick 2
+			GamcAnalogJoy(pgi, szi, i, 1, nSlide);
+			GamcPlayer(pgi, szi, i, 1);
+			GamcMisc(pgi, szi, i);
+			break;
+		case 3:										// Joystick 3
+			GamcAnalogJoy(pgi, szi, i, 2, nSlide);
+			GamcPlayer(pgi, szi, i, 2);
+			GamcMisc(pgi, szi, i);
+			break;
+		case 4:										// X-Arcade left side
+			GamcMisc(pgi, szi, i);
+			GamcPlayerHotRod(pgi, szi, i, 0x10, nSlide);
+			break;
+		case 5:										// X-Arcade right side
+			GamcMisc(pgi, szi, i);
+			GamcPlayerHotRod(pgi, szi, i, 0x11, nSlide);
+			break;
+		case 6:										// Hot Rod left side
+			GamcMisc(pgi, szi, i);
+			GamcPlayerHotRod(pgi, szi, i, 0x00, nSlide);
+			break;
+		case 7:										// Hot Rod right side
+			GamcMisc(pgi, szi, i);
+			GamcPlayerHotRod(pgi, szi, i, 0x01, nSlide);
+			break;
+		default:
+			GamcMisc(pgi, szi, i);
 		}
 	}
 
@@ -1645,7 +1673,8 @@ static INT32 AddCustomMacro(TCHAR* szValue, bool bOverWrite)
 
 	if ((szValue = LabelCheck(szEnd, _T("undefined"))) != NULL) {
 		nMode = 0;
-	} else {
+	}
+	else {
 		if ((szValue = LabelCheck(szEnd, _T("switch"))) != NULL) {
 
 			if (bOverWrite || GameInp[nInput].Macro.nMode == 0) {
@@ -1754,7 +1783,8 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite)
 					if (szQuote[1] != _T('1') + nPlayer) {
 						continue;
 					}
-				} else {
+				}
+				else {
 					if (nPlayer != 0) {
 						continue;
 					}
@@ -1805,12 +1835,12 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite)
 
 INT32 ConfigGameLoadHardwareDefaults()
 {
-	TCHAR *szDefaultCpsFile = _T("config/presets/cps.ini");
-	TCHAR *szDefaultNeogeoFile = _T("config/presets/neogeo.ini");
-	TCHAR *szDefaultNESFile = _T("config/presets/nes.ini");
-	TCHAR *szDefaultFDSFile = _T("config/presets/fds.ini");
-	TCHAR *szDefaultPgmFile = _T("config/presets/pgm.ini");
-	TCHAR *szFileName = _T("");
+	TCHAR* szDefaultCpsFile = _T("config/presets/cps.ini");
+	TCHAR* szDefaultNeogeoFile = _T("config/presets/neogeo.ini");
+	TCHAR* szDefaultNESFile = _T("config/presets/nes.ini");
+	TCHAR* szDefaultFDSFile = _T("config/presets/fds.ini");
+	TCHAR* szDefaultPgmFile = _T("config/presets/pgm.ini");
+	TCHAR* szFileName = _T("");
 	INT32 nApplyHardwareDefaults = 0;
 
 	INT32 nHardwareFlag = (BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK);
@@ -1920,33 +1950,33 @@ INT32 GameInpWrite(FILE* h)
 		_ftprintf(h, _T("%s\n"), InpToString(GameInp + i));
 	}
 
-_ftprintf(h, _T("\n"));
+	_ftprintf(h, _T("\n"));
 
-struct GameInp* pgi = GameInp + nGameInpCount;
-for (UINT32 i = 0; i < nMacroCount; i++, pgi++) {
-	INT32 nPad = 0;
+	struct GameInp* pgi = GameInp + nGameInpCount;
+	for (UINT32 i = 0; i < nMacroCount; i++, pgi++) {
+		INT32 nPad = 0;
 
-	if (pgi->nInput & GIT_GROUP_MACRO) {
-		switch (pgi->nInput) {
-		case GIT_MACRO_AUTO:									// Auto-assigned macros
-			_ftprintf(h, _T("macro  \"%hs\" "), pgi->Macro.szName);
-			break;
-		case GIT_MACRO_CUSTOM:									// Custom macros
-			_ftprintf(h, _T("custom \"%hs\" "), pgi->Macro.szName);
-			break;
-		default:												// Unknown -- ignore
-			continue;
+		if (pgi->nInput & GIT_GROUP_MACRO) {
+			switch (pgi->nInput) {
+			case GIT_MACRO_AUTO:									// Auto-assigned macros
+				_ftprintf(h, _T("macro  \"%hs\" "), pgi->Macro.szName);
+				break;
+			case GIT_MACRO_CUSTOM:									// Custom macros
+				_ftprintf(h, _T("custom \"%hs\" "), pgi->Macro.szName);
+				break;
+			default:												// Unknown -- ignore
+				continue;
+			}
+
+			nPad = 16 - strlen(pgi->Macro.szName);
+			for (INT32 j = 0; j < nPad; j++) {
+				_ftprintf(h, _T(" "));
+			}
+			_ftprintf(h, _T("%s\n"), InpMacroToString(pgi));
 		}
-
-		nPad = 16 - strlen(pgi->Macro.szName);
-		for (INT32 j = 0; j < nPad; j++) {
-			_ftprintf(h, _T(" "));
-		}
-		_ftprintf(h, _T("%s\n"), InpMacroToString(pgi));
 	}
-}
 
-return 0;
+	return 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -2046,7 +2076,8 @@ void GameInpClearOpposites(bool bCopy)
 					SetInpFrame(i, RIGHT, 0, bCopy);
 				}
 			}
-		} else {
+		}
+		else {
 			// Regular SOCD cleaner
 			for (INT32 i = 0; i < 2; i++) {
 				// D + U = neutral

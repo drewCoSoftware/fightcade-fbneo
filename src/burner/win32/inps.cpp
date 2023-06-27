@@ -237,7 +237,7 @@ static void InpsUpdateControl(int nCode)
 	TCHAR szDevice[MAX_PATH] = _T("");
 	TCHAR szControl[MAX_PATH] = _T("");
 
-	_stprintf(szString, _T("%s"), InputCodeDesc(nCode));
+	_stprintf(szString, _T("%s"), InputCodeDesc(nCode, NULL));
 	SetWindowText(GetDlgItem(hInpsDlg, (nDlgState & 0x0100) ? IDC_INPS_CONTROL_S2: IDC_INPS_CONTROL), szString);
 
 	InputGetControlName(nCode, szDevice, szControl);
@@ -345,7 +345,7 @@ int InpsUpdate()
 
 				// Alert the user that a control is stuck
 
-				_stprintf(szTemp, FBALoadStringEx(hAppInst, IDS_INPSET_WAITING, true), InputCodeDesc(nFind));
+				_stprintf(szTemp, FBALoadStringEx(hAppInst, IDS_INPSET_WAITING, true), InputCodeDesc(nFind, NULL));
 				SetWindowText(GetDlgItem(hInpsDlg, IDC_INPS_CONTROL), szTemp);
 
 				nCounter = 0;
@@ -398,7 +398,7 @@ int InpsUpdate()
 		// We end up here if "Map Digital" is checked, and the first key has been pressed.
 		wchar_t szString[MAX_PATH] = _T("");
 
-		swprintf(szString, _T("%s"), InputCodeDesc(nInputCode));
+		swprintf(szString, _T("%s"), InputCodeDesc(nInputCode, NULL));
 		SetWindowText(GetDlgItem(hInpsDlg, IDC_INPS_CONTROL_S1), szString);
 
 		nDlgState = 0x0100 | 4;
