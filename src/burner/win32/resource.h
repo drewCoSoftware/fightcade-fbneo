@@ -9,7 +9,9 @@
 #define BMP_MISC                        3
 #define IDSAVEALIAS                     3
 #define ID_REFRESH_PADS                 4
-#define ID_SAVE_MAPPINGS                5
+#define ID_SET_PLAYER_MAPPINGS          5
+#define ID_SAVE_MAPPINGS2               6
+#define ID_SAVE_MAPPINGS                6
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
 #define IDI_TV_MINUS                    12
@@ -548,7 +550,9 @@
 #define IDC_INPD_USE                    20005
 #define IDC_INPD_DEFAULT                20006
 #define IDC_INPS_GRABMOUSE              20007
+#define IDC_INDP_P1SELECT               20007
 #define IDC_INPS_CONTROL                20008
+#define IDC_INDP_P2SELECT               20008
 #define IDC_INPS_CONTROL_NAME           20009
 #define IDC_INPC_VALUE                  20010
 #define IDC_INPS_PUSH                   20011

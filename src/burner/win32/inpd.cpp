@@ -11,6 +11,8 @@ static unsigned short* LastVal = NULL;			// Last input values/defined
 static int bLastValDefined = 0;					//
 
 static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
+static HWND hP1Select;
+static HWND hP2Select;
 
 // Get the currently plugged gamepad data:
 // NOTE:  We should just get a pointer to this so that we can set the alias directly.
@@ -347,6 +349,89 @@ void getListItemData(HWND& list, int index, LVITEM& item) {
 
 }
 
+
+// ------------------------------------------------------------------------------------------------------
+static int SetInputMappings(int padIndex, int inputIndexOffset)
+{
+	if (padIndex == -1 || padIndex >= nPadCount) {
+		// Do nothing.
+		return 1;
+	}
+
+	auto& profile = padInfos[padIndex]->profile;
+
+	// Otherwise we are going to iterate over the game input + mapped inputs and set the data accordingly.
+	int i = 0;
+	struct GameInp* pgi;
+				// Set the correct mem location...
+	for (i = 0, pgi = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
+		if (pgi->Input.pVal == NULL) {
+			continue;
+		}
+
+		auto& pi = profile.inputs[i];
+		if (pi.nInput == 0) { continue; }		// Not set.
+
+		UINT16 code = pi.nCode;
+		if (code & 0x4000)
+		{
+			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
+			code = code | (padIndex << 8);
+
+			int checkIndex = (code  >> 8) &0x3F;
+			int x = 10;
+		}
+
+		// Now we can set this on the pgi input....
+		pgi->nInput = pi.nInput;
+		if (pi.nInput == GIT_SWITCH){
+			pgi->Input.Switch.nCode = code;
+		}
+		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
+			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
+		}
+
+	}
+	// I think that we need to update the description in the main select box too......
+	InpdUseUpdate();
+
+	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+static int SetPlayerMappings()
+{
+	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
+	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
+
+	// NOTE: The indexes should correspond to the gamepads that are currently defined.
+	// If they aren't, something bad will happen.  We can care about checking this in the future.
+	SetInputMappings(p1Index, 0);
+	SetInputMappings(p2Index, sfiii3nPlayerInputs.buttonCount);
+
+	return 0;
+}
+
+
+
+// ------------------------------------------------------------------------------------------------------
+static int OnPlayerSelectionChanged() {
+
+	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
+	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
+
+	if (p1Index == CB_ERR && p2Index == CB_ERR) {
+		// Disable the set button and exit!
+		SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
+		return 1;
+	}
+
+	// If there is at least one valid selection, then we can set the mappings.
+	SetEnabled(ID_SET_PLAYER_MAPPINGS, true);
+
+	return 0;
+}
+
 // ------------------------------------------------------------------------------------------------------
 static int SelectGamepadListItem()
 {
@@ -360,9 +445,8 @@ static int SelectGamepadListItem()
 	}
 
 	// Get the corresponding input
+	nSelectedPadIndex = nSel;
 	getListItemData(list, nSel, LvItem);
-
-	nSel = LvItem.lParam;
 
 	if (nSel >= nPadCount) {
 		OnGamepadListDeselect();
@@ -371,7 +455,6 @@ static int SelectGamepadListItem()
 
 	// Now we can set the text in the alias text box!
 	// Set the edit control to current value
-	nSelectedPadIndex = nSel;
 
 	// Enable the save alias button....
 	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
@@ -491,6 +574,27 @@ static void DisablePresets()
 	EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_USE), FALSE);
 }
 
+
+// ------------------------------------------------------------------------------------------
+static void RefreshPlayerSelectComboBoxes() {
+	// TODO: Keep track of current selections?
+
+	// Get the list of active gamepads, and populate each combox box with that data.
+	SendMessage(hP1Select, CB_RESETCONTENT, 0, 0);
+	SendMessage(hP2Select, CB_RESETCONTENT, 0, 0);
+
+	for (size_t i = 0; i < nPadCount; i++)
+	{
+		TCHAR* padAlias = padInfos[i]->info.Alias;
+		SendMessage(hP1Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
+		SendMessage(hP2Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
+	}
+
+	// We should only be enabled if one or more selections are currently made.....
+	SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
+}
+
+// ------------------------------------------------------------------------------------------
 static void InitComboboxes()
 {
 	TCHAR szLabel[1024];
@@ -521,6 +625,8 @@ static void InitComboboxes()
 
 		FindClose(search);
 	}
+
+	RefreshPlayerSelectComboBoxes();
 }
 
 static int InpdInit()
@@ -556,6 +662,9 @@ static int InpdInit()
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);
 	hInpdPci = GetDlgItem(hInpdDlg, IDC_INPD_PCI);
 	hInpdAnalog = GetDlgItem(hInpdDlg, IDC_INPD_ANALOG);
+	hP1Select = GetDlgItem(hInpdDlg, IDC_INDP_P1SELECT);
+	hP2Select = GetDlgItem(hInpdDlg, IDC_INDP_P2SELECT);
+
 	InitComboboxes();
 
 	DisablePresets();
@@ -703,13 +812,13 @@ static int ActivateInputListItem()
 #if 0
 			InpMacroCreate(nSel);
 #endif
-		}
+	}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-	}
+}
 
 	GameInpCheckLeftAlt();
 
@@ -749,7 +858,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-}
+		}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -1162,10 +1271,17 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			InputGetGamepads(padInfos, &nPadCount);
 			GamepadListMake(1);
 
+			RefreshPlayerSelectComboBoxes();
 			SetEnabled(ID_REFRESH_PADS, TRUE);
+			return 0;
 		}
 
-		//		if (
+		if (Id == ID_SET_PLAYER_MAPPINGS && Notify == BN_CLICKED) {
+			SetPlayerMappings();
+			return 0;
+		}
+
+
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 
@@ -1200,6 +1316,11 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (Notify == EN_UPDATE) {                          // analog slider update
 			SliderUpdate();
 
+			return 0;
+		}
+
+		if ((Id == IDC_INDP_P1SELECT || Id == IDC_INDP_P2SELECT) && Notify == CBN_SELCHANGE) {
+			OnPlayerSelectionChanged();
 			return 0;
 		}
 
