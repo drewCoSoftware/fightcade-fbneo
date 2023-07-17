@@ -28,6 +28,33 @@ GamepadFileEntry* selectedPadEntry = NULL;
 
 static playerInputs sfiii3nPlayerInputs;
 
+enum EDialogState {
+	DIALOGSTATE_NORMAL = 0,
+	DIALOGSTATE_SET_PLAYER
+};
+int _SetPlayerIndex = -1;
+EDialogState _CurState = DIALOGSTATE_NORMAL;
+
+static void SetState(EDialogState newState) {
+	int x = 10;
+	switch (newState) {
+	case DIALOGSTATE_SET_PLAYER:
+	{
+		TCHAR buffer[256];
+		int label = _SetPlayerIndex + 1;
+
+		swprintf(buffer, _T("Press button for player %d"), label);
+
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
+	}
+	break;
+	default:
+		break;
+	}
+
+	_CurState = newState;
+}
+
 // Update which input is using which PC input
 static int InpdUseUpdate()
 {
@@ -87,6 +114,87 @@ static int InpdUseUpdate()
 	return 0;
 }
 
+
+static int GetGamepadIndex() {
+	unsigned int i, j = 0;
+	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
+	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
+	unsigned short nThisVal;
+	if (hInpdList == NULL) {
+		return 1;
+	}
+	if (LastVal == NULL) {
+		return 1;
+	}
+
+	for (i = 0, pGameInput = GameInp, pLastVal = LastVal; i < nGameInpCount; i++, pGameInput++, pLastVal++) {
+		if (pGameInput->nType == 0) {
+			continue;
+		}
+
+		// This whole thing can probably just be passed in from the calling function.
+		if (pGameInput->nType & BIT_GROUP_ANALOG) {
+			if (bRunPause) {														// Update LastVal
+				nThisVal = pGameInput->Input.nVal;
+			}
+			else {
+				nThisVal = *pGameInput->Input.pShortVal;
+			}
+
+			// Continue if input state hasn't changed.
+			if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
+				j++;
+				continue;
+			}
+
+			*pLastVal = nThisVal;
+		}
+		else {
+			if (bRunPause) {														// Update LastVal
+				nThisVal = pGameInput->Input.nVal;
+			}
+			else {
+				nThisVal = *pGameInput->Input.pVal;
+			}
+
+			// Continue if input state hasn't changed.
+			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {
+				j++;
+				continue;
+			}
+
+			*pLastVal = nThisVal;
+		}
+
+
+
+
+
+		switch (pGameInput->nType) {
+
+			// For 3rd strike we only care about digital inputs, so all others
+			// can just wait.....
+		case BIT_DIGITAL: {
+
+			if (nThisVal == 1)
+			{
+				UINT16 code = pGameInput->Input.Switch.nCode;
+				if (code >= 0x4000 && code < 0x8000)
+				{
+					int index = (code >> 8) & 0x3F;
+					return index;
+				}
+			}
+		}
+		default:
+			// DO NOTHING
+			break;
+
+		}
+	}
+}
+
+// This is where we can wait for p1/p2 to check in and what-not....
 int InpdUpdate()
 {
 	unsigned int i, j = 0;
@@ -99,6 +207,20 @@ int InpdUpdate()
 	if (LastVal == NULL) {
 		return 1;
 	}
+
+
+	if (_CurState == DIALOGSTATE_SET_PLAYER)
+	{
+		// We have to iterate through inputs and select those that are from gamepads.
+		// From there we can determine the index of that gamepad....
+		int index = GetGamepadIndex();
+		if (index != -1)
+		{
+			// We have an index for the player, so we can go to the 'select profile' part of the process....
+		}
+		return 0;
+	}
+
 
 	// Update the values of all the inputs.
 	// Note that this loop is incrementing the pointer addresses to enumerate.  'i' is only used as a control.
@@ -362,7 +484,7 @@ static int SetInputMappings(int padIndex, int inputIndexOffset)
 	// Otherwise we are going to iterate over the game input + mapped inputs and set the data accordingly.
 	int i = 0;
 	struct GameInp* pgi;
-				// Set the correct mem location...
+	// Set the correct mem location...
 	for (i = 0, pgi = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
 		if (pgi->Input.pVal == NULL) {
 			continue;
@@ -377,13 +499,13 @@ static int SetInputMappings(int padIndex, int inputIndexOffset)
 			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
 			code = code | (padIndex << 8);
 
-			int checkIndex = (code  >> 8) &0x3F;
+			int checkIndex = (code >> 8) & 0x3F;
 			int x = 10;
 		}
 
 		// Now we can set this on the pgi input....
 		pgi->nInput = pi.nInput;
-		if (pi.nInput == GIT_SWITCH){
+		if (pi.nInput == GIT_SWITCH) {
 			pgi->Input.Switch.nCode = code;
 		}
 		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
@@ -812,13 +934,13 @@ static int ActivateInputListItem()
 #if 0
 			InpMacroCreate(nSel);
 #endif
-	}
+}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-}
+	}
 
 	GameInpCheckLeftAlt();
 
@@ -858,7 +980,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-		}
+}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -1280,6 +1402,19 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			InpdUseUpdate();
 
 			SetEnabled(ID_REFRESH_PADS, TRUE);
+			return 0;
+		}
+
+		if (Id == ID_SET_PLAYER1 && Notify == BN_CLICKED)
+		{
+			_SetPlayerIndex = 0;
+			SetState(DIALOGSTATE_SET_PLAYER);
+			return 0;
+		}
+		if (Id == ID_SET_PLAYER2 && Notify == BN_CLICKED)
+		{
+			_SetPlayerIndex = 1;
+			SetState(DIALOGSTATE_SET_PLAYER);
 			return 0;
 		}
 

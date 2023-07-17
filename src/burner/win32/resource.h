@@ -11,6 +11,10 @@
 #define ID_REFRESH_PADS                 4
 #define ID_SET_PLAYER_MAPPINGS          5
 #define ID_SAVE_MAPPINGS                6
+#define ID_SET_PLAYER2                  7
+#define ID_SET_PLAYER1                  8
+#define IDC_GAMEPAD_SET_MESSAGE         9
+#define IDC_SET_PLAYER_MESSAGE          9
 #define IDI_APP                         10
 #define IDI_TV_PLUS                     11
 #define IDI_TV_MINUS                    12
@@ -940,7 +944,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        3
 #define _APS_NEXT_COMMAND_VALUE         2
-#define _APS_NEXT_CONTROL_VALUE         4
+#define _APS_NEXT_CONTROL_VALUE         10
 #define _APS_NEXT_SYMED_VALUE           0
 #endif
 #endif
