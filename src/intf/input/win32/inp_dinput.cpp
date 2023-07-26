@@ -957,7 +957,7 @@ int readMouseAxis(int i, int axis)
 	return 0;
 }
 
-// This function finds which key is pressed
+// This function finds the FIRST which key is pressed.
 // To ensure analog gamepad axes are handled correctly, call with createBaseline = true the 1st time
 int find(bool createBaseline)
 {

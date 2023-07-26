@@ -21,7 +21,6 @@ static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
 static int nSelectedPadIndex = -1;
 
-
 // Text buffer for the gamepad alias.
 static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
 GamepadFileEntry* selectedPadEntry = NULL;
@@ -36,6 +35,8 @@ enum EDialogState {
 
 int _SetPlayerIndex = -1;
 int _ProfileIndex = -1;
+int _LastUpDown = 0;
+
 EDialogState _CurState = DIALOGSTATE_NORMAL;
 
 // ------------------------------------------------------------------------------------------
@@ -48,7 +49,6 @@ static void SetState(EDialogState newState) {
 		int label = _SetPlayerIndex + 1;
 
 		swprintf(buffer, _T("Press button for player %d"), label);
-
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 	}
 	break;
@@ -64,6 +64,7 @@ static void SetState(EDialogState newState) {
 	{
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Choose profile and press a button"));
 		_ProfileIndex = -1;
+		_LastUpDown = -2;
 	}
 	break;
 
@@ -168,88 +169,13 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 
 
 }
-
-// -------------------------------------------------------------------------------------
-// Populate the list of all currently pressed gamepad buttons.
-// Nonzero return code indicates that the function doesn't have valid data/failed.
-static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
-	buttonCodes.clear();
-
-	unsigned int i, j = 0;
-	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
-	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
-	unsigned short nThisVal;
-	if (hInpdList == NULL) {
-		return 1;
-	}
-	if (LastVal == NULL) {
-		return 1;
-	}
-
-	for (i = 0, pGameInput = GameInp, pLastVal = LastVal; i < nGameInpCount; i++, pGameInput++, pLastVal++) {
-		if (pGameInput->nType == 0) {
-			continue;
-		}
-
-		//// This whole thing can probably just be passed in from the calling function.
-		//if (pGameInput->nType & BIT_GROUP_ANALOG) {
-		//	// Don't care about analog inputs at this time....
-		//	continue;
-		//}
-		if (pGameInput->nType & BIT_GROUP_ANALOG) {
-			//if (bRunPause) {														// Update LastVal
-			//	nThisVal = pGameInput->Input.nVal;
-			//}
-			//else {
-			//	nThisVal = *pGameInput->Input.pShortVal;
-			//}
-
-			//// Continue if input state hasn't changed.
-			//if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
-			//	j++;
-			//	continue;
-			//}
-
-			//*pLastVal = nThisVal;
-			continue;
-		}
-		else {
-			if (bRunPause) {														// Update LastVal
-				nThisVal = pGameInput->Input.nVal;
-			}
-			else {
-				nThisVal = *pGameInput->Input.pVal;
-			}
-		}
-
-		switch (pGameInput->nType) {
-
-			// We only care about digital inputs since this patch is for fighting games.
-			// We can care about others later.
-		case BIT_DIGITAL: {
-
-			if (nThisVal == 1)
-			{
-				UINT16 code = pGameInput->Input.Switch.nCode;
-				int index = GetIndexFromButton(code);
-				if (index != -1)
-				{
-					buttonCodes.push_back(code);
-				}
-			}
-		}
-		default:
-			// Do nothing:
-			break;
-		}
-	}
-	return 0;
-}
-
 //
-//// NOTE: It would probably be useful to have a function that can just grab us
-//// a list of all of the pressed buttons.....
-//static int GetGamepadIndexLegacy() {
+//// -------------------------------------------------------------------------------------
+//// Populate the list of all currently pressed gamepad buttons.
+//// Nonzero return code indicates that the function doesn't have valid data/failed.
+//static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
+//	buttonCodes.clear();
+//
 //	unsigned int i, j = 0;
 //	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
 //	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
@@ -266,22 +192,27 @@ static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
 //			continue;
 //		}
 //
-//		// This whole thing can probably just be passed in from the calling function.
+//		//// This whole thing can probably just be passed in from the calling function.
+//		//if (pGameInput->nType & BIT_GROUP_ANALOG) {
+//		//	// Don't care about analog inputs at this time....
+//		//	continue;
+//		//}
 //		if (pGameInput->nType & BIT_GROUP_ANALOG) {
-//			if (bRunPause) {														// Update LastVal
-//				nThisVal = pGameInput->Input.nVal;
-//			}
-//			else {
-//				nThisVal = *pGameInput->Input.pShortVal;
-//			}
+//			//if (bRunPause) {														// Update LastVal
+//			//	nThisVal = pGameInput->Input.nVal;
+//			//}
+//			//else {
+//			//	nThisVal = *pGameInput->Input.pShortVal;
+//			//}
 //
-//			// Continue if input state hasn't changed.
-//			if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
-//				j++;
-//				continue;
-//			}
+//			//// Continue if input state hasn't changed.
+//			//if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
+//			//	j++;
+//			//	continue;
+//			//}
 //
-//			*pLastVal = nThisVal;
+//			//*pLastVal = nThisVal;
+//			continue;
 //		}
 //		else {
 //			if (bRunPause) {														// Update LastVal
@@ -290,57 +221,50 @@ static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
 //			else {
 //				nThisVal = *pGameInput->Input.pVal;
 //			}
-//
-//			// Continue if input state hasn't changed.
-//			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {
-//				j++;
-//				continue;
-//			}
-//
-//			*pLastVal = nThisVal;
 //		}
 //
 //		switch (pGameInput->nType) {
 //
-//			// For 3rd strike we only care about digital inputs, so all others
-//			// can just wait.....
+//			// We only care about digital inputs since this patch is for fighting games.
+//			// We can care about others later.
 //		case BIT_DIGITAL: {
 //
 //			if (nThisVal == 1)
 //			{
 //				UINT16 code = pGameInput->Input.Switch.nCode;
-//				if (code >= 0x4000 && code < 0x8000)
+//				int index = GetIndexFromButton(code);
+//				if (index != -1)
 //				{
-//					int index = (code >> 8) & 0x3F;
-//					return index;
+//					buttonCodes.push_back(code);
 //				}
 //			}
 //		}
 //		default:
-//			// DO NOTHING
+//			// Do nothing:
 //			break;
-//
 //		}
 //	}
+//	return 0;
 //}
 
-// ---------------------------------------------------------------------------------------------
-// Returns the index of the first detected button that is currently pressed on a gamepad,
-// or -1 if nothing is pressed.
-static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
-
-	int size = pressedButtons.size();
-	for (size_t i = 0; i < size; i++)
-	{
-		int res = GetIndexFromButton(pressedButtons[i]);
-		if (res != -1)
-		{
-			return res;
-		}
-	}
-
-	return -1;
-}
+//
+//// ---------------------------------------------------------------------------------------------
+//// Returns the index of the first detected button that is currently pressed on a gamepad,
+//// or -1 if nothing is pressed.
+//static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
+//
+//	int size = pressedButtons.size();
+//	for (size_t i = 0; i < size; i++)
+//	{
+//		int res = GetIndexFromButton(pressedButtons[i]);
+//		if (res != -1)
+//		{
+//			return res;
+//		}
+//	}
+//
+//	return -1;
+//}
 
 // REFACTOR: Move these defs.
 #define DIR_UP -1
@@ -351,54 +275,52 @@ static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
 // --------------------------------------------------------------------------------------------------
 // For the given pad index, returns an int that is -1 for up, 1 for down, and zero
 // if an up or down button is not pressed.
-static int GetUpOrDownButton(int padIndex, std::vector<UINT16> buttons) {
+static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
 
-	size_t size = buttons.size();
-	for (size_t i = 0; i < size; i++)
+
+	int index = 0;
+	UINT16 nCode = 0;
+
+
+	if (GetIndexAndCodeFromButton(buttons, index, nCode) == 0)
 	{
-		int index = 0;
-		UINT16 nCode = 0;
+		if (index != padIndex) { return DIR_NONE; }
 
-
-		if (GetIndexAndCodeFromButton(buttons[i], index, nCode) == 0)
-		{
-			if (index != padIndex) { continue; }
-
-			// NOTE: The commented blocks come from the code that formats the labels
-			// when printing out hte button lists:
-			// This is how I determined what is up and what is down.
-			if (nCode < 0x10) {
-				//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
-				//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-				//if (nCode < 4) {
-				//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-				//}
-				//else {
-				//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
-				//}
-				//return szString;
-				if (nCode < 4) {
-					UINT16 axisCode = nCode >> 1;
-					UINT16 dirCode = nCode + 2;
-					if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
-					if (dirCode == 4) { return DIR_UP; }
-					if (dirCode == 5) { return DIR_DOWN; }
-				}
-				else {
-				}
+		// NOTE: The commented blocks come from the code that formats the labels
+		// when printing out hte button lists:
+		// This is how I determined what is up and what is down.
+		if (nCode < 0x10) {
+			//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
+			//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+			//if (nCode < 4) {
+			//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+			//}
+			//else {
+			//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
+			//}
+			//return szString;
+			if (nCode < 4) {
+				UINT16 axisCode = nCode >> 1;
+				UINT16 dirCode = nCode + 2;
+				if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
+				if (dirCode == 4) { return DIR_UP; }
+				if (dirCode == 5) { return DIR_DOWN; }
 			}
-			if (nCode < 0x20) {
-				UINT16 dirCode = nCode & 3;
-				if (dirCode == 2) { return DIR_UP; }
-				if (dirCode == 3) { return DIR_DOWN; }
-				//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-				//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
-				//return szString;
+			else {
 			}
-
-			int xxxxxxx = 10;
 		}
+		if (nCode < 0x20) {
+			UINT16 dirCode = nCode & 3;
+			if (dirCode == 2) { return DIR_UP; }
+			if (dirCode == 3) { return DIR_DOWN; }
+			//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+			//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+			//return szString;
+		}
+
+		int xxxxxxx = 10;
 	}
+
 
 	return DIR_NONE;
 }
@@ -407,8 +329,8 @@ static int GetUpOrDownButton(int padIndex, std::vector<UINT16> buttons) {
 // This is where we can wait for p1/p2 to check in and what-not....
 int InpdUpdate()
 {
-	std::vector<UINT16> pressedPadButtons;
-	GetPressedGamepadButtons(pressedPadButtons);
+	//std::vector<UINT16> pressedPadButtons;
+	//GetPressedGamepadButtons(pressedPadButtons);
 
 
 	unsigned int i, j = 0;
@@ -427,7 +349,8 @@ int InpdUpdate()
 	if (_CurState == DIALOGSTATE_SET_PLAYER) {
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-		int index = GetGamepadIndex(pressedPadButtons);
+		UINT16 pressed = InputFind(8);
+		int index = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
 		if (index != -1)
 		{
 			_SetPlayerIndex = index;
@@ -437,14 +360,24 @@ int InpdUpdate()
 		return 0;
 	}
 	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
+		
+		UINT16 pressed = InputFind(8);
+		//// Here we want to detect the up/down buttons so that
+		//// we can cycle through the available profiles.
+		int upDownDir = GetUpOrDownButton(_SetPlayerIndex, pressed);
 
-		// Here we want to detect the up/down buttons so that
-		// we can cycle through the available profiles.
-		int upDownDir = GetUpOrDownButton(_SetPlayerIndex, pressedPadButtons);
-		if (upDownDir != DIR_NONE) {
-			// Now we can cylcle through the profiles.....
-			int x = 10;
+		bool dirChanged = upDownDir != _LastUpDown;
+		if (dirChanged)
+		{
+			_LastUpDown = upDownDir;
+
+
+			// NOTE: This is where we will change the selected profile....
+			TCHAR buffer[256];
+			swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
+			SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 		}
+
 	}
 
 
@@ -1168,12 +1101,12 @@ static int ActivateInputListItem()
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-	}
+		}
 
 	GameInpCheckLeftAlt();
 
 	return 0;
-}
+	}
 
 #if 0
 static int NewMacroButton()
