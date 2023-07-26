@@ -6,6 +6,7 @@
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
 static HWND hGamepadList = NULL;
+static HWND hProfileList = NULL;
 
 static unsigned short* LastVal = NULL;			// Last input values/defined
 static int bLastValDefined = 0;					//
@@ -20,6 +21,13 @@ static HWND hP2Select;
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
 static int nSelectedPadIndex = -1;
+
+
+///InputGetProfiles(profileInfos, &nProfileCount);
+static InputProfileEntry* profileInfos[MAX_GAMEPAD];
+static INT32 nProfileCount;
+static int nSelectedProfileIndex = -1;
+
 
 // Text buffer for the gamepad alias.
 static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
@@ -488,6 +496,19 @@ static void SetEnabled(int id, BOOL bEnable)
 }
 
 // ---------------------------------------------------------------------------------------------------------
+void SetStrBuffer(TCHAR* buffer, int bufLen, TCHAR* data) {
+	int len = wcslen(data);
+	memset(buffer, 0, bufLen);
+	if (len >= bufLen) {
+		len = bufLen - 1;
+	}
+	for (size_t i = 0; i < len; i++)
+	{
+		buffer[i] = data[i];
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------
 static int GamepadListBegin()
 {
 	if (hGamepadList == NULL) {
@@ -520,18 +541,41 @@ static int GamepadListBegin()
 	return 0;
 }
 
+
+
 // ---------------------------------------------------------------------------------------------------------
-void SetStrBuffer(TCHAR* buffer, int bufLen, TCHAR* data) {
-	int len = wcslen(data);
-	memset(buffer, 0, bufLen);
-	if (len >= bufLen) {
-		len = bufLen - 1;
+static int ProfileListBegin()
+{
+	auto hList = hProfileList;
+	if (hList == NULL) {
+		return 1;
 	}
-	for (size_t i = 0; i < len; i++)
-	{
-		buffer[i] = data[i];
-	}
+
+	// Full row select style:
+	SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+
+
+	// Make column headers
+	LVCOLUMN LvCol;
+	memset(&LvCol, 0, sizeof(LvCol));
+	LvCol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+
+
+	LvCol.cx = 0x95;		// Column Width.
+	LvCol.pszText =  _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
+	SendMessage(hList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
+
+	//LvCol.cx = 0x38;
+	//LvCol.pszText = FBALoadStringEx(hAppInst, IDS_INPUT_STATE, true);
+	//SendMessage(hList, LVM_INSERTCOLUMN, STATE_INDEX, (LPARAM)&LvCol);
+
+	//LvCol.cx = 0xa5;		// Column Width.
+	//LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_GUID, true);
+	//SendMessage(hList, LVM_INSERTCOLUMN, GUID_INDEX, (LPARAM)&LvCol);
+
+	return 0;
 }
+
 
 // ---------------------------------------------------------------------------------------------------------
 static void updateListboxAlias(HWND& list, int index, TCHAR* buffer, int bufSize, bool insertNew) {
@@ -550,7 +594,6 @@ static void updateListboxAlias(HWND& list, int index, TCHAR* buffer, int bufSize
 
 // ---------------------------------------------------------------------------------------------------------
 static int GamepadListMake(int bBuild) {
-	//	return 0; //
 
 	HWND& list = hGamepadList;
 	if (list == NULL) {
@@ -604,6 +647,61 @@ static int GamepadListMake(int bBuild) {
 	return 0;
 }
 
+
+// ---------------------------------------------------------------------------------------------------------
+static int ProfileListMake(int bBuild) {
+	//	return 0; //
+
+	HWND& hList = hProfileList;
+	if (hList == NULL) {
+		return 1;
+	}
+
+	if (bBuild) {
+		SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
+	}
+
+
+	// Populate the list:
+	for (unsigned int i = 0; i < nProfileCount; i++) {
+		InputProfileEntry* profile = profileInfos[i];
+
+
+		//if (profile->info.Alias == 0 || wcscmp(_T(""), profile->info.Alias) == 0) {
+		//	SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
+		//}
+		//else
+		//{
+			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
+//		}
+
+		// Populate the ALIAS column (TODO)
+	//	updateListboxAlias(hList, i, aliasBuffer, MAX_ALIAS_CHARS, true);
+
+
+		LVITEM LvItem;
+
+		// Populate the name column.
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT;
+		LvItem.iItem = i;
+		LvItem.iSubItem = 0;
+		LvItem.pszText = profile->Name; // aliasBuffer; // _T(aliasBuffer);
+		SendMessage(hList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+		//// Populate the GUID column
+		//memset(&LvItem, 0, sizeof(LvItem));
+		//LvItem.mask = LVIF_TEXT;
+		//LvItem.iItem = i;
+		//LvItem.iSubItem = GUID_INDEX;
+		//LvItem.pszText = GUIDToTCHAR(&profile->info.guidInstance);
+		//SendMessage(hList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+	}
+
+
+	return 0;
+}
 
 // ------------------------------------------------------------------------------------------------------
 static int OnGamepadListDeselect()
@@ -933,11 +1031,15 @@ static int InpdInit()
 
 
 	InputGetGamepads(padInfos, &nPadCount);
+	InputGetProfiles(profileInfos, &nProfileCount);
 
 	InpdListBegin();
 	InpdListMake(1);
 	GamepadListBegin();
 	GamepadListMake(1);
+
+	ProfileListBegin();
+	ProfileListMake(1);
 
 	// Init the Combo boxes
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);

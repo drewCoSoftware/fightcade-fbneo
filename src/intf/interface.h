@@ -47,7 +47,7 @@ struct GamepadInputProfile {
 	TCHAR driverName[MAX_NAME];			// PLACEHOLDER: The game that this profile belongs to.
 	TCHAR profileName[MAX_NAME];		// PLACEHOLDER: The name of the profile.  In theory, there could be many.
 
-	GamepadInput inputs[MAX_INPUTS];	// PLACEHOLDER:
+	GamepadInput inputs[MAX_INPUTS];	
 	// TOOD
 };
 
@@ -61,6 +61,12 @@ struct GamepadFileEntry {
 	GamepadInputProfile profile;
 };
 
+// Stores data about a single input profile.
+// This maps a name to some buttons.
+struct InputProfileEntry {
+	TCHAR Name[MAX_ALIAS_CHARS];
+	GamepadInput Inputs[MAX_INPUTS];
+};
 
 
 // Input plugin:
@@ -81,11 +87,18 @@ struct InputInOut {
 	INT32   (*GetControlName)(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 	// Get plugin info
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
-	// Get Device List.  Gamepads...
+
+	// Get Gamepads...
 	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 	
 	// Save the current set of mapping data!
 	INT32 (*SaveGamepadMappings)();
+
+	// Get Input profiles...
+	INT32(*GetProfileList)(InputProfileEntry** ppProfiles, INT32* nProfileCount);
+
+	// Save the current set of input profiles!
+	INT32(*SaveInputProfiles)();
 
 	const TCHAR* szModuleName;
 };
@@ -101,6 +114,9 @@ std::vector<const InputInOut *> InputGetInterfaces();
 INT32 InputSaveGamepadMappings();
 
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
+
+INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount);
+INT32 InputSaveProfiles();
 
 extern bool bInputOkay;
 extern UINT32 nInputSelect;

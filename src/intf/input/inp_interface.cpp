@@ -147,6 +147,19 @@ static INT32 InputTick()
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
+INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount) {
+	INT32 nRet = 0;
+
+	// Fail on index mismatch.
+	if (nInputSelect >= INPUT_LEN) {
+		return 1;
+	}
+
+	nRet = pInputInOut[nInputSelect]->GetProfileList(ppProfiles, nProfileCount);
+	return nRet;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount) {
 	INT32 nRet = 0;
 
@@ -156,6 +169,20 @@ INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount) {
 	}
 
 	nRet = pInputInOut[nInputSelect]->GetGamepadList(ppPadInfos, nPadCount);
+	return nRet;
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------------
+INT32 InputSaveProfiles() {
+	INT32 nRet = 0;
+
+	// Fail on index mismatch.
+	if (nInputSelect >= INPUT_LEN) {
+		return 1;
+	}
+
+	nRet = pInputInOut[nInputSelect]->SaveInputProfiles();
 	return nRet;
 }
 
