@@ -13,10 +13,11 @@
 #define ID_SAVE_MAPPINGS                6
 #define ID_SET_PLAYER2                  7
 #define ID_SET_PLAYER1                  8
-#define IDC_GAMEPAD_SET_MESSAGE         9
 #define IDC_SET_PLAYER_MESSAGE          9
 #define IDI_APP                         10
+#define ID_NEW_PROFILE                  10
 #define IDI_TV_PLUS                     11
+#define ID_DELETE_PROFILE               11
 #define IDI_TV_MINUS                    12
 #define IDI_TV_NOTWORKING               13
 #define IDI_TV_NOTFOUND_ESS             14
@@ -766,6 +767,8 @@
 #define IDC_SPATH_TAB                   20501
 #define IDC_ROMPATH_TAB                 20502
 #define IDC_GAMEPAD_LIST                20503
+#define IDC_GAMEPAD_LIST2               20504
+#define IDC_PROFILE_LIST                20504
 #define IDROM                           20600
 #define IDRESCAN                        20601
 #define IDGAMEINFO                      20602

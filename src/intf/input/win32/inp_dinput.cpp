@@ -465,9 +465,23 @@ INT32 saveGamepadMappings() {
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
+void refreshEntryMap() {
+	// Create our convenient guid map..
+	_entryMap.clear();
+	size_t len = gamepadFile.entryCount;
+	for (size_t i = 0; i < len; i++)
+	{
+		auto& e = gamepadFile.entries[i];
+		_entryMap[e.info.guidInstance] = &e;
+	}
+}
+
 
 // ---------------------------------------------------------------------------------------------------------
-void addGamepadEntry(gamepadData& props) {
+// TODO: This needs to be ported....
+void addGamepad(gamepadData& props) {
+	//	throw std::exception("NOT SUPPORTED YET!");
 
 	UINT16 index = gamepadFile.entryCount;
 	if (index >= MAX_GAMEPAD_INFOS) {
@@ -490,19 +504,8 @@ void addGamepadEntry(gamepadData& props) {
 
 
 // ---------------------------------------------------------------------------------------------------------
-void refreshEntryMap() {
-	// Create our convenient guid map..
-	_entryMap.clear();
-	size_t len = gamepadFile.entryCount;
-	for (size_t i = 0; i < len; i++)
-	{
-		auto& e = gamepadFile.entries[i];
-		_entryMap[e.info.guidInstance] = &e;
-	}
-}
-
-// ---------------------------------------------------------------------------------------------------------
 // Merge any *new* gamepads that have been detected with the current data file.
+// OBSOLETE:  Will be removed!
 void mergeGamepadMappings() {
 
 	bool saveData = false;
@@ -513,7 +516,7 @@ void mergeGamepadMappings() {
 		if (match == _entryMap.end())
 		{
 			// This is a new entry!
-			addGamepadEntry(gamepadProperties[i]);
+			addGamepad(gamepadProperties[i]);
 			saveData = true;
 		}
 	}
@@ -525,9 +528,26 @@ void mergeGamepadMappings() {
 
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Quick n' dirty, probably not accurate way to check for an existing file....
+bool FileExists(TCHAR* szFileName)
+{
+	FILE* fp = _tfopen(szFileName, _T("r"));
+	bool res = fp != NULL;
+	if (fp)
+	{
+		fclose(fp);
+	}
+
+	return res;
+}
+
 
 // ---------------------------------------------------------------------------------------------------------
-INT32 loadGamepadMappings() {
+INT32 loadProfiles() {
+	throw std::exception("NOT SUPPORTED YET!");
+
+	bool mappingsLoaded = false;
 	TCHAR* szFileName = _T("config/gamepads.dat");
 
 	FILE* fp = _tfopen(szFileName, _T("r"));
@@ -564,6 +584,7 @@ INT32 loadGamepadMappings() {
 		}
 
 		fclose(fp);
+		mappingsLoaded = true;
 	}
 	else
 	{
@@ -574,7 +595,61 @@ INT32 loadGamepadMappings() {
 
 	refreshEntryMap();
 
-	return 0;
+	return mappingsLoaded ? 0 : -1;
+}
+
+
+// ---------------------------------------------------------------------------------------------------------
+INT32 loadGamepadMappings() {
+	bool mappingsLoaded = false;
+	TCHAR* szFileName = _T("config/gamepads.dat");
+
+	FILE* fp = _tfopen(szFileName, _T("r"));
+	if (fp) {
+		clearGamepadMappingData();
+
+		// LOAD + CHECK HEADER:
+		CHAR header[7];
+		ReadData(fp, header, 6);
+		header[6] = 0;	// Null terminate!
+		UINT16 version = ReadUint16(fp);
+
+		if (strcmp(header, "GP-MAP") != 0 || version != 1) {
+			throw "INVALID HEADER DATA!";
+		}
+
+		UINT16 entryCount = ReadUint16(fp);
+		gamepadFile.entryCount = entryCount;
+		for (size_t i = 0; i < entryCount; i++)
+		{
+			GamepadFileEntry& e = gamepadFile.entries[i];
+			e.info.guidInstance = ReadData_G<GUID>(fp);
+			ReadTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
+
+			UINT16 profileCount = ReadUint16(fp);
+			if (profileCount != 1) { throw "INVALID PROFILE COUNT!"; }
+
+			// Read all of the profiles (in a loop (future))
+			GamepadInputProfile& p = e.profile; //[j];
+			ReadTCHAR(fp, p.driverName, MAX_NAME);
+			ReadTCHAR(fp, p.profileName, MAX_NAME);
+
+			ReadButtonData(fp, p);
+		}
+
+		fclose(fp);
+		mappingsLoaded = true;
+	}
+	else
+	{
+		// File doesn't exist?
+		// We will set some default data.  Any new gamepads will be added during the merge step!
+		clearGamepadMappingData();
+	}
+
+	refreshEntryMap();
+
+	return mappingsLoaded ? 0 : -1;
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -647,7 +722,24 @@ int init()
 	// We only need to read disk data the first time around.
 	if (firstInit)
 	{
-		loadGamepadMappings();
+		bool loadOK = loadGamepadMappings() == 0;
+		if (loadOK)
+		{
+			// We can attempt to port mappings to player profiles...
+			// This is just an upgrade path that one might use with a new application version....
+			if (!FileExists(_T("profiles.dat")))
+			{
+				// NOTE: This should be the last step!
+				//createProfilesFromMappings();
+			}
+			// We have an input mappings file, so we can go ahead
+			// and create our input profiles from it....
+			// Nah, fuckit, they can setup new profiles....
+		}
+		else
+		{
+			// There is no input mappings file....
+		}
 	}
 	mergeGamepadMappings();
 
@@ -658,6 +750,7 @@ int init()
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
 // Call before checking for Input in a frame
 int newFrame()
 {
@@ -679,6 +772,7 @@ int newFrame()
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
 // Read the keyboard
 int readKeyboard(keyboardData* keyboard)
 {
