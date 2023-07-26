@@ -35,17 +35,25 @@ enum EDialogState {
 int _SetPlayerIndex = -1;
 EDialogState _CurState = DIALOGSTATE_NORMAL;
 
+// ------------------------------------------------------------------------------------------
 static void SetState(EDialogState newState) {
-	int x = 10;
+	TCHAR buffer[256];
+
 	switch (newState) {
 	case DIALOGSTATE_SET_PLAYER:
 	{
-		TCHAR buffer[256];
 		int label = _SetPlayerIndex + 1;
 
 		swprintf(buffer, _T("Press button for player %d"), label);
 
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
+	}
+	break;
+	
+	case DIALOGSTATE_NORMAL:
+	{
+		// Clear the text.
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, NULL);
 	}
 	break;
 	default:
@@ -114,8 +122,22 @@ static int InpdUseUpdate()
 	return 0;
 }
 
+// -------------------------------------------------------------------------------------
+static int GetIndexFromButton(UINT16 code) {
+	if (code >= 0x4000 && code < 0x8000)
+	{
+		int index = (code >> 8) & 0x3F;
+		return index;
+	}
+	return -1;
+}
 
-static int GetGamepadIndex() {
+// -------------------------------------------------------------------------------------
+// Populate the list of all currently pressed gamepad buttons.
+// Nonzero return code indicates that the function doesn't have valid data/failed.
+static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
+	buttonCodes.clear();
+
 	unsigned int i, j = 0;
 	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
 	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
@@ -132,7 +154,11 @@ static int GetGamepadIndex() {
 			continue;
 		}
 
-		// This whole thing can probably just be passed in from the calling function.
+		//// This whole thing can probably just be passed in from the calling function.
+		//if (pGameInput->nType & BIT_GROUP_ANALOG) {
+		//	// Don't care about analog inputs at this time....
+		//	continue;
+		//}
 		if (pGameInput->nType & BIT_GROUP_ANALOG) {
 			if (bRunPause) {														// Update LastVal
 				nThisVal = pGameInput->Input.nVal;
@@ -156,47 +182,137 @@ static int GetGamepadIndex() {
 			else {
 				nThisVal = *pGameInput->Input.pVal;
 			}
-
-			// Continue if input state hasn't changed.
-			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {
-				j++;
-				continue;
-			}
-
-			*pLastVal = nThisVal;
 		}
-
-
-
-
 
 		switch (pGameInput->nType) {
 
-			// For 3rd strike we only care about digital inputs, so all others
-			// can just wait.....
+			// We only care about digital inputs since this patch is for fighting games.
+			// We can care about others later.
 		case BIT_DIGITAL: {
 
 			if (nThisVal == 1)
 			{
 				UINT16 code = pGameInput->Input.Switch.nCode;
-				if (code >= 0x4000 && code < 0x8000)
+				int index = GetIndexFromButton(code);
+				if (index != -1)
 				{
-					int index = (code >> 8) & 0x3F;
-					return index;
+					buttonCodes.push_back(code);
 				}
 			}
 		}
 		default:
-			// DO NOTHING
+			// Do nothing:
 			break;
-
 		}
 	}
+	return 0;
 }
 
+//
+//// NOTE: It would probably be useful to have a function that can just grab us
+//// a list of all of the pressed buttons.....
+//static int GetGamepadIndexLegacy() {
+//	unsigned int i, j = 0;
+//	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
+//	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
+//	unsigned short nThisVal;
+//	if (hInpdList == NULL) {
+//		return 1;
+//	}
+//	if (LastVal == NULL) {
+//		return 1;
+//	}
+//
+//	for (i = 0, pGameInput = GameInp, pLastVal = LastVal; i < nGameInpCount; i++, pGameInput++, pLastVal++) {
+//		if (pGameInput->nType == 0) {
+//			continue;
+//		}
+//
+//		// This whole thing can probably just be passed in from the calling function.
+//		if (pGameInput->nType & BIT_GROUP_ANALOG) {
+//			if (bRunPause) {														// Update LastVal
+//				nThisVal = pGameInput->Input.nVal;
+//			}
+//			else {
+//				nThisVal = *pGameInput->Input.pShortVal;
+//			}
+//
+//			// Continue if input state hasn't changed.
+//			if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
+//				j++;
+//				continue;
+//			}
+//
+//			*pLastVal = nThisVal;
+//		}
+//		else {
+//			if (bRunPause) {														// Update LastVal
+//				nThisVal = pGameInput->Input.nVal;
+//			}
+//			else {
+//				nThisVal = *pGameInput->Input.pVal;
+//			}
+//
+//			// Continue if input state hasn't changed.
+//			if (bLastValDefined && pGameInput->Input.nVal == *pLastVal) {
+//				j++;
+//				continue;
+//			}
+//
+//			*pLastVal = nThisVal;
+//		}
+//
+//		switch (pGameInput->nType) {
+//
+//			// For 3rd strike we only care about digital inputs, so all others
+//			// can just wait.....
+//		case BIT_DIGITAL: {
+//
+//			if (nThisVal == 1)
+//			{
+//				UINT16 code = pGameInput->Input.Switch.nCode;
+//				if (code >= 0x4000 && code < 0x8000)
+//				{
+//					int index = (code >> 8) & 0x3F;
+//					return index;
+//				}
+//			}
+//		}
+//		default:
+//			// DO NOTHING
+//			break;
+//
+//		}
+//	}
+//}
+
+// ---------------------------------------------------------------------------------------------
+// Returns the index of the first detected button that is currently pressed on a gamepad,
+// or -1 if nothing is pressed.
+static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
+
+	int size = pressedButtons.size();
+	for (size_t i = 0; i < size; i++)
+	{
+		int res = GetIndexFromButton(pressedButtons[i]);
+		if (res != -1)
+		{
+			return res;
+		}
+	}
+
+	return -1;
+}
+
+
+// ---------------------------------------------------------------------------------------------
 // This is where we can wait for p1/p2 to check in and what-not....
 int InpdUpdate()
 {
+	std::vector<UINT16> pressedPadButtons;
+	GetPressedGamepadButtons(pressedPadButtons);
+
+
 	unsigned int i, j = 0;
 	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
 	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
@@ -209,14 +325,16 @@ int InpdUpdate()
 	}
 
 
+
 	if (_CurState == DIALOGSTATE_SET_PLAYER)
 	{
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-		int index = GetGamepadIndex();
+		int index = GetGamepadIndex(pressedPadButtons);
 		if (index != -1)
 		{
 			// We have an index for the player, so we can go to the 'select profile' part of the process....
+			SetState(DIALOGSTATE_NORMAL);
 		}
 		return 0;
 	}
@@ -934,7 +1052,7 @@ static int ActivateInputListItem()
 #if 0
 			InpMacroCreate(nSel);
 #endif
-}
+		}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
