@@ -1411,6 +1411,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 			_stprintf(szString, _T("%s Button %d"), gpName, nCode & 0x7F);
 			return szString;
 		}
+		// Directional Axes:
 		if (nCode < 0x10) {
 			TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 			TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
@@ -1422,6 +1423,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 			}
 			return szString;
 		}
+		// D-PAD
 		if (nCode < 0x20) {
 			TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
 			_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);

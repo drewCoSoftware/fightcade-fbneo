@@ -30,9 +30,12 @@ static playerInputs sfiii3nPlayerInputs;
 
 enum EDialogState {
 	DIALOGSTATE_NORMAL = 0,
-	DIALOGSTATE_SET_PLAYER
+	DIALOGSTATE_SET_PLAYER,			// Set pad index for player.
+	DIALOGSTATE_CHOOSE_PROFILE		// Choose the profile for the player.
 };
+
 int _SetPlayerIndex = -1;
+int _ProfileIndex = -1;
 EDialogState _CurState = DIALOGSTATE_NORMAL;
 
 // ------------------------------------------------------------------------------------------
@@ -49,13 +52,22 @@ static void SetState(EDialogState newState) {
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 	}
 	break;
-	
+
 	case DIALOGSTATE_NORMAL:
 	{
 		// Clear the text.
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, NULL);
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
 	}
 	break;
+
+	case DIALOGSTATE_CHOOSE_PROFILE:
+	{
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Choose profile and press a button"));
+		_ProfileIndex = -1;
+	}
+	break;
+
+
 	default:
 		break;
 	}
@@ -63,6 +75,7 @@ static void SetState(EDialogState newState) {
 	_CurState = newState;
 }
 
+// -------------------------------------------------------------------------------------
 // Update which input is using which PC input
 static int InpdUseUpdate()
 {
@@ -123,13 +136,37 @@ static int InpdUseUpdate()
 }
 
 // -------------------------------------------------------------------------------------
-static int GetIndexFromButton(UINT16 code) {
-	if (code >= 0x4000 && code < 0x8000)
+static int GetIndexFromButton(UINT16 button) {
+	if (button >= 0x4000 && button < 0x8000)
 	{
-		int index = (code >> 8) & 0x3F;
+		int index = (button >> 8) & 0x3F;
 		return index;
 	}
 	return -1;
+}
+
+// -------------------------------------------------------------------------------------
+// From the given button, set the pad index and button code.
+// Returns 0 when the values are correctly set.
+static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
+
+	if (button >= 0x4000 && button < 0x8000)
+	{
+		UINT16 codePart = button & 0xFF;
+		int indexPart = (button >> 8) & 0x3F;
+
+		code = codePart;
+		index = indexPart;
+
+		return 0;
+	}
+	else
+	{
+		// Not a gamepad input.
+		return -1;
+	}
+
+
 }
 
 // -------------------------------------------------------------------------------------
@@ -160,20 +197,21 @@ static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
 		//	continue;
 		//}
 		if (pGameInput->nType & BIT_GROUP_ANALOG) {
-			if (bRunPause) {														// Update LastVal
-				nThisVal = pGameInput->Input.nVal;
-			}
-			else {
-				nThisVal = *pGameInput->Input.pShortVal;
-			}
+			//if (bRunPause) {														// Update LastVal
+			//	nThisVal = pGameInput->Input.nVal;
+			//}
+			//else {
+			//	nThisVal = *pGameInput->Input.pShortVal;
+			//}
 
-			// Continue if input state hasn't changed.
-			if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
-				j++;
-				continue;
-			}
+			//// Continue if input state hasn't changed.
+			//if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
+			//	j++;
+			//	continue;
+			//}
 
-			*pLastVal = nThisVal;
+			//*pLastVal = nThisVal;
+			continue;
 		}
 		else {
 			if (bRunPause) {														// Update LastVal
@@ -304,6 +342,66 @@ static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
 	return -1;
 }
 
+// REFACTOR: Move these defs.
+#define DIR_UP -1
+#define DIR_DOWN 1
+#define DIR_NONE 0
+#define Y_AXIS_CODE 1
+
+// --------------------------------------------------------------------------------------------------
+// For the given pad index, returns an int that is -1 for up, 1 for down, and zero
+// if an up or down button is not pressed.
+static int GetUpOrDownButton(int padIndex, std::vector<UINT16> buttons) {
+
+	size_t size = buttons.size();
+	for (size_t i = 0; i < size; i++)
+	{
+		int index = 0;
+		UINT16 nCode = 0;
+
+
+		if (GetIndexAndCodeFromButton(buttons[i], index, nCode) == 0)
+		{
+			if (index != padIndex) { continue; }
+
+			// NOTE: The commented blocks come from the code that formats the labels
+			// when printing out hte button lists:
+			// This is how I determined what is up and what is down.
+			if (nCode < 0x10) {
+				//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
+				//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+				//if (nCode < 4) {
+				//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+				//}
+				//else {
+				//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
+				//}
+				//return szString;
+				if (nCode < 4) {
+					UINT16 axisCode = nCode >> 1;
+					UINT16 dirCode = nCode + 2;
+					if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
+					if (dirCode == 4) { return DIR_UP; }
+					if (dirCode == 5) { return DIR_DOWN; }
+				}
+				else {
+				}
+			}
+			if (nCode < 0x20) {
+				UINT16 dirCode = nCode & 3;
+				if (dirCode == 2) { return DIR_UP; }
+				if (dirCode == 3) { return DIR_DOWN; }
+				//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+				//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+				//return szString;
+			}
+
+			int xxxxxxx = 10;
+		}
+	}
+
+	return DIR_NONE;
+}
 
 // ---------------------------------------------------------------------------------------------
 // This is where we can wait for p1/p2 to check in and what-not....
@@ -326,17 +424,27 @@ int InpdUpdate()
 
 
 
-	if (_CurState == DIALOGSTATE_SET_PLAYER)
-	{
+	if (_CurState == DIALOGSTATE_SET_PLAYER) {
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
 		int index = GetGamepadIndex(pressedPadButtons);
 		if (index != -1)
 		{
+			_SetPlayerIndex = index;
 			// We have an index for the player, so we can go to the 'select profile' part of the process....
-			SetState(DIALOGSTATE_NORMAL);
+			SetState(DIALOGSTATE_CHOOSE_PROFILE);
 		}
 		return 0;
+	}
+	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
+
+		// Here we want to detect the up/down buttons so that
+		// we can cycle through the available profiles.
+		int upDownDir = GetUpOrDownButton(_SetPlayerIndex, pressedPadButtons);
+		if (upDownDir != DIR_NONE) {
+			// Now we can cylcle through the profiles.....
+			int x = 10;
+		}
 	}
 
 
@@ -909,6 +1017,8 @@ static int InpdInit()
 
 	DisablePresets();
 
+
+	SetState(DIALOGSTATE_NORMAL);
 	return 0;
 }
 
