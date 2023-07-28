@@ -442,7 +442,7 @@ void clearGamepadMappingData() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-void clearInputProfilesData() {
+void clearInputMappingsData() {
 	// Compose the mappings data.  This will end up being our source of data for 'getGamepadInfos'....
 	memset(&inputProfiles, 0, sizeof(InputProfileFileData));
 }
@@ -538,7 +538,7 @@ INT32 loadInputProfiles() {
 
 	FILE* fp = _tfopen(szFileName, _T("r"));
 	if (fp) {
-		clearInputProfilesData();
+		clearInputMappingsData();
 
 		// LOAD + CHECK HEADER:
 		CHAR header[7];
@@ -567,7 +567,7 @@ INT32 loadInputProfiles() {
 	{
 		// File doesn't exist?
 		// We will set some default data.  Any new gamepads will be added during the merge step!
-		clearInputProfilesData();
+		clearInputMappingsData();
 	}
 
 	return profilesLoaded ? 0 : -1;
@@ -886,7 +886,16 @@ int init()
 	// We only need to read disk data the first time around.
 	if (firstInit)
 	{
-		bool loadOK = loadInputProfiles() == 0;
+		bool loadOK = false; ;
+		try {
+			loadOK = loadInputProfiles() == 0;
+		}
+		catch (...) {
+			// DANGER! Catch All!
+			// Something bad happened or failed.  Possibly a corrupt file?
+			loadOK = false;
+			clearInputMappingsData();
+		}
 		//bool loadOK = loadGamepadMappings() == 0;
 		//if (loadOK)
 		//{

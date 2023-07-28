@@ -20,17 +20,15 @@ static HWND hP2Select;
 #define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
-static int nSelectedPadIndex = -1;
+// static int nSelectedPadIndex = -1;
 
 
-static InputProfileEntry* profileInfos[MAX_GAMEPAD];
+static InputProfileEntry* inputMappings[MAX_PROFILE_LEN];
 static INT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
 
-
 // Text buffer for the gamepad alias.
 static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
-GamepadFileEntry* selectedPadEntry = NULL;
 
 static playerInputs sfiii3nPlayerInputs;
 
@@ -524,7 +522,6 @@ static int GamepadListBegin()
 	LvCol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
 
 
-
 	LvCol.cx = 0x95;		// Column Width.
 	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
 	SendMessage(hGamepadList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
@@ -563,14 +560,6 @@ static int ProfileListBegin()
 	LvCol.cx = 0x95;		// Column Width.
 	LvCol.pszText = _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
 	SendMessage(hList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
-
-	//LvCol.cx = 0x38;
-	//LvCol.pszText = FBALoadStringEx(hAppInst, IDS_INPUT_STATE, true);
-	//SendMessage(hList, LVM_INSERTCOLUMN, STATE_INDEX, (LPARAM)&LvCol);
-
-	//LvCol.cx = 0xa5;		// Column Width.
-	//LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_GUID, true);
-	//SendMessage(hList, LVM_INSERTCOLUMN, GUID_INDEX, (LPARAM)&LvCol);
 
 	return 0;
 }
@@ -649,7 +638,6 @@ static int GamepadListMake(int bBuild) {
 
 // ---------------------------------------------------------------------------------------------------------
 static int ProfileListMake(int bBuild) {
-	//	return 0; //
 
 	HWND& hList = hProfileList;
 	if (hList == NULL) {
@@ -663,20 +651,9 @@ static int ProfileListMake(int bBuild) {
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nProfileCount; i++) {
-		InputProfileEntry* profile = profileInfos[i];
+		InputProfileEntry* profile = inputMappings[i];
 
-
-		//if (profile->info.Alias == 0 || wcscmp(_T(""), profile->info.Alias) == 0) {
-		//	SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
-		//}
-		//else
-		//{
 		SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
-		//		}
-
-				// Populate the ALIAS column (TODO)
-			//	updateListboxAlias(hList, i, aliasBuffer, MAX_ALIAS_CHARS, true);
-
 
 		LVITEM LvItem;
 
@@ -687,15 +664,6 @@ static int ProfileListMake(int bBuild) {
 		LvItem.iSubItem = 0;
 		LvItem.pszText = profile->Name; // aliasBuffer; // _T(aliasBuffer);
 		SendMessage(hList, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
-
-		//// Populate the GUID column
-		//memset(&LvItem, 0, sizeof(LvItem));
-		//LvItem.mask = LVIF_TEXT;
-		//LvItem.iItem = i;
-		//LvItem.iSubItem = GUID_INDEX;
-		//LvItem.pszText = GUIDToTCHAR(&profile->info.guidInstance);
-		//SendMessage(hList, LVM_SETITEM, 0, (LPARAM)&LvItem);
-
 	}
 
 
@@ -711,16 +679,53 @@ static int OnProfileListDeselect() {
 	return 0;
 }
 
-// ------------------------------------------------------------------------------------------------------
-static int OnGamepadListDeselect() {
-	// Clear the alias input box.
-	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
-	nSelectedPadIndex = -1;
-	selectedPadEntry = NULL;
-	SetEnabled(IDSAVEALIAS, FALSE);
-	SetEnabled(ID_SAVE_MAPPINGS, FALSE);
-	return 0;
-}
+//
+//// ------------------------------------------------------------------------------------------------------
+//static int OnGamepadListDeselect() {
+//	// Clear the alias input box.
+//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
+//	nSelectedPadIndex = -1;
+//	selectedPadEntry = NULL;
+//	SetEnabled(IDSAVEALIAS, FALSE);
+//	SetEnabled(ID_SAVE_MAPPINGS, FALSE);
+//	return 0;
+//}
+
+//// ------------------------------------------------------------------------------------------------------
+//static int SelectGamepadListItem()
+//{
+//	HWND& list = hGamepadList;
+//	LVITEM LvItem;
+//	memset(&LvItem, 0, sizeof(LvItem));
+//	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+//	if (nSel < 0) {
+//		OnGamepadListDeselect();
+//		return 1;
+//	}
+//
+//	// Get the corresponding input
+//	nSelectedPadIndex = nSel;
+//	getListItemData(list, nSel, LvItem);
+//
+//	if (nSel >= nPadCount) {
+//		OnGamepadListDeselect();
+//		return 1;
+//	}
+//
+//	// Now we can set the text in the alias text box!
+//	// Set the edit control to current value
+//
+//	// Enable the save alias button....
+//	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
+//	SetEnabled(IDSAVEALIAS, TRUE);
+//	SetEnabled(ID_SAVE_MAPPINGS, TRUE);
+//
+//	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
+//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)useBuffer);
+//
+//
+//}
+
 
 // ------------------------------------------------------------------------------------------------------
 void getListItemData(HWND& list, int index, LVITEM& item) {
@@ -802,6 +807,7 @@ static int SetPlayerMappings()
 // ------------------------------------------------------------------------------------------------------
 static int OnPlayerSelectionChanged() {
 
+	// TODO: Enable/disable the 'set' button that is under the combos....
 	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
 	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
 
@@ -841,44 +847,10 @@ static int SelectProfileListItem()
 
 	// Activate certain buttons.
 	SetEnabled(ID_REMOVE_PROFILE, true);
-	SetEnabled(ID_SET_PLAYER_MAPPINGS, true);
+	SetEnabled(ID_SAVE_MAPPINGS, true);
 
 }
 
-// ------------------------------------------------------------------------------------------------------
-static int SelectGamepadListItem()
-{
-	HWND& list = hGamepadList;
-	LVITEM LvItem;
-	memset(&LvItem, 0, sizeof(LvItem));
-	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
-	if (nSel < 0) {
-		OnGamepadListDeselect();
-		return 1;
-	}
-
-	// Get the corresponding input
-	nSelectedPadIndex = nSel;
-	getListItemData(list, nSel, LvItem);
-
-	if (nSel >= nPadCount) {
-		OnGamepadListDeselect();
-		return 1;
-	}
-
-	// Now we can set the text in the alias text box!
-	// Set the edit control to current value
-
-	// Enable the save alias button....
-	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
-	SetEnabled(IDSAVEALIAS, TRUE);
-	SetEnabled(ID_SAVE_MAPPINGS, TRUE);
-
-	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
-	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)useBuffer);
-
-
-}
 
 // ---------------------------------------------------------------------------------------------------------
 static int InpdListBegin()
@@ -1042,8 +1014,9 @@ static void InitComboboxes()
 	RefreshPlayerSelectComboBoxes();
 }
 
+// ------------------------------------------------------------------------------------------------------------
 static void RefreshProfileData() {
-	InputGetProfiles(profileInfos, &nProfileCount);
+	InputGetProfiles(inputMappings, &nProfileCount);
 }
 
 static int InpdInit()
@@ -1574,9 +1547,9 @@ static void SliderExit()
 // Long term we will come up with a way for the user to be able to set all of the buttons at one time,
 // probably by borrowing functionality from the inps.cpp dialog....
 static void saveMappingsInfo() {
-	if (nSelectedPadIndex == -1) { return; }
-
-	GamepadFileEntry* pad = padInfos[nSelectedPadIndex];
+	// NOTE: It makes more sense to just keep a mapping profile laying around.....
+	if (nSelectedProfileIndex == -1) { return; }
+	InputProfileEntry* profile = inputMappings[nSelectedProfileIndex];
 
 	// We will copy + translate the values from the p1 inputs.....
 	unsigned int i, j = 0;
@@ -1586,7 +1559,7 @@ static void saveMappingsInfo() {
 			continue;
 		}
 
-		GamepadInput& pi = pad->profile.inputs[i];
+		GamepadInput& pi = profile->Inputs[i];
 		pi.nInput = pgi->nInput;
 
 		UINT16 code = 0; //pgi->Input.nVal;
@@ -1612,12 +1585,10 @@ static void saveMappingsInfo() {
 			code |= 0x4000;
 		}
 		pi.nCode = code;
-
-
 	}
 
-
-	InputSaveGamepadMappings();
+	InputSaveProfiles();
+	// InputSaveGamepadMappings();
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1656,27 +1627,27 @@ static void removeProfile() {
 	ProfileListMake(1);
 }
 
-
-// ---------------------------------------------------------------------------------------------------------
-static void saveAliasInfo() {
-	if (nSelectedPadIndex == -1) { return; }
-
-	selectedPadEntry = padInfos[nSelectedPadIndex];
-
-	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
-	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
-
-	// Update the list box item....
-	updateListboxAlias(hGamepadList, nSelectedPadIndex, aliasBuffer, MAX_ALIAS_CHARS, false);
-
-	SetStrBuffer(selectedPadEntry->info.Alias, MAX_ALIAS_CHARS, aliasBuffer);
-
-	// Write out the data to disk....
-	InputSaveGamepadMappings();
-
-	// Refresh the gamepad names in the mapper....
-	InpdUseUpdate();
-}
+//
+//// ---------------------------------------------------------------------------------------------------------
+//static void saveAliasInfo() {
+//	if (nSelectedPadIndex == -1) { return; }
+//
+//	selectedPadEntry = padInfos[nSelectedPadIndex];
+//
+//	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
+//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
+//
+//	// Update the list box item....
+//	updateListboxAlias(hGamepadList, nSelectedPadIndex, aliasBuffer, MAX_ALIAS_CHARS, false);
+//
+//	SetStrBuffer(selectedPadEntry->info.Alias, MAX_ALIAS_CHARS, aliasBuffer);
+//
+//	// Write out the data to disk....
+//	// InputSaveGamepadMappings();
+//
+//	// Refresh the gamepad names in the mapper....
+//	InpdUseUpdate();
+//}
 
 // ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -1710,7 +1681,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDOK && Notify == BN_CLICKED) {
 			ActivateInputListItem();
-			SelectGamepadListItem();
+//			SelectGamepadListItem();
 			return 0;
 		}
 		if (Id == IDCANCEL && Notify == BN_CLICKED) {
@@ -1718,10 +1689,10 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 
-		if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
-			saveAliasInfo();
-			return 0;
-		}
+		//if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
+		//	saveAliasInfo();
+		//	return 0;
+		//}
 
 		if (Id == ID_ADDPROFILE && Notify == BN_CLICKED) {
 			addNewProfile();
@@ -1740,7 +1711,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == ID_REFRESH_PADS && Notify == BN_CLICKED) {
 			SetEnabled(ID_REFRESH_PADS, FALSE);
-			OnGamepadListDeselect();
+			// OnGamepadListDeselect();
 			InputInit();
 
 			// Repopulate the gamepad list....
@@ -1924,9 +1895,9 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_ITEMACTIVATE) {
 			ActivateInputListItem();
 		}
-		if (Id == IDC_GAMEPAD_LIST && pnm->code == LVN_ITEMCHANGED) {
-			SelectGamepadListItem();
-		}
+		//if (Id == IDC_GAMEPAD_LIST && pnm->code == LVN_ITEMCHANGED) {
+		//	SelectGamepadListItem();
+		//}
 
 		if (Id == IDC_PROFILE_LIST && pnm->code == LVN_ITEMCHANGED) {
 			SelectProfileListItem();

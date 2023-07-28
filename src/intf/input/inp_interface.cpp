@@ -199,15 +199,17 @@ INT32 InputSaveProfiles() {
 
 // ------------------------------------------------------------------------------------------------------------------------
 INT32 InputSaveGamepadMappings() {
-	INT32 nRet = 0;
+	// We don't save mappings per-pad, but we might care about aliasing again....
+	throw std::exception("NOT SUPPORTED!");
+	//INT32 nRet = 0;
 
-	// Fail on index mismatch.
-	if (nInputSelect >= INPUT_LEN) {
-		return 1;
-	}
+	//// Fail on index mismatch.
+	//if (nInputSelect >= INPUT_LEN) {
+	//	return 1;
+	//}
 
-	nRet = pInputInOut[nInputSelect]->SaveGamepadMappings();
-	return nRet;
+	//nRet = pInputInOut[nInputSelect]->SaveGamepadMappings();
+	//return nRet;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
