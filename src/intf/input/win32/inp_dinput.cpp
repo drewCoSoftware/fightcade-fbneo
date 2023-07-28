@@ -601,7 +601,7 @@ INT32 saveInputProfiles() {
 		{
 			InputProfileEntry& entry = inputProfiles.entries[i];
 
-				// Write out the info....
+			// Write out the info....
 			WriteTCHAR(fp, entry.Name, MAX_ALIAS_CHARS);
 			WriteButtonData(fp, entry);
 		}
@@ -614,6 +614,23 @@ INT32 saveInputProfiles() {
 
 
 // ---------------------------------------------------------------------------------------------------------
+INT32 removeInputProfile(size_t index) {
+
+	if (index >= inputProfiles.entryCount) { return -1; }
+
+	// All we have to do is move all of the profiles up by one
+	// and adjust the count.
+	for (size_t i = index + 1; i < inputProfiles.entryCount; i++) {
+		inputProfiles.entries[i - 1] = inputProfiles.entries[i];
+	}
+
+	inputProfiles.entryCount -= 1;
+
+	saveInputProfiles();
+	return 0;
+}
+
+// ---------------------------------------------------------------------------------------------------------
 INT32 addInputProfile(const TCHAR* profileName) {
 	// TODO: Don't allow duplicate names!
 
@@ -624,10 +641,12 @@ INT32 addInputProfile(const TCHAR* profileName) {
 	inputProfiles.entryCount += 1;
 
 	// This is all we need, just to add the guid....
-	InputProfileEntry& e = inputProfiles.entries[index]; 
+	InputProfileEntry& e = inputProfiles.entries[index];
 	wcscpy(e.Name, profileName);
 
 	saveInputProfiles();
+
+	return 0;
 }
 
 //// ---------------------------------------------------------------------------------------------------------
@@ -1444,4 +1463,4 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, removeInputProfile, _T("DirectInput8 input") };

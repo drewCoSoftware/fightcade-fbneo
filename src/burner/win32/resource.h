@@ -19,8 +19,8 @@
 #define ID_ADDPROFILE                   10
 #define IDI_TV_PLUS                     11
 #define ID_DELETE_PROFILE               11
+#define ID_REMOVE_PROFILE               11
 #define IDI_TV_MINUS                    12
-#define IDC_EDIT1                       12
 #define IDI_TV_NOTWORKING               13
 #define IDC_PROFILE_NAME                13
 #define IDI_TV_NOTFOUND_ESS             14

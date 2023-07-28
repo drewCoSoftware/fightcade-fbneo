@@ -703,8 +703,16 @@ static int ProfileListMake(int bBuild) {
 }
 
 // ------------------------------------------------------------------------------------------------------
-static int OnGamepadListDeselect()
-{
+static int OnProfileListDeselect() {
+	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
+	nSelectedProfileIndex = -1;
+	SetEnabled(ID_REMOVE_PROFILE, FALSE);
+	SetEnabled(ID_SAVE_MAPPINGS, FALSE);
+	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+static int OnGamepadListDeselect() {
 	// Clear the alias input box.
 	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
 	nSelectedPadIndex = -1;
@@ -807,6 +815,34 @@ static int OnPlayerSelectionChanged() {
 	SetEnabled(ID_SET_PLAYER_MAPPINGS, true);
 
 	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+static int SelectProfileListItem()
+{
+	HWND& list = hProfileList;
+
+	LVITEM LvItem;
+	memset(&LvItem, 0, sizeof(LvItem));
+	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
+	if (nSel < 0) {
+		OnProfileListDeselect();
+		return 1;
+	}
+
+	// Get the corresponding input
+	nSelectedProfileIndex = nSel;
+	getListItemData(list, nSel, LvItem);
+
+	if (nSel >= nProfileCount) {
+		OnProfileListDeselect();
+		return 1;
+	}
+
+	// Activate certain buttons.
+	SetEnabled(ID_REMOVE_PROFILE, true);
+	SetEnabled(ID_SET_PLAYER_MAPPINGS, true);
+
 }
 
 // ------------------------------------------------------------------------------------------------------
@@ -1609,6 +1645,19 @@ static void addNewProfile() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+static void removeProfile() {
+
+	if (nSelectedProfileIndex == -1) { return; }
+	InputRemoveProfile(nSelectedProfileIndex);
+
+	OnProfileListDeselect();
+
+	RefreshProfileData();
+	ProfileListMake(1);
+}
+
+
+// ---------------------------------------------------------------------------------------------------------
 static void saveAliasInfo() {
 	if (nSelectedPadIndex == -1) { return; }
 
@@ -1676,6 +1725,11 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == ID_ADDPROFILE && Notify == BN_CLICKED) {
 			addNewProfile();
+			return 0;
+		}
+
+		if (Id == ID_REMOVE_PROFILE && Notify == BN_CLICKED) {
+			removeProfile();
 			return 0;
 		}
 
@@ -1874,6 +1928,10 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			SelectGamepadListItem();
 		}
 
+		if (Id == IDC_PROFILE_LIST && pnm->code == LVN_ITEMCHANGED) {
+			SelectProfileListItem();
+		}
+
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_KEYDOWN) {
 			NMLVKEYDOWN* pnmkd = (NMLVKEYDOWN*)lParam;
 			if (pnmkd->wVKey == VK_DELETE) {
@@ -1928,6 +1986,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 	return 0;
 }
 
+// ---------------------------------------------------------------------------------------------------------
 int InpdCreate()
 {
 	if (bDrvOkay == 0) {
