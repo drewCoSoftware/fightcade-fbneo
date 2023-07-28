@@ -16,10 +16,13 @@
 #define IDC_SET_PLAYER_MESSAGE          9
 #define IDI_APP                         10
 #define ID_NEW_PROFILE                  10
+#define ID_ADDPROFILE                   10
 #define IDI_TV_PLUS                     11
 #define ID_DELETE_PROFILE               11
 #define IDI_TV_MINUS                    12
+#define IDC_EDIT1                       12
 #define IDI_TV_NOTWORKING               13
+#define IDC_PROFILE_NAME                13
 #define IDI_TV_NOTFOUND_ESS             14
 #define IDI_TV_NOTFOUND_NON             15
 #define IDD_SPLASH                      50
@@ -947,7 +950,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        3
 #define _APS_NEXT_COMMAND_VALUE         2
-#define _APS_NEXT_CONTROL_VALUE         10
+#define _APS_NEXT_CONTROL_VALUE         14
 #define _APS_NEXT_SYMED_VALUE           0
 #endif
 #endif

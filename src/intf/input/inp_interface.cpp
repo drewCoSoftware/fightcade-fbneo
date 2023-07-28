@@ -174,6 +174,12 @@ INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount) {
 
 
 // ------------------------------------------------------------------------------------------------------------------------
+INT32 InputAddInputProfile(const TCHAR* name) {
+	INT32 nRet = pInputInOut[nInputSelect]->AddInputProfile(name);
+	return nRet;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
 INT32 InputSaveProfiles() {
 	INT32 nRet = 0;
 

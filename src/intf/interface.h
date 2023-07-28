@@ -99,6 +99,7 @@ struct InputInOut {
 
 	// Save the current set of input profiles!
 	INT32(*SaveInputProfiles)();
+	INT32(*AddInputProfile)(const TCHAR* name);
 
 	const TCHAR* szModuleName;
 };
@@ -117,6 +118,7 @@ INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 
 INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount);
 INT32 InputSaveProfiles();
+INT32 InputAddInputProfile(const TCHAR* name);
 
 extern bool bInputOkay;
 extern UINT32 nInputSelect;

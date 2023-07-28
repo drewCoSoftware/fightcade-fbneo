@@ -23,7 +23,6 @@ static INT32 nPadCount;
 static int nSelectedPadIndex = -1;
 
 
-///InputGetProfiles(profileInfos, &nProfileCount);
 static InputProfileEntry* profileInfos[MAX_GAMEPAD];
 static INT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
@@ -368,7 +367,7 @@ int InpdUpdate()
 		return 0;
 	}
 	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
-		
+
 		UINT16 pressed = InputFind(8);
 		//// Here we want to detect the up/down buttons so that
 		//// we can cycle through the available profiles.
@@ -562,7 +561,7 @@ static int ProfileListBegin()
 
 
 	LvCol.cx = 0x95;		// Column Width.
-	LvCol.pszText =  _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
+	LvCol.pszText = _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
 	SendMessage(hList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
 
 	//LvCol.cx = 0x38;
@@ -672,11 +671,11 @@ static int ProfileListMake(int bBuild) {
 		//}
 		//else
 		//{
-			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
-//		}
+		SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
+		//		}
 
-		// Populate the ALIAS column (TODO)
-	//	updateListboxAlias(hList, i, aliasBuffer, MAX_ALIAS_CHARS, true);
+				// Populate the ALIAS column (TODO)
+			//	updateListboxAlias(hList, i, aliasBuffer, MAX_ALIAS_CHARS, true);
 
 
 		LVITEM LvItem;
@@ -687,7 +686,7 @@ static int ProfileListMake(int bBuild) {
 		LvItem.iItem = i;
 		LvItem.iSubItem = 0;
 		LvItem.pszText = profile->Name; // aliasBuffer; // _T(aliasBuffer);
-		SendMessage(hList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+		SendMessage(hList, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		//// Populate the GUID column
 		//memset(&LvItem, 0, sizeof(LvItem));
@@ -1007,6 +1006,10 @@ static void InitComboboxes()
 	RefreshPlayerSelectComboBoxes();
 }
 
+static void RefreshProfileData() {
+	InputGetProfiles(profileInfos, &nProfileCount);
+}
+
 static int InpdInit()
 {
 	// We are just going to hard-code this mapping for now.
@@ -1020,6 +1023,7 @@ static int InpdInit()
 
 	hInpdList = GetDlgItem(hInpdDlg, IDC_INPD_LIST);
 	hGamepadList = GetDlgItem(hInpdDlg, IDC_GAMEPAD_LIST);
+	hProfileList = GetDlgItem(hInpdDlg, IDC_PROFILE_LIST);
 
 	// Allocate a last val array for the last input values
 	nMemLen = nGameInpCount * sizeof(char);
@@ -1031,7 +1035,7 @@ static int InpdInit()
 
 
 	InputGetGamepads(padInfos, &nPadCount);
-	InputGetProfiles(profileInfos, &nProfileCount);
+	RefreshProfileData();
 
 	InpdListBegin();
 	InpdListMake(1);
@@ -1203,12 +1207,12 @@ static int ActivateInputListItem()
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-		}
+	}
 
 	GameInpCheckLeftAlt();
 
 	return 0;
-	}
+}
 
 #if 0
 static int NewMacroButton()
@@ -1581,6 +1585,30 @@ static void saveMappingsInfo() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+// Add a new input mapping profile into the system.
+static void addNewProfile() {
+
+	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
+	SendDlgItemMessage(hInpdDlg, IDC_PROFILE_NAME, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
+
+	// No text, bail.
+	// TODO: We can track text events to disable the button, check for dupes, etc.
+	if (aliasBuffer == 0 || wcslen(aliasBuffer) == 0)
+	{
+		return;
+	}
+
+	INT32 added = InputAddInputProfile(aliasBuffer);
+	if (added == 0)
+	{
+		// Repopulate the alias list.
+		RefreshProfileData();
+		ProfileListMake(1);
+	}
+
+}
+
+// ---------------------------------------------------------------------------------------------------------
 static void saveAliasInfo() {
 	if (nSelectedPadIndex == -1) { return; }
 
@@ -1601,6 +1629,7 @@ static void saveAliasInfo() {
 	InpdUseUpdate();
 }
 
+// ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	if (Msg == WM_INITDIALOG) {
@@ -1642,6 +1671,11 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
 			saveAliasInfo();
+			return 0;
+		}
+
+		if (Id == ID_ADDPROFILE && Notify == BN_CLICKED) {
+			addNewProfile();
 			return 0;
 		}
 

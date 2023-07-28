@@ -100,7 +100,7 @@ HWND hDinpWnd;
 
 bool firstInit = true;
 
-int inputProfileCount;
+// int inputProfileCount;
 
 
 int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
@@ -533,7 +533,7 @@ void refreshEntryMap() {
 
 // ---------------------------------------------------------------------------------------------------------
 INT32 loadInputProfiles() {
-	bool mappingsLoaded = false;
+	bool profilesLoaded = false;
 	TCHAR* szFileName = _T("config/input_profiles.dat");
 
 	FILE* fp = _tfopen(szFileName, _T("r"));
@@ -561,18 +561,16 @@ INT32 loadInputProfiles() {
 		}
 
 		fclose(fp);
-		mappingsLoaded = true;
+		profilesLoaded = true;
 	}
 	else
 	{
 		// File doesn't exist?
 		// We will set some default data.  Any new gamepads will be added during the merge step!
-		clearGamepadMappingData();
+		clearInputProfilesData();
 	}
 
-	refreshEntryMap();
-
-	return mappingsLoaded ? 0 : -1;
+	return profilesLoaded ? 0 : -1;
 }
 // ---------------------------------------------------------------------------------------------------------
 // Save all of the gamepad data to disk.  Alias + button mappings.....
@@ -615,12 +613,8 @@ INT32 saveInputProfiles() {
 }
 
 
-
-
-
 // ---------------------------------------------------------------------------------------------------------
-// TODO: This needs to be ported....
-void addInputProfile(const TCHAR* profileName) {
+INT32 addInputProfile(const TCHAR* profileName) {
 	// TODO: Don't allow duplicate names!
 
 	UINT16 index = inputProfiles.entryCount;
@@ -630,8 +624,10 @@ void addInputProfile(const TCHAR* profileName) {
 	inputProfiles.entryCount += 1;
 
 	// This is all we need, just to add the guid....
-	InputProfileEntry& e = inputProfiles.entries[index];
+	InputProfileEntry& e = inputProfiles.entries[index]; 
 	wcscpy(e.Name, profileName);
+
+	saveInputProfiles();
 }
 
 //// ---------------------------------------------------------------------------------------------------------
@@ -728,61 +724,6 @@ bool FileExists(TCHAR* szFileName)
 	return res;
 }
 
-// ---------------------------------------------------------------------------------------------------------
-INT32 loadProfiles() {
-	throw std::exception("NOT SUPPORTED YET!");
-
-	bool mappingsLoaded = false;
-	TCHAR* szFileName = _T("config/gamepads.dat");
-
-	FILE* fp = _tfopen(szFileName, _T("r"));
-	if (fp) {
-		clearGamepadMappingData();
-
-		// LOAD + CHECK HEADER:
-		CHAR header[7];
-		ReadData(fp, header, 6);
-		header[6] = 0;	// Null terminate!
-		UINT16 version = ReadUint16(fp);
-
-		if (strcmp(header, "GP-MAP") != 0 || version != 1) {
-			throw "INVALID HEADER DATA!";
-		}
-
-		UINT16 entryCount = ReadUint16(fp);
-		gamepadFile.entryCount = entryCount;
-		for (size_t i = 0; i < entryCount; i++)
-		{
-			GamepadFileEntry& e = gamepadFile.entries[i];
-			e.info.guidInstance = ReadData_G<GUID>(fp);
-			ReadTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
-
-			UINT16 profileCount = ReadUint16(fp);
-			if (profileCount != 1) { throw "INVALID PROFILE COUNT!"; }
-
-			// Read all of the profiles (in a loop (future))
-			GamepadInputProfile& p = e.profile; //[j];
-			ReadTCHAR(fp, p.driverName, MAX_NAME);
-			ReadTCHAR(fp, p.profileName, MAX_NAME);
-
-			ReadButtonData(fp, p);
-		}
-
-		fclose(fp);
-		mappingsLoaded = true;
-	}
-	else
-	{
-		// File doesn't exist?
-		// We will set some default data.  Any new gamepads will be added during the merge step!
-		clearGamepadMappingData();
-	}
-
-	refreshEntryMap();
-
-	return mappingsLoaded ? 0 : -1;
-}
-
 
 // ---------------------------------------------------------------------------------------------------------
 INT32 loadGamepadMappings() {
@@ -838,7 +779,7 @@ INT32 loadGamepadMappings() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-INT32 getProfiles(InputProfileEntry** ppProfileInfos, INT32* nProfileCount)
+INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, INT32* nProfileCount)
 {
 	// This is where we will load our mapping information.
 	for (size_t i = 0; i < MAX_INPUT_PROFILE; i++)
@@ -847,13 +788,11 @@ INT32 getProfiles(InputProfileEntry** ppProfileInfos, INT32* nProfileCount)
 	}
 
 	// Populate the array with the pointers...
-	*nProfileCount = inputProfileCount;
-	for (size_t i = 0; i < inputProfileCount; i++)
+	*nProfileCount = inputProfiles.entryCount;
+	for (size_t i = 0; i < inputProfiles.entryCount; i++)
 	{
 		ppProfileInfos[i] = &inputProfiles.entries[i];
 	}
-
-	*nProfileCount = inputProfileCount;
 
 	return 0;
 }
@@ -1505,4 +1444,4 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, getProfiles, saveInputProfiles, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, _T("DirectInput8 input") };
