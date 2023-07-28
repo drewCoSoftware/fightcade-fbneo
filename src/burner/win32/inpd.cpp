@@ -20,14 +20,15 @@ static HWND hP2Select;
 #define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
-// static int nSelectedPadIndex = -1;
 
 
-static InputProfileEntry* inputMappings[MAX_PROFILE_LEN];
+static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
 static INT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
 
-// Text buffer for the gamepad alias.
+// Text buffer for the gamepad alias + other text fields.
+// We don't really need this here, it's just where it landed and there hasn't been a great need
+// to use in-function buffers yet.
 static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
 
 static playerInputs sfiii3nPlayerInputs;
@@ -35,35 +36,63 @@ static playerInputs sfiii3nPlayerInputs;
 enum EDialogState {
 	DIALOGSTATE_NORMAL = 0,
 	DIALOGSTATE_SET_PLAYER,			// Set pad index for player.
-	DIALOGSTATE_CHOOSE_PROFILE		// Choose the profile for the player.
+	DIALOGSTATE_CHOOSE_PROFILE
 };
+int _DetectPlayerIndex = -1;
+int _SelectedPadIndex = -1;
 
-int _SetPlayerIndex = -1;
+// Choose profile stuff (placeholder)
 int _ProfileIndex = -1;
 int _LastUpDown = 0;
 
 EDialogState _CurState = DIALOGSTATE_NORMAL;
+
+#define ALIAS_INDEX 0
+#define STATE_INDEX 1
+#define GUID_INDEX 2
+
+// ---------------------------------------------------------------------------------------------------------
+static void SetEnabled(int id, BOOL bEnable)
+{
+	EnableWindow(GetDlgItem(hInpdDlg, id), bEnable);
+}
 
 // ------------------------------------------------------------------------------------------
 static void SetState(EDialogState newState) {
 	TCHAR buffer[256];
 
 	switch (newState) {
-	case DIALOGSTATE_SET_PLAYER:
-	{
-		int label = _SetPlayerIndex + 1;
-
-		swprintf(buffer, _T("Press button for player %d"), label);
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-	}
-	break;
-
 	case DIALOGSTATE_NORMAL:
 	{
 		// Clear the text.
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
+		SetEnabled(ID_SET_PLAYER1, true);
+		SetEnabled(ID_SET_PLAYER2, true);
+
+		_SelectedPadIndex = -1;
+		_DetectPlayerIndex = -1;
 	}
 	break;
+
+	case DIALOGSTATE_SET_PLAYER:
+	{
+		int label = _DetectPlayerIndex + 1;
+
+		swprintf(buffer, _T("Press button for player %d"), label);
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
+
+		// Disable the correct button....
+		if (_DetectPlayerIndex == 0) {
+			SetEnabled(ID_SET_PLAYER1, true);
+			SetEnabled(ID_SET_PLAYER2, false);
+		}
+		else {
+			SetEnabled(ID_SET_PLAYER1, false);
+			SetEnabled(ID_SET_PLAYER2, true);
+		}
+	}
+	break;
+
 
 	case DIALOGSTATE_CHOOSE_PROFILE:
 	{
@@ -80,6 +109,130 @@ static void SetState(EDialogState newState) {
 
 	_CurState = newState;
 }
+
+// REFACTOR: Move these defs.
+#define DIR_UP -1
+#define DIR_DOWN 1
+#define DIR_NONE 0
+#define Y_AXIS_CODE 1
+
+// --------------------------------------------------------------------------------------------------
+// For the given pad index, returns an int that is -1 for up, 1 for down, and zero
+// if an up or down button is not pressed.
+// TODO: These need to be able to detect up/down keys from the keyboard too!
+static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
+
+
+	int index = 0;
+	UINT16 nCode = 0;
+
+
+	if (GetIndexAndCodeFromButton(buttons, index, nCode) == 0)
+	{
+		if (index != padIndex) { return DIR_NONE; }
+
+		// NOTE: The commented blocks come from the code that formats the labels
+		// when printing out hte button lists:
+		// This is how I determined what is up and what is down.
+		if (nCode < 0x10) {
+			//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
+			//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+			//if (nCode < 4) {
+			//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+			//}
+			//else {
+			//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
+			//}
+			//return szString;
+			if (nCode < 4) {
+				UINT16 axisCode = nCode >> 1;
+				UINT16 dirCode = nCode + 2;
+				if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
+				if (dirCode == 4) { return DIR_UP; }
+				if (dirCode == 5) { return DIR_DOWN; }
+			}
+			else {
+			}
+		}
+		if (nCode < 0x20) {
+			UINT16 dirCode = nCode & 3;
+			if (dirCode == 2) { return DIR_UP; }
+			if (dirCode == 3) { return DIR_DOWN; }
+			//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+			//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+			//return szString;
+		}
+
+		int xxxxxxx = 10;
+	}
+
+
+	return DIR_NONE;
+}
+
+// --------------------------------------------------------------------------------------------------
+static void ProcessState() {
+	if (_CurState == DIALOGSTATE_SET_PLAYER) {
+		// We have to iterate through inputs and select those that are from gamepads.
+		// From there we can determine the index of that gamepad....
+		UINT16 pressed = InputFind(8);
+		int padIndex = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
+		if (padIndex != -1)
+		{
+			// Now that we have a pad index, we can associate it with the currently selected
+			// input profile!
+			_SelectedPadIndex = padIndex;
+			SetState(DIALOGSTATE_CHOOSE_PROFILE);
+		}
+		return 0;
+	}
+	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
+
+		UINT16 pressed = InputFind(8);
+		int padIndex = GetIndexFromButton(pressed);
+
+		// Here we want to detect the up/down buttons so that
+		// we can cycle through the available profiles.
+		// TODO: Make sure that this works with keyboard buttons too!
+		int upDownDir = GetUpOrDownButton(_SelectedPadIndex, pressed);
+
+		bool dirChanged = upDownDir != _LastUpDown;
+		if (dirChanged) {
+			_LastUpDown = upDownDir;
+
+
+			// NOTE: This is where we will change the selected profile....
+			TCHAR buffer[256];
+			swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
+			SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
+
+			// NOTE: We don't really need combo boxes.  We could just update text in a textbox....
+			// I want to keep the combos around tho in case we need them later......
+			// In theory one could still use them to make a selection, and then hit a pad button.....
+
+
+			// FROM CHATGPT:
+			// With a bit of poking, we can certainly figure out how to get the selected index of
+			// the combo box to use when setting the profile..........
+			//void ChangeComboBoxSelection(HWND hWndComboBox, int selectedIndex)
+			//{
+			//	if (hWndComboBox && ::IsWindow(hWndComboBox) && selectedIndex >= 0)
+			//	{
+			//		::SendMessage(hWndComboBox, CB_SETCURSEL, static_cast<WPARAM>(selectedIndex), 0);
+			//	}
+			//}
+
+
+		}
+		else if (upDownDir == 0 && padIndex == _SelectedPadIndex) {
+
+			// User didn't press a direction button, but did press something
+			// else.  They must be happy with their profile selection....
+			throw std::exception("NOT IMPLEMENTED!");
+		}
+	}
+}
+
 
 // -------------------------------------------------------------------------------------
 // Update which input is using which PC input
@@ -174,161 +327,8 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 
 
 }
-//
-//// -------------------------------------------------------------------------------------
-//// Populate the list of all currently pressed gamepad buttons.
-//// Nonzero return code indicates that the function doesn't have valid data/failed.
-//static int GetPressedGamepadButtons(std::vector<UINT16>& buttonCodes) {
-//	buttonCodes.clear();
-//
-//	unsigned int i, j = 0;
-//	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
-//	unsigned short* pLastVal = NULL;			// Pointer to the 'last value' data.
-//	unsigned short nThisVal;
-//	if (hInpdList == NULL) {
-//		return 1;
-//	}
-//	if (LastVal == NULL) {
-//		return 1;
-//	}
-//
-//	for (i = 0, pGameInput = GameInp, pLastVal = LastVal; i < nGameInpCount; i++, pGameInput++, pLastVal++) {
-//		if (pGameInput->nType == 0) {
-//			continue;
-//		}
-//
-//		//// This whole thing can probably just be passed in from the calling function.
-//		//if (pGameInput->nType & BIT_GROUP_ANALOG) {
-//		//	// Don't care about analog inputs at this time....
-//		//	continue;
-//		//}
-//		if (pGameInput->nType & BIT_GROUP_ANALOG) {
-//			//if (bRunPause) {														// Update LastVal
-//			//	nThisVal = pGameInput->Input.nVal;
-//			//}
-//			//else {
-//			//	nThisVal = *pGameInput->Input.pShortVal;
-//			//}
-//
-//			//// Continue if input state hasn't changed.
-//			//if (bLastValDefined && (pGameInput->nType != BIT_ANALOG_REL || nThisVal) && pGameInput->Input.nVal == *pLastVal) {
-//			//	j++;
-//			//	continue;
-//			//}
-//
-//			//*pLastVal = nThisVal;
-//			continue;
-//		}
-//		else {
-//			if (bRunPause) {														// Update LastVal
-//				nThisVal = pGameInput->Input.nVal;
-//			}
-//			else {
-//				nThisVal = *pGameInput->Input.pVal;
-//			}
-//		}
-//
-//		switch (pGameInput->nType) {
-//
-//			// We only care about digital inputs since this patch is for fighting games.
-//			// We can care about others later.
-//		case BIT_DIGITAL: {
-//
-//			if (nThisVal == 1)
-//			{
-//				UINT16 code = pGameInput->Input.Switch.nCode;
-//				int index = GetIndexFromButton(code);
-//				if (index != -1)
-//				{
-//					buttonCodes.push_back(code);
-//				}
-//			}
-//		}
-//		default:
-//			// Do nothing:
-//			break;
-//		}
-//	}
-//	return 0;
-//}
-
-//
-//// ---------------------------------------------------------------------------------------------
-//// Returns the index of the first detected button that is currently pressed on a gamepad,
-//// or -1 if nothing is pressed.
-//static int GetGamepadIndex(std::vector<UINT16> pressedButtons) {
-//
-//	int size = pressedButtons.size();
-//	for (size_t i = 0; i < size; i++)
-//	{
-//		int res = GetIndexFromButton(pressedButtons[i]);
-//		if (res != -1)
-//		{
-//			return res;
-//		}
-//	}
-//
-//	return -1;
-//}
-
-// REFACTOR: Move these defs.
-#define DIR_UP -1
-#define DIR_DOWN 1
-#define DIR_NONE 0
-#define Y_AXIS_CODE 1
-
-// --------------------------------------------------------------------------------------------------
-// For the given pad index, returns an int that is -1 for up, 1 for down, and zero
-// if an up or down button is not pressed.
-static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
 
 
-	int index = 0;
-	UINT16 nCode = 0;
-
-
-	if (GetIndexAndCodeFromButton(buttons, index, nCode) == 0)
-	{
-		if (index != padIndex) { return DIR_NONE; }
-
-		// NOTE: The commented blocks come from the code that formats the labels
-		// when printing out hte button lists:
-		// This is how I determined what is up and what is down.
-		if (nCode < 0x10) {
-			//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
-			//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			//if (nCode < 4) {
-			//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-			//}
-			//else {
-			//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
-			//}
-			//return szString;
-			if (nCode < 4) {
-				UINT16 axisCode = nCode >> 1;
-				UINT16 dirCode = nCode + 2;
-				if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
-				if (dirCode == 4) { return DIR_UP; }
-				if (dirCode == 5) { return DIR_DOWN; }
-			}
-			else {
-			}
-		}
-		if (nCode < 0x20) {
-			UINT16 dirCode = nCode & 3;
-			if (dirCode == 2) { return DIR_UP; }
-			if (dirCode == 3) { return DIR_DOWN; }
-			//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
-			//return szString;
-		}
-
-		int xxxxxxx = 10;
-	}
-
-
-	return DIR_NONE;
-}
 
 // ---------------------------------------------------------------------------------------------
 // This is where we can wait for p1/p2 to check in and what-not....
@@ -336,7 +336,6 @@ int InpdUpdate()
 {
 	//std::vector<UINT16> pressedPadButtons;
 	//GetPressedGamepadButtons(pressedPadButtons);
-
 
 	unsigned int i, j = 0;
 	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
@@ -351,39 +350,7 @@ int InpdUpdate()
 
 
 
-	if (_CurState == DIALOGSTATE_SET_PLAYER) {
-		// We have to iterate through inputs and select those that are from gamepads.
-		// From there we can determine the index of that gamepad....
-		UINT16 pressed = InputFind(8);
-		int index = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
-		if (index != -1)
-		{
-			_SetPlayerIndex = index;
-			// We have an index for the player, so we can go to the 'select profile' part of the process....
-			SetState(DIALOGSTATE_CHOOSE_PROFILE);
-		}
-		return 0;
-	}
-	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
-
-		UINT16 pressed = InputFind(8);
-		//// Here we want to detect the up/down buttons so that
-		//// we can cycle through the available profiles.
-		int upDownDir = GetUpOrDownButton(_SetPlayerIndex, pressed);
-
-		bool dirChanged = upDownDir != _LastUpDown;
-		if (dirChanged)
-		{
-			_LastUpDown = upDownDir;
-
-
-			// NOTE: This is where we will change the selected profile....
-			TCHAR buffer[256];
-			swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
-			SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-		}
-
-	}
+	ProcessState();
 
 
 	// Update the values of all the inputs.
@@ -482,15 +449,6 @@ int InpdUpdate()
 	return 0;
 }
 
-#define ALIAS_INDEX 0
-#define STATE_INDEX 1
-#define GUID_INDEX 2
-
-// ---------------------------------------------------------------------------------------------------------
-static void SetEnabled(int id, BOOL bEnable)
-{
-	EnableWindow(GetDlgItem(hInpdDlg, id), bEnable);
-}
 
 // ---------------------------------------------------------------------------------------------------------
 void SetStrBuffer(TCHAR* buffer, int bufLen, TCHAR* data) {
@@ -651,7 +609,7 @@ static int ProfileListMake(int bBuild) {
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nProfileCount; i++) {
-		InputProfileEntry* profile = inputMappings[i];
+		InputProfileEntry* profile = inputProfiles[i];
 
 		SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
 
@@ -803,25 +761,22 @@ static int SetPlayerMappings()
 }
 
 
-
-// ------------------------------------------------------------------------------------------------------
-static int OnPlayerSelectionChanged() {
-
-	// TODO: Enable/disable the 'set' button that is under the combos....
-	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
-	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
-
-	if (p1Index == CB_ERR && p2Index == CB_ERR) {
-		// Disable the set button and exit!
-		SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
-		return 1;
-	}
-
-	// If there is at least one valid selection, then we can set the mappings.
-	SetEnabled(ID_SET_PLAYER_MAPPINGS, true);
-
-	return 0;
-}
+// Removed, we don't really need this information.....
+// We don't even really need combos for that matter.....
+//// ------------------------------------------------------------------------------------------------------
+//static int OnPlayerSelectionChanged() {
+//
+//	// TODO: Enable/disable the 'set' button that is under the combos....
+//	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
+//	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
+//
+//	bool p1Enabled = p1Index != CB_ERR && p1Index > -1;
+//	bool p2Enabled = p2Index != CB_ERR && p2Index > -1;
+//	SetEnabled(ID_SET_PLAYER1, p1Enabled);
+//	SetEnabled(ID_SET_PLAYER2, p2Enabled);
+//
+//	return 0;
+//}
 
 // ------------------------------------------------------------------------------------------------------
 static int SelectProfileListItem()
@@ -951,6 +906,7 @@ int InpdListMake(int bBuild)
 	return 0;
 }
 
+// ------------------------------------------------------------------------------------------
 static void DisablePresets()
 {
 	EnableWindow(hInpdPci, FALSE);
@@ -958,7 +914,6 @@ static void DisablePresets()
 	EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_DEFAULT), FALSE);
 	EnableWindow(GetDlgItem(hInpdDlg, IDC_INPD_USE), FALSE);
 }
-
 
 // ------------------------------------------------------------------------------------------
 static void RefreshPlayerSelectComboBoxes() {
@@ -968,15 +923,15 @@ static void RefreshPlayerSelectComboBoxes() {
 	SendMessage(hP1Select, CB_RESETCONTENT, 0, 0);
 	SendMessage(hP2Select, CB_RESETCONTENT, 0, 0);
 
-	for (size_t i = 0; i < nPadCount; i++)
+	for (size_t i = 0; i < nProfileCount; i++)
 	{
-		TCHAR* padAlias = padInfos[i]->info.Alias;
+		TCHAR* padAlias = inputProfiles[i]->Name;
 		SendMessage(hP1Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
 		SendMessage(hP2Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
 	}
 
-	// We should only be enabled if one or more selections are currently made.....
-	SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
+	//// We should only be enabled if one or more selections are currently made.....
+	//SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -1016,7 +971,7 @@ static void InitComboboxes()
 
 // ------------------------------------------------------------------------------------------------------------
 static void RefreshProfileData() {
-	InputGetProfiles(inputMappings, &nProfileCount);
+	InputGetProfiles(inputProfiles, &nProfileCount);
 }
 
 static int InpdInit()
@@ -1256,7 +1211,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-}
+	}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -1549,7 +1504,7 @@ static void SliderExit()
 static void saveMappingsInfo() {
 	// NOTE: It makes more sense to just keep a mapping profile laying around.....
 	if (nSelectedProfileIndex == -1) { return; }
-	InputProfileEntry* profile = inputMappings[nSelectedProfileIndex];
+	InputProfileEntry* profile = inputProfiles[nSelectedProfileIndex];
 
 	// We will copy + translate the values from the p1 inputs.....
 	unsigned int i, j = 0;
@@ -1611,6 +1566,8 @@ static void addNewProfile() {
 		// Repopulate the alias list.
 		RefreshProfileData();
 		ProfileListMake(1);
+
+		RefreshPlayerSelectComboBoxes();
 	}
 
 }
@@ -1623,6 +1580,7 @@ static void removeProfile() {
 
 	OnProfileListDeselect();
 
+	RefreshPlayerSelectComboBoxes();
 	RefreshProfileData();
 	ProfileListMake(1);
 }
@@ -1681,7 +1639,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDOK && Notify == BN_CLICKED) {
 			ActivateInputListItem();
-//			SelectGamepadListItem();
+			//			SelectGamepadListItem();
 			return 0;
 		}
 		if (Id == IDCANCEL && Notify == BN_CLICKED) {
@@ -1718,8 +1676,6 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			InputGetGamepads(padInfos, &nPadCount);
 			GamepadListMake(1);
 
-			RefreshPlayerSelectComboBoxes();
-
 			// Update the labels in the UI.
 			InpdUseUpdate();
 
@@ -1729,13 +1685,13 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == ID_SET_PLAYER1 && Notify == BN_CLICKED)
 		{
-			_SetPlayerIndex = 0;
+			_DetectPlayerIndex = 0;
 			SetState(DIALOGSTATE_SET_PLAYER);
 			return 0;
 		}
 		if (Id == ID_SET_PLAYER2 && Notify == BN_CLICKED)
 		{
-			_SetPlayerIndex = 1;
+			_DetectPlayerIndex = 1;
 			SetState(DIALOGSTATE_SET_PLAYER);
 			return 0;
 		}
