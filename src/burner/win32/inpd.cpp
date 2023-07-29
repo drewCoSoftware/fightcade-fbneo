@@ -62,9 +62,19 @@ EDialogState _CurState = DIALOGSTATE_NORMAL;
 
 #define DIR_UP -1
 #define DIR_DOWN 1
+
+#define DIR_LEFT -1
+#define DIR_RIGHT 1
+
 #define DIR_NONE 0
 #define Y_AXIS_CODE 1
+#define X_AXIS_CODE 0
 
+// Keyboard arrow key codes.
+#define KEYB_LEFT 203
+#define KEYB_UP 200
+#define KEYB_RIGHT 205
+#define KEYB_DOWN 208
 
 // ---------------------------------------------------------------------------------------------------------
 static INT32 SetComboIndex(HWND handle, int index) {
@@ -131,33 +141,73 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 		code = codePart;
 		index = indexPart;
 
-		return 0;
+		return 1;
 	}
 	else
 	{
 		// Not a gamepad input.
-		return -1;
+		return 0;
 	}
+}
+
+
+// --------------------------------------------------------------------------------------------------
+// For the given pad index, returns an int that is -1 for left, 1 for right, and zero
+// if neither are pressed.
+// 'allButtons' is passed in so we can detect keyboard keys.
+static int GetLeftOrRightButton(int padIndex, INT32 gamepadButtons, INT32 allButtons) {
+
+	int index = 0;
+	UINT16 nCode = 0;
+
+	if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
+	{
+		if (index != padIndex) { return DIR_NONE; }
+
+		// See the comments in 'GetUpOrDownButton' for information on how the button codes are derived.
+		if (nCode < 0x10) {
+			if (nCode < 4) {
+				UINT16 axisCode = nCode >> 1;
+				UINT16 dirCode = nCode + 2;
+				if (axisCode != X_AXIS_CODE) { return DIR_NONE; }
+				if (dirCode == 2) { return DIR_LEFT; }
+				if (dirCode == 3) { return DIR_RIGHT; }
+			}
+			else {
+				// Is this a condition we care about?
+				int x = 10;
+			}
+		}
+		if (nCode < 0x20) {
+			UINT16 dirCode = nCode & 3;
+			if (dirCode == 0) { return DIR_LEFT; }
+			if (dirCode == 1) { return DIR_RIGHT; }
+		}
+	}
+
+	// We might have some keyboard buttons....
+	if (allButtons == KEYB_LEFT) { return DIR_LEFT; }
+	if (allButtons == KEYB_RIGHT) { return DIR_RIGHT; }
+
+	return DIR_NONE;
 }
 
 // --------------------------------------------------------------------------------------------------
 // For the given pad index, returns an int that is -1 for up, 1 for down, and zero
 // if an up or down button is not pressed.
 // TODO: These need to be able to detect up/down keys from the keyboard too!
-static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
-
+static int GetUpOrDownButton(int padIndex, INT32 gamepadButtons, INT32 allButtons) {
 
 	int index = 0;
 	UINT16 nCode = 0;
 
-
-	if (GetIndexAndCodeFromButton(buttons, index, nCode) == 0)
+	if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
 	{
 		if (index != padIndex) { return DIR_NONE; }
 
 		// NOTE: The commented blocks come from the code that formats the labels
-		// when printing out hte button lists:
-		// This is how I determined what is up and what is down.
+		// when printing out the button lists:
+		// This is how I determined what is up and what is down, left and right.
 		if (nCode < 0x10) {
 			//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 			//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
@@ -176,6 +226,8 @@ static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
 				if (dirCode == 5) { return DIR_DOWN; }
 			}
 			else {
+				// Is this a condition we care about?
+				int x = 10;
 			}
 		}
 		if (nCode < 0x20) {
@@ -186,10 +238,11 @@ static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
 			//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
 			//return szString;
 		}
-
-		int xxxxxxx = 10;
 	}
 
+	// We might have some keyboard buttons....
+	if (allButtons == KEYB_UP) { return DIR_UP; }
+	if (allButtons == KEYB_DOWN) { return DIR_DOWN; }
 
 	return DIR_NONE;
 }
@@ -316,7 +369,13 @@ static void ProcessState() {
 			// Here we want to detect the up/down buttons so that
 			// we can cycle through the available profiles.
 			// TODO: Make sure that this works with keyboard buttons too!
-		int dirDelta = GetUpOrDownButton(_SelectedPadIndex, usePressed);
+		int dirDelta = GetUpOrDownButton(_SelectedPadIndex, usePressed, pressed);
+
+		// Maybe left or right?
+		if (dirDelta == 0)
+		{
+			dirDelta = GetLeftOrRightButton(_SelectedPadIndex, usePressed, pressed);
+		}
 
 		bool dirChanged = dirDelta != _LastUpDown;
 		if (dirChanged) {
