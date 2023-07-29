@@ -25,6 +25,7 @@ static INT32 nPadCount;
 static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
 static INT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
+static HWND hActivePlayerCombo;
 
 // Text buffer for the gamepad alias + other text fields.
 // We don't really need this here, it's just where it landed and there hasn't been a great need
@@ -45,76 +46,99 @@ int _SelectedPadIndex = -1;
 int _ProfileIndex = -1;
 int _LastUpDown = 0;
 
+// The last button code that we detected as pressed.
+// The input system has a makework system of checking for button presses,
+// so we just keep track of this to help us determine when a button is released....
+//bool AllReleased = true;		
+//UINT16 CurPressed = 0;		// Currently pressed button (for update call)
+INT32 LastPressed = -1;
+
+
 EDialogState _CurState = DIALOGSTATE_NORMAL;
 
 #define ALIAS_INDEX 0
 #define STATE_INDEX 1
 #define GUID_INDEX 2
 
-// ---------------------------------------------------------------------------------------------------------
-static void SetEnabled(int id, BOOL bEnable)
-{
-	EnableWindow(GetDlgItem(hInpdDlg, id), bEnable);
-}
-
-// ------------------------------------------------------------------------------------------
-static void SetState(EDialogState newState) {
-	TCHAR buffer[256];
-
-	switch (newState) {
-	case DIALOGSTATE_NORMAL:
-	{
-		// Clear the text.
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
-		SetEnabled(ID_SET_PLAYER1, true);
-		SetEnabled(ID_SET_PLAYER2, true);
-
-		_SelectedPadIndex = -1;
-		_DetectPlayerIndex = -1;
-	}
-	break;
-
-	case DIALOGSTATE_SET_PLAYER:
-	{
-		int label = _DetectPlayerIndex + 1;
-
-		swprintf(buffer, _T("Press button for player %d"), label);
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-
-		// Disable the correct button....
-		if (_DetectPlayerIndex == 0) {
-			SetEnabled(ID_SET_PLAYER1, true);
-			SetEnabled(ID_SET_PLAYER2, false);
-		}
-		else {
-			SetEnabled(ID_SET_PLAYER1, false);
-			SetEnabled(ID_SET_PLAYER2, true);
-		}
-	}
-	break;
-
-
-	case DIALOGSTATE_CHOOSE_PROFILE:
-	{
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Choose profile and press a button"));
-		_ProfileIndex = -1;
-		_LastUpDown = -2;
-	}
-	break;
-
-
-	default:
-		break;
-	}
-
-	_CurState = newState;
-}
-
-// REFACTOR: Move these defs.
 #define DIR_UP -1
 #define DIR_DOWN 1
 #define DIR_NONE 0
 #define Y_AXIS_CODE 1
+
+
+// ---------------------------------------------------------------------------------------------------------
+static INT32 SetComboIndex(HWND handle, int index) {
+
+	SendMessage(handle, CB_SETCURSEL, index, 0);
+	//if (_SelectedPadIndex == 0) {
+
+	//}
+	//else if (_SelectedPadIndex == 1) {
+
+	//}
+	//else {
+	//	// Invalid Id...
+	//	return -1;
+	//}
+
+
+	// NOTE: We don't really need combo boxes.  We could just update text in a textbox....
+	// I want to keep the combos around tho in case we need them later......
+	// In theory one could still use them to make a selection, and then hit a pad button.....
+
+
+	// FROM CHATGPT:
+	// With a bit of poking, we can certainly figure out how to get the selected index of
+	// the combo box to use when setting the profile..........
+	//void ChangeComboBoxSelection(HWND hWndComboBox, int selectedIndex)
+	//{
+	//	if (hWndComboBox && ::IsWindow(hWndComboBox) && selectedIndex >= 0)
+	//	{
+	//		::SendMessage(hWndComboBox, CB_SETCURSEL, static_cast<WPARAM>(selectedIndex), 0);
+	//	}
+	//}
+
+	return 0;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Enable / disable a control based on its ID.
+static void SetEnabled(int id, BOOL bEnable) {
+	EnableWindow(GetDlgItem(hInpdDlg, id), bEnable);
+}
+
+
+// -------------------------------------------------------------------------------------
+static int GetIndexFromButton(UINT16 button) {
+	if (button >= 0x4000 && button < 0x8000)
+	{
+		int index = (button >> 8) & 0x3F;
+		return index;
+	}
+	return -1;
+}
+
+// -------------------------------------------------------------------------------------
+// From the given button, set the pad index and button code.
+// Returns 0 when the values are correctly set.
+static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
+
+	if (button >= 0x4000 && button < 0x8000)
+	{
+		UINT16 codePart = button & 0xFF;
+		int indexPart = (button >> 8) & 0x3F;
+
+		code = codePart;
+		index = indexPart;
+
+		return 0;
+	}
+	else
+	{
+		// Not a gamepad input.
+		return -1;
+	}
+}
 
 // --------------------------------------------------------------------------------------------------
 // For the given pad index, returns an int that is -1 for up, 1 for down, and zero
@@ -170,13 +194,111 @@ static int GetUpOrDownButton(int padIndex, UINT16 buttons) {
 	return DIR_NONE;
 }
 
+// ------------------------------------------------------------------------------------------
+static void SetState(EDialogState newState) {
+	TCHAR buffer[256];
+
+	switch (newState) {
+	case DIALOGSTATE_NORMAL:
+	{
+		// Clear the text.
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
+		SetEnabled(ID_SET_PLAYER1, true);
+		SetEnabled(ID_SET_PLAYER2, true);
+
+		_SelectedPadIndex = -1;
+		_DetectPlayerIndex = -1;
+	}
+	break;
+
+	case DIALOGSTATE_SET_PLAYER:
+	{
+		int label = _DetectPlayerIndex + 1;
+
+		swprintf(buffer, _T("Press button for player %d"), label);
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
+
+		// Disable the correct button....
+		if (_DetectPlayerIndex == 0) {
+			SetEnabled(ID_SET_PLAYER1, true);
+			SetEnabled(ID_SET_PLAYER2, false);
+		}
+		else {
+			SetEnabled(ID_SET_PLAYER1, false);
+			SetEnabled(ID_SET_PLAYER2, true);
+		}
+	}
+	break;
+
+
+	case DIALOGSTATE_CHOOSE_PROFILE:
+	{
+
+		if (_SelectedPadIndex < 0 || _SelectedPadIndex > 1 || nProfileCount < 1)
+		{
+			// Invalid ID or no profiles to choose from.
+			SetState(DIALOGSTATE_NORMAL);
+			return;
+		}
+
+		// We will set a selection in the combo box.
+		hActivePlayerCombo = 0;
+		if (_SelectedPadIndex == 0) {
+			hActivePlayerCombo = hP1Select;
+		}
+		else if (_SelectedPadIndex == 1) {
+			hActivePlayerCombo = hP2Select;
+		}
+
+		SetComboIndex(hActivePlayerCombo, 0);
+
+
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Choose profile and press a button"));
+		_ProfileIndex = -1;
+		_LastUpDown = -2;
+	}
+	break;
+
+
+	default:
+		break;
+	}
+
+	_CurState = newState;
+}
+
 // --------------------------------------------------------------------------------------------------
 static void ProcessState() {
+
+	// We only want to update the pressed button code the first time it is pushed.
+	// If we still have a pressed button on the next cycle we will ignore it.
+	INT32 pressed = InputFind(8);
+	int padIndex = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
+
+	// We only care about pad buttons for this stuff.....
+	INT32 usePressed = -1;
+	if (padIndex != -1)
+	{
+		usePressed = LastPressed == -1 ? pressed : -1;
+		LastPressed = pressed;
+	}
+
+	if (pressed == -1)
+	{
+		// Clear the pressed button....
+		LastPressed = -1;
+	}
+
+
+
+	// Only use 
+	//UINT16 usePressed = AllReleased ? 0 : CurPressed;
+
 	if (_CurState == DIALOGSTATE_SET_PLAYER) {
+
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-		UINT16 pressed = InputFind(8);
-		int padIndex = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
+	//	UINT16 pressed = InputFind(8);
 		if (padIndex != -1)
 		{
 			// Now that we have a pad index, we can associate it with the currently selected
@@ -184,53 +306,52 @@ static void ProcessState() {
 			_SelectedPadIndex = padIndex;
 			SetState(DIALOGSTATE_CHOOSE_PROFILE);
 		}
-		return 0;
+
 	}
 	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
 
-		UINT16 pressed = InputFind(8);
-		int padIndex = GetIndexFromButton(pressed);
+		//	UINT16 pressed = InputFind(8);
+	//		int padIndex = GetIndexFromButton(CurP);
 
-		// Here we want to detect the up/down buttons so that
-		// we can cycle through the available profiles.
-		// TODO: Make sure that this works with keyboard buttons too!
-		int upDownDir = GetUpOrDownButton(_SelectedPadIndex, pressed);
+			// Here we want to detect the up/down buttons so that
+			// we can cycle through the available profiles.
+			// TODO: Make sure that this works with keyboard buttons too!
+		int dirDelta = GetUpOrDownButton(_SelectedPadIndex, usePressed);
 
-		bool dirChanged = upDownDir != _LastUpDown;
+		bool dirChanged = dirDelta != _LastUpDown;
 		if (dirChanged) {
-			_LastUpDown = upDownDir;
+			_LastUpDown = dirDelta;
 
+			int curIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
+			int newIndex = curIndex + dirDelta;
+
+			int maxIndex = nProfileCount - 1;
+
+			if (newIndex < 0) { newIndex = maxIndex; }
+			if (newIndex > maxIndex) { newIndex = 0; }
+
+			SetComboIndex(hActivePlayerCombo, newIndex);
 
 			// NOTE: This is where we will change the selected profile....
-			TCHAR buffer[256];
-			swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
-			SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-
-			// NOTE: We don't really need combo boxes.  We could just update text in a textbox....
-			// I want to keep the combos around tho in case we need them later......
-			// In theory one could still use them to make a selection, and then hit a pad button.....
-
-
-			// FROM CHATGPT:
-			// With a bit of poking, we can certainly figure out how to get the selected index of
-			// the combo box to use when setting the profile..........
-			//void ChangeComboBoxSelection(HWND hWndComboBox, int selectedIndex)
-			//{
-			//	if (hWndComboBox && ::IsWindow(hWndComboBox) && selectedIndex >= 0)
-			//	{
-			//		::SendMessage(hWndComboBox, CB_SETCURSEL, static_cast<WPARAM>(selectedIndex), 0);
-			//	}
-			//}
-
+			//TCHAR buffer[256];
+			//swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
+			//SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 
 		}
-		else if (upDownDir == 0 && padIndex == _SelectedPadIndex) {
+		else if (usePressed != -1 && dirDelta == 0 && padIndex == _SelectedPadIndex) {
 
 			// User didn't press a direction button, but did press something
 			// else.  They must be happy with their profile selection....
 			throw std::exception("NOT IMPLEMENTED!");
 		}
 	}
+
+	//// Only update last pressed if it is zero.
+	//// We can only really track that NOTHING is pressed, not that a certain button has been released.
+	//if (LastPressed == 0)
+	//{
+	//}
+
 }
 
 
@@ -293,42 +414,6 @@ static int InpdUseUpdate()
 
 	return 0;
 }
-
-// -------------------------------------------------------------------------------------
-static int GetIndexFromButton(UINT16 button) {
-	if (button >= 0x4000 && button < 0x8000)
-	{
-		int index = (button >> 8) & 0x3F;
-		return index;
-	}
-	return -1;
-}
-
-// -------------------------------------------------------------------------------------
-// From the given button, set the pad index and button code.
-// Returns 0 when the values are correctly set.
-static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
-
-	if (button >= 0x4000 && button < 0x8000)
-	{
-		UINT16 codePart = button & 0xFF;
-		int indexPart = (button >> 8) & 0x3F;
-
-		code = codePart;
-		index = indexPart;
-
-		return 0;
-	}
-	else
-	{
-		// Not a gamepad input.
-		return -1;
-	}
-
-
-}
-
-
 
 // ---------------------------------------------------------------------------------------------
 // This is where we can wait for p1/p2 to check in and what-not....
@@ -1737,10 +1822,10 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 
-		if ((Id == IDC_INDP_P1SELECT || Id == IDC_INDP_P2SELECT) && Notify == CBN_SELCHANGE) {
-			OnPlayerSelectionChanged();
-			return 0;
-		}
+		//if ((Id == IDC_INDP_P1SELECT || Id == IDC_INDP_P2SELECT) && Notify == CBN_SELCHANGE) {
+		//	OnPlayerSelectionChanged();
+		//	return 0;
+		//}
 
 		if (Id == IDC_INPD_GI && Notify == CBN_SELCHANGE) {
 			int nGi;
