@@ -39,7 +39,7 @@ enum EDialogState {
 	DIALOGSTATE_SET_PLAYER,			// Set pad index for player.
 	DIALOGSTATE_CHOOSE_PROFILE
 };
-int _DetectPlayerIndex = -1;
+int _TargetPlayerIndex = -1;
 int _SelectedPadIndex = -1;
 
 // Choose profile stuff (placeholder)
@@ -247,6 +247,128 @@ static int GetUpOrDownButton(int padIndex, INT32 gamepadButtons, INT32 allButton
 	return DIR_NONE;
 }
 
+
+// -------------------------------------------------------------------------------------
+// Update which input is using which PC input
+static int InpdUseUpdate()
+{
+	unsigned int i, j = 0;
+	struct GameInp* pgi = NULL;
+	if (hInpdList == NULL) {
+		return 1;
+	}
+
+	// Update the values of all the inputs
+	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
+		LVITEM LvItem;
+		TCHAR* pszVal = NULL;
+
+		if (pgi->Input.pVal == NULL) {
+			continue;
+		}
+
+		pszVal = InpToDesc(pgi, padInfos);
+
+		if (_tcscmp(pszVal, _T("code 0x00")) == 0)
+			pszVal = _T("Unassigned (locked)");
+
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT;
+		LvItem.iItem = j;
+		LvItem.iSubItem = 1;
+		LvItem.pszText = pszVal;
+
+		SendMessage(hInpdList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+
+		j++;
+	}
+
+	for (i = 0, pgi = GameInp + nGameInpCount; i < nMacroCount; i++, pgi++) {
+		LVITEM LvItem;
+		TCHAR* pszVal = NULL;
+
+		if (pgi->nInput & GIT_GROUP_MACRO) {
+			pszVal = InpMacroToDesc(pgi);
+
+			if (_tcscmp(pszVal, _T("code 0x00")) == 0)
+				pszVal = _T("Unassigned (locked)");
+
+			memset(&LvItem, 0, sizeof(LvItem));
+			LvItem.mask = LVIF_TEXT;
+			LvItem.iItem = j;
+			LvItem.iSubItem = 1;
+			LvItem.pszText = pszVal;
+
+			SendMessage(hInpdList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+		}
+
+		j++;
+	}
+
+	return 0;
+}
+
+
+// ------------------------------------------------------------------------------------------------------
+static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int inputIndexOffset)
+{
+	if (padIndex == -1 || padIndex >= nPadCount) {
+		// Do nothing.
+		return 1;
+	}
+
+	// Otherwise we are going to iterate over the game input + mapped inputs and set the data accordingly.
+	int i = 0;
+	struct GameInp* pgi;
+	// Set the correct mem location...
+	for (i = 0, pgi = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
+		if (pgi->Input.pVal == NULL) {
+			continue;
+		}
+
+		auto& pi = profile->Inputs[i];
+		if (pi.nInput == 0) { continue; }		// Not set.
+
+		UINT16 code = pi.nCode;
+		if (code >= 0x4000 && code < 0x8000)
+		{
+			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
+			code = code | (padIndex << 8);
+
+			int checkIndex = (code >> 8) & 0x3F;
+			int x = 10;
+		}
+
+		// Now we can set this on the pgi input....
+		pgi->nInput = pi.nInput;
+		if (pi.nInput == GIT_SWITCH) {
+			pgi->Input.Switch.nCode = code;
+		}
+		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
+			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
+		}
+
+	}
+	// I think that we need to update the description in the main select box too......
+	InpdUseUpdate();
+
+	return 0;
+}
+
+// ------------------------------------------------------------------------------------------------------
+// Returns 0 if the mapping was set correctly.
+static int SetPlayerMappings(int playerIndex, int padIndex, int profileIndex)
+{
+	if (playerIndex == -1 || profileIndex == -1) { return 1; }
+
+	InputProfileEntry* useProfile = inputProfiles[profileIndex];
+	int buttonOffset = playerIndex == 0 ? 0 : sfiii3nPlayerInputs.buttonCount;
+	SetInputMappings(padIndex, useProfile, buttonOffset);
+
+	// SUCCESS!
+	return 0;
+}
+
 // ------------------------------------------------------------------------------------------
 static void SetState(EDialogState newState) {
 	TCHAR buffer[256];
@@ -260,25 +382,31 @@ static void SetState(EDialogState newState) {
 		SetEnabled(ID_SET_PLAYER2, true);
 
 		_SelectedPadIndex = -1;
-		_DetectPlayerIndex = -1;
+		_TargetPlayerIndex = -1;
 	}
 	break;
 
 	case DIALOGSTATE_SET_PLAYER:
 	{
-		int label = _DetectPlayerIndex + 1;
+		int label = _TargetPlayerIndex + 1;
 
 		swprintf(buffer, _T("Press button for player %d"), label);
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 
 		// Disable the correct button....
-		if (_DetectPlayerIndex == 0) {
+		if (_TargetPlayerIndex == 0) {
 			SetEnabled(ID_SET_PLAYER1, true);
 			SetEnabled(ID_SET_PLAYER2, false);
+
+			SetEnabled(IDC_INDP_P1SELECT, true);
+			SetEnabled(IDC_INDP_P2SELECT, false);
 		}
 		else {
 			SetEnabled(ID_SET_PLAYER1, false);
 			SetEnabled(ID_SET_PLAYER2, true);
+
+			SetEnabled(IDC_INDP_P1SELECT, false);
+			SetEnabled(IDC_INDP_P2SELECT, true);
 		}
 	}
 	break;
@@ -296,10 +424,10 @@ static void SetState(EDialogState newState) {
 
 		// We will set a selection in the combo box.
 		hActivePlayerCombo = 0;
-		if (_SelectedPadIndex == 0) {
+		if (_TargetPlayerIndex == 0) {
 			hActivePlayerCombo = hP1Select;
 		}
-		else if (_SelectedPadIndex == 1) {
+		else if (_TargetPlayerIndex == 1) {
 			hActivePlayerCombo = hP2Select;
 		}
 
@@ -363,12 +491,8 @@ static void ProcessState() {
 	}
 	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
 
-		//	UINT16 pressed = InputFind(8);
-	//		int padIndex = GetIndexFromButton(CurP);
-
-			// Here we want to detect the up/down buttons so that
-			// we can cycle through the available profiles.
-			// TODO: Make sure that this works with keyboard buttons too!
+		// Here we want to detect the up/down buttons so that
+		// we can cycle through the available profiles.
 		int dirDelta = GetUpOrDownButton(_SelectedPadIndex, usePressed, pressed);
 
 		// Maybe left or right?
@@ -390,89 +514,21 @@ static void ProcessState() {
 			if (newIndex > maxIndex) { newIndex = 0; }
 
 			SetComboIndex(hActivePlayerCombo, newIndex);
-
-			// NOTE: This is where we will change the selected profile....
-			//TCHAR buffer[256];
-			//swprintf(buffer, _T("Up/Down?: %i"), upDownDir);
-			//SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-
 		}
 		else if (usePressed != -1 && dirDelta == 0 && padIndex == _SelectedPadIndex) {
 
 			// User didn't press a direction button, but did press something
 			// else.  They must be happy with their profile selection....
-			throw std::exception("NOT IMPLEMENTED!");
+			// This is where we will copy the profile buttons over to the input interface.....
+			int profileIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
+			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
+
+			SetState(DIALOGSTATE_NORMAL);
 		}
 	}
-
-	//// Only update last pressed if it is zero.
-	//// We can only really track that NOTHING is pressed, not that a certain button has been released.
-	//if (LastPressed == 0)
-	//{
-	//}
 
 }
 
-
-// -------------------------------------------------------------------------------------
-// Update which input is using which PC input
-static int InpdUseUpdate()
-{
-	unsigned int i, j = 0;
-	struct GameInp* pgi = NULL;
-	if (hInpdList == NULL) {
-		return 1;
-	}
-
-	// Update the values of all the inputs
-	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
-		LVITEM LvItem;
-		TCHAR* pszVal = NULL;
-
-		if (pgi->Input.pVal == NULL) {
-			continue;
-		}
-
-		pszVal = InpToDesc(pgi, padInfos);
-
-		if (_tcscmp(pszVal, _T("code 0x00")) == 0)
-			pszVal = _T("Unassigned (locked)");
-
-		memset(&LvItem, 0, sizeof(LvItem));
-		LvItem.mask = LVIF_TEXT;
-		LvItem.iItem = j;
-		LvItem.iSubItem = 1;
-		LvItem.pszText = pszVal;
-
-		SendMessage(hInpdList, LVM_SETITEM, 0, (LPARAM)&LvItem);
-
-		j++;
-	}
-
-	for (i = 0, pgi = GameInp + nGameInpCount; i < nMacroCount; i++, pgi++) {
-		LVITEM LvItem;
-		TCHAR* pszVal = NULL;
-
-		if (pgi->nInput & GIT_GROUP_MACRO) {
-			pszVal = InpMacroToDesc(pgi);
-
-			if (_tcscmp(pszVal, _T("code 0x00")) == 0)
-				pszVal = _T("Unassigned (locked)");
-
-			memset(&LvItem, 0, sizeof(LvItem));
-			LvItem.mask = LVIF_TEXT;
-			LvItem.iItem = j;
-			LvItem.iSubItem = 1;
-			LvItem.pszText = pszVal;
-
-			SendMessage(hInpdList, LVM_SETITEM, 0, (LPARAM)&LvItem);
-		}
-
-		j++;
-	}
-
-	return 0;
-}
 
 // ---------------------------------------------------------------------------------------------
 // This is where we can wait for p1/p2 to check in and what-not....
@@ -842,67 +898,6 @@ void getListItemData(HWND& list, int index, LVITEM& item) {
 }
 
 
-// ------------------------------------------------------------------------------------------------------
-static int SetInputMappings(int padIndex, int inputIndexOffset)
-{
-	if (padIndex == -1 || padIndex >= nPadCount) {
-		// Do nothing.
-		return 1;
-	}
-
-	auto& profile = padInfos[padIndex]->profile;
-
-	// Otherwise we are going to iterate over the game input + mapped inputs and set the data accordingly.
-	int i = 0;
-	struct GameInp* pgi;
-	// Set the correct mem location...
-	for (i = 0, pgi = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
-		if (pgi->Input.pVal == NULL) {
-			continue;
-		}
-
-		auto& pi = profile.inputs[i];
-		if (pi.nInput == 0) { continue; }		// Not set.
-
-		UINT16 code = pi.nCode;
-		if (code >= 0x4000 && code < 0x8000)
-		{
-			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
-			code = code | (padIndex << 8);
-
-			int checkIndex = (code >> 8) & 0x3F;
-			int x = 10;
-		}
-
-		// Now we can set this on the pgi input....
-		pgi->nInput = pi.nInput;
-		if (pi.nInput == GIT_SWITCH) {
-			pgi->Input.Switch.nCode = code;
-		}
-		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
-			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
-		}
-
-	}
-	// I think that we need to update the description in the main select box too......
-	InpdUseUpdate();
-
-	return 0;
-}
-
-// ------------------------------------------------------------------------------------------------------
-static int SetPlayerMappings()
-{
-	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
-	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
-
-	// NOTE: The indexes should correspond to the gamepads that are currently defined.
-	// If they aren't, something bad will happen.  We can care about checking this in the future.
-	SetInputMappings(p1Index, 0);
-	SetInputMappings(p2Index, sfiii3nPlayerInputs.buttonCount);
-
-	return 0;
-}
 
 
 // Removed, we don't really need this information.....
@@ -1355,7 +1350,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-	}
+}
 #endif
 
 static int DeleteInput(unsigned int i)
@@ -1829,21 +1824,21 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == ID_SET_PLAYER1 && Notify == BN_CLICKED)
 		{
-			_DetectPlayerIndex = 0;
+			_TargetPlayerIndex = 0;
 			SetState(DIALOGSTATE_SET_PLAYER);
 			return 0;
 		}
 		if (Id == ID_SET_PLAYER2 && Notify == BN_CLICKED)
 		{
-			_DetectPlayerIndex = 1;
+			_TargetPlayerIndex = 1;
 			SetState(DIALOGSTATE_SET_PLAYER);
 			return 0;
 		}
 
-		if (Id == ID_SET_PLAYER_MAPPINGS && Notify == BN_CLICKED) {
-			SetPlayerMappings();
-			return 0;
-		}
+		//if (Id == ID_SET_PLAYER_MAPPINGS && Notify == BN_CLICKED) {
+		//	SetPlayerMappings();
+		//	return 0;
+		//}
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 
