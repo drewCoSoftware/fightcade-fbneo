@@ -6,9 +6,11 @@
 #define ID_INPUT_INPUTDEVICES           1
 #define IDC_ALIAS_EDIT                  1
 #define BMP_ABOUT                       2
+#define MENU_INPUT_QUICKSETUP           2
 #define BMP_MISC                        3
 #define IDSAVEALIAS                     3
 #define ID_REFRESH_PADS                 4
+#define ID_INPUT_                       4
 #define ID_SET_PLAYER_MAPPINGS          5
 #define ID_SAVE_MAPPINGS                6
 #define ID_SET_PLAYER2                  7
@@ -949,7 +951,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        3
-#define _APS_NEXT_COMMAND_VALUE         2
+#define _APS_NEXT_COMMAND_VALUE         5
 #define _APS_NEXT_CONTROL_VALUE         14
 #define _APS_NEXT_SYMED_VALUE           0
 #endif

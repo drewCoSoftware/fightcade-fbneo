@@ -374,7 +374,7 @@ int WaveLogStop();
 extern HWND hInpdDlg;								// Handle to the Input Dialog
 
 int InpdUpdate();
-int InpdCreate();
+int InpdCreate(bool quickSetup);
 int InpdListMake(int bBuild);
 
 // inpcheat.cpp

@@ -983,7 +983,15 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 			AudBlankSound();
 			if (UseDialogs()) {
 				InputSetCooperativeLevel(false, false);
-				InpdCreate();
+				InpdCreate(false);
+			}
+			break;
+
+		case MENU_INPUT_QUICKSETUP:
+			AudBlankSound();
+			if (UseDialogs()) {
+				InputSetCooperativeLevel(false, false);
+				InpdCreate(true);
 			}
 			break;
 

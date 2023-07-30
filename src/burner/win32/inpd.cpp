@@ -11,7 +11,10 @@ static HWND hProfileList = NULL;
 static unsigned short* LastVal = NULL;			// Last input values/defined
 static int bLastValDefined = 0;					//
 
-static HWND hInpdGi = NULL, hInpdPci = NULL, hInpdAnalog = NULL;	// Combo boxes
+// Combo boxes
+static HWND hInpdGi = NULL;
+static HWND hInpdPci = NULL;
+static HWND hInpdAnalog = NULL;
 static HWND hP1Select;
 static HWND hP2Select;
 
@@ -27,17 +30,12 @@ static INT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
 static HWND hActivePlayerCombo;
 
-// Text buffer for the gamepad alias + other text fields.
-// We don't really need this here, it's just where it landed and there hasn't been a great need
-// to use in-function buffers yet.
-static TCHAR aliasBuffer[MAX_ALIAS_CHARS];
-
 static playerInputs sfiii3nPlayerInputs;
 
 enum EDialogState {
-	DIALOGSTATE_NORMAL = 0,
-	DIALOGSTATE_SET_PLAYER,			// Set pad index for player.
-	DIALOGSTATE_CHOOSE_PROFILE
+	SETUPSTATE_NONE = 0,
+	SETUPSTATE_SET_PLAYER,			// Set pad index for player.
+	SETUPSTATE_CHOOSE_PROFILE
 };
 int _TargetPlayerIndex = -1;
 int _SelectedPadIndex = -1;
@@ -48,13 +46,11 @@ int _LastUpDown = 0;
 
 // The last button code that we detected as pressed.
 // The input system has a makework system of checking for button presses,
-// so we just keep track of this to help us determine when a button is released....
-//bool AllReleased = true;		
-//UINT16 CurPressed = 0;		// Currently pressed button (for update call)
+// so we just keep track of this to help us determine when all buttons are released...
 INT32 LastPressed = -1;
+bool _IsQuickSetupMode = false;
 
-
-EDialogState _CurState = DIALOGSTATE_NORMAL;
+EDialogState _CurState = SETUPSTATE_NONE;
 
 #define ALIAS_INDEX 0
 #define STATE_INDEX 1
@@ -80,34 +76,6 @@ EDialogState _CurState = DIALOGSTATE_NORMAL;
 static INT32 SetComboIndex(HWND handle, int index) {
 
 	SendMessage(handle, CB_SETCURSEL, index, 0);
-	//if (_SelectedPadIndex == 0) {
-
-	//}
-	//else if (_SelectedPadIndex == 1) {
-
-	//}
-	//else {
-	//	// Invalid Id...
-	//	return -1;
-	//}
-
-
-	// NOTE: We don't really need combo boxes.  We could just update text in a textbox....
-	// I want to keep the combos around tho in case we need them later......
-	// In theory one could still use them to make a selection, and then hit a pad button.....
-
-
-	// FROM CHATGPT:
-	// With a bit of poking, we can certainly figure out how to get the selected index of
-	// the combo box to use when setting the profile..........
-	//void ChangeComboBoxSelection(HWND hWndComboBox, int selectedIndex)
-	//{
-	//	if (hWndComboBox && ::IsWindow(hWndComboBox) && selectedIndex >= 0)
-	//	{
-	//		::SendMessage(hWndComboBox, CB_SETCURSEL, static_cast<WPARAM>(selectedIndex), 0);
-	//	}
-	//}
-
 	return 0;
 }
 
@@ -116,7 +84,6 @@ static INT32 SetComboIndex(HWND handle, int index) {
 static void SetEnabled(int id, BOOL bEnable) {
 	EnableWindow(GetDlgItem(hInpdDlg, id), bEnable);
 }
-
 
 // -------------------------------------------------------------------------------------
 static int GetIndexFromButton(UINT16 button) {
@@ -149,7 +116,6 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 		return 0;
 	}
 }
-
 
 // --------------------------------------------------------------------------------------------------
 // For the given pad index, returns an int that is -1 for left, 1 for right, and zero
@@ -308,7 +274,6 @@ static int InpdUseUpdate()
 	return 0;
 }
 
-
 // ------------------------------------------------------------------------------------------------------
 static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int inputIndexOffset)
 {
@@ -370,11 +335,11 @@ static int SetPlayerMappings(int playerIndex, int padIndex, int profileIndex)
 }
 
 // ------------------------------------------------------------------------------------------
-static void SetState(EDialogState newState) {
+static void SetSetupState(EDialogState newState) {
 	TCHAR buffer[256];
 
 	switch (newState) {
-	case DIALOGSTATE_NORMAL:
+	case SETUPSTATE_NONE:
 	{
 		// Clear the text.
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
@@ -386,7 +351,7 @@ static void SetState(EDialogState newState) {
 	}
 	break;
 
-	case DIALOGSTATE_SET_PLAYER:
+	case SETUPSTATE_SET_PLAYER:
 	{
 		int label = _TargetPlayerIndex + 1;
 
@@ -412,13 +377,13 @@ static void SetState(EDialogState newState) {
 	break;
 
 
-	case DIALOGSTATE_CHOOSE_PROFILE:
+	case SETUPSTATE_CHOOSE_PROFILE:
 	{
 
 		if (_SelectedPadIndex < 0 || _SelectedPadIndex > 1 || nProfileCount < 1)
 		{
 			// Invalid ID or no profiles to choose from.
-			SetState(DIALOGSTATE_NORMAL);
+			SetSetupState(SETUPSTATE_NONE);
 			return;
 		}
 
@@ -449,7 +414,12 @@ static void SetState(EDialogState newState) {
 }
 
 // --------------------------------------------------------------------------------------------------
-static void ProcessState() {
+static void BeginQuickSetup() {
+}
+
+
+// --------------------------------------------------------------------------------------------------
+static void ProcessSetupState() {
 
 	// We only want to update the pressed button code the first time it is pushed.
 	// If we still have a pressed button on the next cycle we will ignore it.
@@ -470,26 +440,27 @@ static void ProcessState() {
 		LastPressed = -1;
 	}
 
-
-
-	// Only use 
-	//UINT16 usePressed = AllReleased ? 0 : CurPressed;
-
-	if (_CurState == DIALOGSTATE_SET_PLAYER) {
+	if (_CurState == SETUPSTATE_NONE)
+	{
+		// Check for quick setup mode and handle accordingly......
+		if (_IsQuickSetupMode) {
+			BeginQuickSetup();
+		}
+	}
+	else if (_CurState == SETUPSTATE_SET_PLAYER) {
 
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-	//	UINT16 pressed = InputFind(8);
 		if (padIndex != -1)
 		{
 			// Now that we have a pad index, we can associate it with the currently selected
 			// input profile!
 			_SelectedPadIndex = padIndex;
-			SetState(DIALOGSTATE_CHOOSE_PROFILE);
+			SetSetupState(SETUPSTATE_CHOOSE_PROFILE);
 		}
 
 	}
-	else if (_CurState == DIALOGSTATE_CHOOSE_PROFILE) {
+	else if (_CurState == SETUPSTATE_CHOOSE_PROFILE) {
 
 		// Here we want to detect the up/down buttons so that
 		// we can cycle through the available profiles.
@@ -523,7 +494,7 @@ static void ProcessState() {
 			int profileIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
 
-			SetState(DIALOGSTATE_NORMAL);
+			SetSetupState(SETUPSTATE_NONE);
 		}
 	}
 
@@ -548,9 +519,7 @@ int InpdUpdate()
 		return 1;
 	}
 
-
-
-	ProcessState();
+	ProcessSetupState();
 
 
 	// Update the values of all the inputs.
@@ -722,22 +691,6 @@ static int ProfileListBegin()
 	return 0;
 }
 
-
-// ---------------------------------------------------------------------------------------------------------
-static void updateListboxAlias(HWND& list, int index, TCHAR* buffer, int bufSize, bool insertNew) {
-
-	// TODO: Make sure the index exists....
-	LVITEM LvItem;
-	memset(&LvItem, 0, sizeof(LvItem));
-	LvItem.mask = LVIF_TEXT | LVIF_PARAM;
-	LvItem.iItem = index;
-	LvItem.iSubItem = ALIAS_INDEX;
-	LvItem.pszText = buffer; // _T("ALIAS");  // TODO: Alias data will come when we populate the gamepad data when the dialog opens.
-	LvItem.lParam = (LPARAM)index;
-	SendMessage(list, insertNew ? LVM_INSERTITEM : LVM_SETITEM, 0, (LPARAM)&LvItem);
-
-}
-
 // ---------------------------------------------------------------------------------------------------------
 static int GamepadListMake(int bBuild) {
 
@@ -750,6 +703,7 @@ static int GamepadListMake(int bBuild) {
 		SendMessage(list, LVM_DELETEALLITEMS, 0, 0);
 	}
 
+	TCHAR textBuffer[MAX_ALIAS_CHARS];
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nPadCount; i++) {
@@ -757,15 +711,12 @@ static int GamepadListMake(int bBuild) {
 
 
 		if (pad->info.Alias == 0 || wcscmp(_T(""), pad->info.Alias) == 0) {
-			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
+			SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
 		}
 		else
 		{
-			SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
+			SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
 		}
-
-		// Populate the ALIAS column (TODO)
-		updateListboxAlias(list, i, aliasBuffer, MAX_ALIAS_CHARS, true);
 
 
 		LVITEM LvItem;
@@ -806,12 +757,13 @@ static int ProfileListMake(int bBuild) {
 		SendMessage(hList, LVM_DELETEALLITEMS, 0, 0);
 	}
 
+	TCHAR textBuffer[MAX_ALIAS_CHARS];
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nProfileCount; i++) {
 		InputProfileEntry* profile = inputProfiles[i];
 
-		SetStrBuffer(aliasBuffer, MAX_ALIAS_CHARS, profile->Name);
+		SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, profile->Name);
 
 		LVITEM LvItem;
 
@@ -837,85 +789,23 @@ static int OnProfileListDeselect() {
 	return 0;
 }
 
-//
-//// ------------------------------------------------------------------------------------------------------
-//static int OnGamepadListDeselect() {
-//	// Clear the alias input box.
-//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)NULL);
-//	nSelectedPadIndex = -1;
-//	selectedPadEntry = NULL;
-//	SetEnabled(IDSAVEALIAS, FALSE);
-//	SetEnabled(ID_SAVE_MAPPINGS, FALSE);
-//	return 0;
-//}
-
-//// ------------------------------------------------------------------------------------------------------
-//static int SelectGamepadListItem()
-//{
-//	HWND& list = hGamepadList;
-//	LVITEM LvItem;
-//	memset(&LvItem, 0, sizeof(LvItem));
-//	int nSel = SendMessage(list, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_SELECTED);
-//	if (nSel < 0) {
-//		OnGamepadListDeselect();
-//		return 1;
-//	}
-//
-//	// Get the corresponding input
-//	nSelectedPadIndex = nSel;
-//	getListItemData(list, nSel, LvItem);
-//
-//	if (nSel >= nPadCount) {
-//		OnGamepadListDeselect();
-//		return 1;
-//	}
-//
-//	// Now we can set the text in the alias text box!
-//	// Set the edit control to current value
-//
-//	// Enable the save alias button....
-//	HWND hBtn = GetDlgItem(hInpdDlg, IDSAVEALIAS);
-//	SetEnabled(IDSAVEALIAS, TRUE);
-//	SetEnabled(ID_SAVE_MAPPINGS, TRUE);
-//
-//	TCHAR* useBuffer = wcscmp(aliasBuffer, _T("<not set>")) == 0 ? _T("") : aliasBuffer;
-//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_SETTEXT, (WPARAM)0, (LPARAM)useBuffer);
-//
-//
-//}
-
-
 // ------------------------------------------------------------------------------------------------------
-void getListItemData(HWND& list, int index, LVITEM& item) {
+void getListItemData(HWND& list, int index, LVITEM& item, TCHAR* textBuffer) {
 
 	item.mask = LVIF_TEXT;
 	item.iItem = index;
 	item.iSubItem = 0;
-	item.pszText = aliasBuffer;
+	item.pszText = textBuffer;
 	item.cchTextMax = MAX_ALIAS_CHARS;
 	SendMessage(list, LVM_GETITEM, 0, (LPARAM)&item);
-
 }
 
+// ------------------------------------------------------------------------------------------------------
+// Get the text from an input control.
+void getText(int textId, TCHAR* textBuffer) {
+	SendDlgItemMessage(hInpdDlg, textId, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)textBuffer);
+}
 
-
-
-// Removed, we don't really need this information.....
-// We don't even really need combos for that matter.....
-//// ------------------------------------------------------------------------------------------------------
-//static int OnPlayerSelectionChanged() {
-//
-//	// TODO: Enable/disable the 'set' button that is under the combos....
-//	int p1Index = SendMessage(hP1Select, CB_GETCURSEL, 0, 0);
-//	int p2Index = SendMessage(hP2Select, CB_GETCURSEL, 0, 0);
-//
-//	bool p1Enabled = p1Index != CB_ERR && p1Index > -1;
-//	bool p2Enabled = p2Index != CB_ERR && p2Index > -1;
-//	SetEnabled(ID_SET_PLAYER1, p1Enabled);
-//	SetEnabled(ID_SET_PLAYER2, p2Enabled);
-//
-//	return 0;
-//}
 
 // ------------------------------------------------------------------------------------------------------
 static int SelectProfileListItem()
@@ -930,9 +820,11 @@ static int SelectProfileListItem()
 		return 1;
 	}
 
+	TCHAR textBuffer[MAX_ALIAS_CHARS];
+
 	// Get the corresponding input
 	nSelectedProfileIndex = nSel;
-	getListItemData(list, nSel, LvItem);
+	getListItemData(list, nSel, LvItem, textBuffer);
 
 	if (nSel >= nProfileCount) {
 		OnProfileListDeselect();
@@ -1113,6 +1005,7 @@ static void RefreshProfileData() {
 	InputGetProfiles(inputProfiles, &nProfileCount);
 }
 
+// ------------------------------------------------------------------------------------------------------------
 static int InpdInit()
 {
 	// We are just going to hard-code this mapping for now.
@@ -1160,10 +1053,11 @@ static int InpdInit()
 	DisablePresets();
 
 
-	SetState(DIALOGSTATE_NORMAL);
+	SetSetupState(SETUPSTATE_NONE);
 	return 0;
 }
 
+// ------------------------------------------------------------------------------------------------------------
 static int InpdExit()
 {
 	// Exit the Combo boxes
@@ -1682,24 +1576,23 @@ static void saveMappingsInfo() {
 	}
 
 	InputSaveProfiles();
-	// InputSaveGamepadMappings();
 }
 
 // ---------------------------------------------------------------------------------------------------------
 // Add a new input mapping profile into the system.
 static void addNewProfile() {
 
-	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
-	SendDlgItemMessage(hInpdDlg, IDC_PROFILE_NAME, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
+	TCHAR textBuffer[MAX_ALIAS_CHARS];
+	getText(IDC_PROFILE_NAME, textBuffer);
 
 	// No text, bail.
 	// TODO: We can track text events to disable the button, check for dupes, etc.
-	if (aliasBuffer == 0 || wcslen(aliasBuffer) == 0)
+	if (textBuffer == 0 || wcslen(textBuffer) == 0)
 	{
 		return;
 	}
 
-	INT32 added = InputAddInputProfile(aliasBuffer);
+	INT32 added = InputAddInputProfile(textBuffer);
 	if (added == 0)
 	{
 		// Repopulate the alias list.
@@ -1723,28 +1616,6 @@ static void removeProfile() {
 	RefreshProfileData();
 	ProfileListMake(1);
 }
-
-//
-//// ---------------------------------------------------------------------------------------------------------
-//static void saveAliasInfo() {
-//	if (nSelectedPadIndex == -1) { return; }
-//
-//	selectedPadEntry = padInfos[nSelectedPadIndex];
-//
-//	memset(aliasBuffer, 0, MAX_ALIAS_CHARS);
-//	SendDlgItemMessage(hInpdDlg, IDC_ALIAS_EDIT, WM_GETTEXT, (WPARAM)MAX_ALIAS_CHARS, (LPARAM)aliasBuffer);
-//
-//	// Update the list box item....
-//	updateListboxAlias(hGamepadList, nSelectedPadIndex, aliasBuffer, MAX_ALIAS_CHARS, false);
-//
-//	SetStrBuffer(selectedPadEntry->info.Alias, MAX_ALIAS_CHARS, aliasBuffer);
-//
-//	// Write out the data to disk....
-//	// InputSaveGamepadMappings();
-//
-//	// Refresh the gamepad names in the mapper....
-//	InpdUseUpdate();
-//}
 
 // ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -1825,13 +1696,13 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (Id == ID_SET_PLAYER1 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 0;
-			SetState(DIALOGSTATE_SET_PLAYER);
+			SetSetupState(SETUPSTATE_SET_PLAYER);
 			return 0;
 		}
 		if (Id == ID_SET_PLAYER2 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 1;
-			SetState(DIALOGSTATE_SET_PLAYER);
+			SetSetupState(SETUPSTATE_SET_PLAYER);
 			return 0;
 		}
 
@@ -1875,11 +1746,6 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 			return 0;
 		}
-
-		//if ((Id == IDC_INDP_P1SELECT || Id == IDC_INDP_P2SELECT) && Notify == CBN_SELCHANGE) {
-		//	OnPlayerSelectionChanged();
-		//	return 0;
-		//}
 
 		if (Id == IDC_INPD_GI && Notify == CBN_SELCHANGE) {
 			int nGi;
@@ -1990,9 +1856,6 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (Id == IDC_INPD_LIST && pnm->code == LVN_ITEMACTIVATE) {
 			ActivateInputListItem();
 		}
-		//if (Id == IDC_GAMEPAD_LIST && pnm->code == LVN_ITEMCHANGED) {
-		//	SelectGamepadListItem();
-		//}
 
 		if (Id == IDC_PROFILE_LIST && pnm->code == LVN_ITEMCHANGED) {
 			SelectProfileListItem();
@@ -2053,7 +1916,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 }
 
 // ---------------------------------------------------------------------------------------------------------
-int InpdCreate()
+int InpdCreate(bool quickSetup)
 {
 	if (bDrvOkay == 0) {
 		return 1;
@@ -2068,6 +1931,10 @@ int InpdCreate()
 
 	WndInMid(hInpdDlg, hScrnWnd);
 	ShowWindow(hInpdDlg, SW_NORMAL);
+
+	// NOTE: We can't really send this data to the FBACreateDialog function (and then to the WM_INITDIALOG code)
+	// So we will just set the flag here.
+	_IsQuickSetupMode = quickSetup;
 
 	return 0;
 }
