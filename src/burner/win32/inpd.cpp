@@ -33,9 +33,10 @@ static HWND hActivePlayerCombo;
 static playerInputs sfiii3nPlayerInputs;
 
 enum EDialogState {
-	SETUPSTATE_NONE = 0,
-	SETUPSTATE_SET_PLAYER,			// Set pad index for player.
-	SETUPSTATE_CHOOSE_PROFILE
+	SETUPSTATE_NONE = 0
+	, SETUPSTATE_SET_PLAYER			// Set pad index for player.
+	, SETUPSTATE_CHOOSE_PROFILE
+	, SETUPSTATE_QUICKSETUP_COMPLETE
 };
 int _TargetPlayerIndex = -1;
 int _SelectedPadIndex = -1;
@@ -49,6 +50,7 @@ int _LastUpDown = 0;
 // so we just keep track of this to help us determine when all buttons are released...
 INT32 LastPressed = -1;
 bool _IsQuickSetupMode = false;
+INT32 _QuickSetupIndex = 0;
 
 EDialogState _CurState = SETUPSTATE_NONE;
 
@@ -71,6 +73,8 @@ EDialogState _CurState = SETUPSTATE_NONE;
 #define KEYB_UP 200
 #define KEYB_RIGHT 205
 #define KEYB_DOWN 208
+
+static void SetSetupState(EDialogState newState);
 
 // ---------------------------------------------------------------------------------------------------------
 static INT32 SetComboIndex(HWND handle, int index) {
@@ -334,6 +338,49 @@ static int SetPlayerMappings(int playerIndex, int padIndex, int profileIndex)
 	return 0;
 }
 
+
+// --------------------------------------------------------------------------------------------------
+static void InitProfileSelect(int playerIndex)
+{
+
+	if (_SelectedPadIndex < 0 || _SelectedPadIndex > 1 || nProfileCount < 1)
+	{
+		// Invalid ID or no profiles to choose from.
+		SetSetupState(SETUPSTATE_NONE);
+		return;
+	}
+
+	// We will set a selection in the combo box.
+	hActivePlayerCombo = 0;
+	if (playerIndex == 0) {
+		hActivePlayerCombo = hP1Select;
+	}
+	else if (playerIndex == 1) {
+		hActivePlayerCombo = hP2Select;
+	}
+
+	SetComboIndex(hActivePlayerCombo, 0);
+
+	TCHAR textBuffer[256];
+	swprintf(textBuffer, _T("Choose profile for player %d and press a button"), playerIndex + 1);
+	SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, textBuffer);
+	_ProfileIndex = -1;
+	_LastUpDown = -2;
+}
+
+// --------------------------------------------------------------------------------------------------
+static void InitChooseProfile(int padIndex) {
+	_SelectedPadIndex = padIndex;
+	SetSetupState(SETUPSTATE_CHOOSE_PROFILE);
+}
+
+// ------------------------------------------------------------------------------------------
+static void InitSetPlayer(int playerIndex) {
+
+	_TargetPlayerIndex = playerIndex;
+	SetSetupState(SETUPSTATE_SET_PLAYER);
+}
+
 // ------------------------------------------------------------------------------------------
 static void SetSetupState(EDialogState newState) {
 	TCHAR buffer[256];
@@ -353,8 +400,9 @@ static void SetSetupState(EDialogState newState) {
 
 	case SETUPSTATE_SET_PLAYER:
 	{
-		int label = _TargetPlayerIndex + 1;
+		TCHAR buffer[256];
 
+		int label = _TargetPlayerIndex + 1;
 		swprintf(buffer, _T("Press button for player %d"), label);
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
 
@@ -379,32 +427,15 @@ static void SetSetupState(EDialogState newState) {
 
 	case SETUPSTATE_CHOOSE_PROFILE:
 	{
-
-		if (_SelectedPadIndex < 0 || _SelectedPadIndex > 1 || nProfileCount < 1)
-		{
-			// Invalid ID or no profiles to choose from.
-			SetSetupState(SETUPSTATE_NONE);
-			return;
-		}
-
-		// We will set a selection in the combo box.
-		hActivePlayerCombo = 0;
-		if (_TargetPlayerIndex == 0) {
-			hActivePlayerCombo = hP1Select;
-		}
-		else if (_TargetPlayerIndex == 1) {
-			hActivePlayerCombo = hP2Select;
-		}
-
-		SetComboIndex(hActivePlayerCombo, 0);
-
-
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Choose profile and press a button"));
-		_ProfileIndex = -1;
-		_LastUpDown = -2;
+		InitProfileSelect(_TargetPlayerIndex);
 	}
 	break;
 
+	case SETUPSTATE_QUICKSETUP_COMPLETE:
+	{
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Quick setup complete!"));
+	}
+	break; 
 
 	default:
 		break;
@@ -414,7 +445,15 @@ static void SetSetupState(EDialogState newState) {
 }
 
 // --------------------------------------------------------------------------------------------------
-static void BeginQuickSetup() {
+static INT32 BeginQuickSetup() {
+
+	if (nPadCount == 0) { return 1; }
+
+	// Quick setup puts us in a state where we do profile input for p1, then p2.....
+	_QuickSetupIndex = 0;
+	InitSetPlayer(_QuickSetupIndex);
+
+	return 0;
 }
 
 
@@ -424,7 +463,7 @@ static void ProcessSetupState() {
 	// We only want to update the pressed button code the first time it is pushed.
 	// If we still have a pressed button on the next cycle we will ignore it.
 	INT32 pressed = InputFind(8);
-	int padIndex = GetIndexFromButton(pressed); //   GetGamepadIndex(pressedPadButtons);
+	int padIndex = GetIndexFromButton(pressed);
 
 	// We only care about pad buttons for this stuff.....
 	INT32 usePressed = -1;
@@ -445,18 +484,18 @@ static void ProcessSetupState() {
 		// Check for quick setup mode and handle accordingly......
 		if (_IsQuickSetupMode) {
 			BeginQuickSetup();
+			return;
 		}
 	}
 	else if (_CurState == SETUPSTATE_SET_PLAYER) {
 
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-		if (padIndex != -1)
+		if (usePressed != -1 & padIndex != -1)
 		{
 			// Now that we have a pad index, we can associate it with the currently selected
 			// input profile!
-			_SelectedPadIndex = padIndex;
-			SetSetupState(SETUPSTATE_CHOOSE_PROFILE);
+			InitChooseProfile(padIndex);
 		}
 
 	}
@@ -494,7 +533,24 @@ static void ProcessSetupState() {
 			int profileIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
 
-			SetSetupState(SETUPSTATE_NONE);
+			if (_IsQuickSetupMode) {
+				_QuickSetupIndex++;
+				if (_QuickSetupIndex == sfiii3nPlayerInputs.maxPlayers) {
+
+					// We are done with setup, so let's close the dialog ?? 
+					_IsQuickSetupMode = false;
+					SetSetupState(SETUPSTATE_QUICKSETUP_COMPLETE);
+
+					// TODO: Figure out how we close the dialog....
+					// Actually, I think we want to consider it done!
+					return;
+				}
+
+				InitSetPlayer(_QuickSetupIndex);
+			}
+			else {
+				SetSetupState(SETUPSTATE_NONE);
+			}
 		}
 	}
 
@@ -1014,6 +1070,7 @@ static int InpdInit()
 	pi.p1Index = 0;
 	pi.p2Index = 12;
 	pi.buttonCount = 12;
+	pi.maxPlayers = 2;
 
 	int nMemLen;
 

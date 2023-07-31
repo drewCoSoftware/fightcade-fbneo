@@ -365,6 +365,7 @@ struct playerInputs {
 
 	//GamepadInput buttons[MAX_INPUTS];
 	UINT16 buttonCount;				// Total number of mapped buttons.
+	UINT16 maxPlayers;				// Max number of players for the game.
 };
 
 //
