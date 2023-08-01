@@ -1017,6 +1017,8 @@ static void DisablePresets()
 // ------------------------------------------------------------------------------------------
 static void RefreshPlayerSelectComboBoxes() {
 	// TODO: Keep track of current selections?
+	// This would be kind of part of some feature where we track the pad guid on the background
+	// and just make associations as we go.  Actually, that would be retty easy to do....
 
 	// Get the list of active gamepads, and populate each combox box with that data.
 	SendMessage(hP1Select, CB_RESETCONTENT, 0, 0);
@@ -1028,9 +1030,6 @@ static void RefreshPlayerSelectComboBoxes() {
 		SendMessage(hP1Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
 		SendMessage(hP2Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
 	}
-
-	//// We should only be enabled if one or more selections are currently made.....
-	//SetEnabled(ID_SET_PLAYER_MAPPINGS, false);
 }
 
 // ------------------------------------------------------------------------------------------
