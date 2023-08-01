@@ -433,7 +433,7 @@ static void SetSetupState(EDialogState newState) {
 
 	case SETUPSTATE_QUICKSETUP_COMPLETE:
 	{
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Quick setup complete!"));
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Quick setup complete! Press Escape!"));
 	}
 	break; 
 
@@ -714,7 +714,7 @@ static int ProfileListBegin()
 
 	RECT r;
 	GetWindowRect(hGamepadList, &r);
-	LvCol.cx = (r.right - r.left) - BORDER_WIDTH; //; //0x95;			// Column Width.
+	LvCol.cx = (r.right - r.left) - BORDER_WIDTH;
 	LvCol.pszText = _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
 	SendMessage(hList, LVM_INSERTCOLUMN, 0, (LPARAM)&LvCol);
 
@@ -733,7 +733,7 @@ static int GamepadListBegin()
 	RECT r;
 	GetWindowRect(hGamepadList, &r);
 
-	const int GUID_WIDTH = 300;
+	const int GUID_WIDTH = 200;
 	int stateWidth = (r.right - r.left) - GUID_WIDTH - BORDER_WIDTH;
 
 
@@ -1687,6 +1687,38 @@ static void removeProfile() {
 	ProfileListMake(1);
 }
 
+
+HFONT hMsgFont = 0;
+
+// ---------------------------------------------------------------------------------------------------------
+static void SetPlayerSetupMessageFont() {
+
+	// I can't really get this and word wrap to work, and I don't want to spend time on that now.
+	// I will leave this block here as a placeholder.
+	// NOTE: It DOES change the font size, so its kind of working.
+	return;
+
+	//HWND hPadMsg = GetDlgItem(hInpdDlg, IDC_SET_PLAYER_MESSAGE);
+	//if (hPadMsg) {
+
+	//	// OPTIONS:
+	//	int fontSize = 10;
+	//	bool isBold = true;
+
+
+	//	LOGFONT logFont;
+	//	memset(&logFont, 0, sizeof(LOGFONT));
+	//	logFont.lfHeight = -MulDiv(fontSize, GetDeviceCaps(::GetDC(NULL), LOGPIXELSY), 72);
+	//	logFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
+	//	logFont.lfItalic = false;
+	//	_tcsncpy_s(logFont.lfFaceName, _T("Arial"), _TRUNCATE);
+
+	//	hMsgFont = CreateFontIndirect(&logFont);
+
+	//	SendMessage(hPadMsg, WM_SETFONT, (WPARAM)hMsgFont, MAKELPARAM(TRUE, 0));
+	//}
+}
+
 // ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -1697,6 +1729,9 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (!kNetGame && bAutoPause) {
 			bRunPause = 1;
 		}
+
+		SetPlayerSetupMessageFont();
+
 
 		return TRUE;
 	}
@@ -2005,7 +2040,9 @@ int InpdCreate(bool quickSetup)
 	// NOTE: We can't really send this data to the FBACreateDialog function (and then to the WM_INITDIALOG code)
 	// So we will just set the flag here.
 	_IsQuickSetupMode = quickSetup;
-
+	if (_IsQuickSetupMode) {
+		SetWindowText(hInpdDlg, _T("Quick Setup Mode!"));
+	}
 	return 0;
 }
 
