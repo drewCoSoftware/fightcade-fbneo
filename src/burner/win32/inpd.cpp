@@ -54,9 +54,9 @@ INT32 _QuickSetupIndex = 0;
 
 EDialogState _CurState = SETUPSTATE_NONE;
 
-#define ALIAS_INDEX 0
+// #define ALIAS_INDEX 0
 #define STATE_INDEX 1
-#define GUID_INDEX 2
+#define GUID_INDEX 0
 
 #define DIR_UP -1
 #define DIR_DOWN 1
@@ -73,6 +73,8 @@ EDialogState _CurState = SETUPSTATE_NONE;
 #define KEYB_UP 200
 #define KEYB_RIGHT 205
 #define KEYB_DOWN 208
+
+#define BORDER_WIDTH 4
 
 static void SetSetupState(EDialogState newState);
 
@@ -354,9 +356,13 @@ static void InitProfileSelect(int playerIndex)
 	hActivePlayerCombo = 0;
 	if (playerIndex == 0) {
 		hActivePlayerCombo = hP1Select;
+		SetEnabled(IDC_INDP_P1SELECT, true);
+		SetEnabled(IDC_INDP_P2SELECT, false);
 	}
 	else if (playerIndex == 1) {
 		hActivePlayerCombo = hP2Select;
+		SetEnabled(IDC_INDP_P1SELECT, false);
+		SetEnabled(IDC_INDP_P2SELECT, true);
 	}
 
 	SetComboIndex(hActivePlayerCombo, 0);
@@ -410,16 +416,10 @@ static void SetSetupState(EDialogState newState) {
 		if (_TargetPlayerIndex == 0) {
 			SetEnabled(ID_SET_PLAYER1, true);
 			SetEnabled(ID_SET_PLAYER2, false);
-
-			SetEnabled(IDC_INDP_P1SELECT, true);
-			SetEnabled(IDC_INDP_P2SELECT, false);
 		}
 		else {
 			SetEnabled(ID_SET_PLAYER1, false);
 			SetEnabled(ID_SET_PLAYER2, true);
-
-			SetEnabled(IDC_INDP_P1SELECT, false);
-			SetEnabled(IDC_INDP_P2SELECT, true);
 		}
 	}
 	break;
@@ -532,6 +532,10 @@ static void ProcessSetupState() {
 			// This is where we will copy the profile buttons over to the input interface.....
 			int profileIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
+
+			// Disable both combos when the players are set.
+			SetEnabled(IDC_INDP_P1SELECT, false);
+			SetEnabled(IDC_INDP_P2SELECT, false);
 
 			if (_IsQuickSetupMode) {
 				_QuickSetupIndex++;
@@ -688,12 +692,50 @@ void SetStrBuffer(TCHAR* buffer, int bufLen, TCHAR* data) {
 	}
 }
 
+
+// ---------------------------------------------------------------------------------------------------------
+static int ProfileListBegin()
+{
+	auto hList = hProfileList;
+	if (hList == NULL) {
+		return 1;
+	}
+
+
+
+	// Full row select style:
+	SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
+
+
+	// Make column headers
+	LVCOLUMN LvCol;
+	memset(&LvCol, 0, sizeof(LvCol));
+	LvCol.mask = LVCF_TEXT | LVCF_WIDTH;
+
+	RECT r;
+	GetWindowRect(hGamepadList, &r);
+	LvCol.cx = (r.right - r.left) - BORDER_WIDTH; //; //0x95;			// Column Width.
+	LvCol.pszText = _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
+	SendMessage(hList, LVM_INSERTCOLUMN, 0, (LPARAM)&LvCol);
+
+	return 0;
+}
+
+
 // ---------------------------------------------------------------------------------------------------------
 static int GamepadListBegin()
 {
 	if (hGamepadList == NULL) {
 		return 1;
 	}
+
+
+	RECT r;
+	GetWindowRect(hGamepadList, &r);
+
+	const int GUID_WIDTH = 300;
+	int stateWidth = (r.right - r.left) - GUID_WIDTH - BORDER_WIDTH;
+
 
 	// Full row select style:
 	SendMessage(hGamepadList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
@@ -704,48 +746,18 @@ static int GamepadListBegin()
 	memset(&LvCol, 0, sizeof(LvCol));
 	LvCol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
 
-
-	LvCol.cx = 0x95;		// Column Width.
-	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
-	SendMessage(hGamepadList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
-
-	LvCol.cx = 0x38;
-	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_INPUT_STATE, true);
-	SendMessage(hGamepadList, LVM_INSERTCOLUMN, STATE_INDEX, (LPARAM)&LvCol);
-
-	LvCol.cx = 0xa5;		// Column Width.
+	LvCol.cx = GUID_WIDTH;// 0xa5;		// Column Width.
 	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_GAMEPAD_GUID, true);
 	SendMessage(hGamepadList, LVM_INSERTCOLUMN, GUID_INDEX, (LPARAM)&LvCol);
 
+	LvCol.cx = stateWidth; // 100; //0x95;
+	LvCol.pszText = FBALoadStringEx(hAppInst, IDS_INPUT_STATE, true);
+	SendMessage(hGamepadList, LVM_INSERTCOLUMN, STATE_INDEX, (LPARAM)&LvCol);
+
+
 	return 0;
 }
 
-
-
-// ---------------------------------------------------------------------------------------------------------
-static int ProfileListBegin()
-{
-	auto hList = hProfileList;
-	if (hList == NULL) {
-		return 1;
-	}
-
-	// Full row select style:
-	SendMessage(hList, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
-
-
-	// Make column headers
-	LVCOLUMN LvCol;
-	memset(&LvCol, 0, sizeof(LvCol));
-	LvCol.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-
-
-	LvCol.cx = 0x95;		// Column Width.
-	LvCol.pszText = _T("Name"); //TODO: Localize  // FBALoadStringEx(hAppInst, IDS_GAMEPAD_ALIAS, true);
-	SendMessage(hList, LVM_INSERTCOLUMN, ALIAS_INDEX, (LPARAM)&LvCol);
-
-	return 0;
-}
 
 // ---------------------------------------------------------------------------------------------------------
 static int GamepadListMake(int bBuild) {
@@ -759,23 +771,30 @@ static int GamepadListMake(int bBuild) {
 		SendMessage(list, LVM_DELETEALLITEMS, 0, 0);
 	}
 
-	TCHAR textBuffer[MAX_ALIAS_CHARS];
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nPadCount; i++) {
 		GamepadFileEntry* pad = padInfos[i];
 
-
-		if (pad->info.Alias == 0 || wcscmp(_T(""), pad->info.Alias) == 0) {
-			SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
-		}
-		else
-		{
-			SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
-		}
+		// NOTE: We don't fiddle with pad aliases anymore....
+		//if (pad->info.Alias == 0 || wcscmp(_T(""), pad->info.Alias) == 0) {
+		//	SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
+		//}
+		//else
+		//{
+		//	SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
+		//}
 
 
 		LVITEM LvItem;
+
+		// Populate the GUID column
+		memset(&LvItem, 0, sizeof(LvItem));
+		LvItem.mask = LVIF_TEXT;
+		LvItem.iItem = i;
+		LvItem.iSubItem = GUID_INDEX;
+		LvItem.pszText =  GUIDToTCHAR(&pad->info.guidInstance);
+		SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the STATE column (empty is fine!)
 		// This gets set when we detect input from an attached gamepad!
@@ -786,13 +805,6 @@ static int GamepadListMake(int bBuild) {
 		LvItem.pszText = _T("STATE");
 		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
 
-		// Populate the GUID column
-		memset(&LvItem, 0, sizeof(LvItem));
-		LvItem.mask = LVIF_TEXT;
-		LvItem.iItem = i;
-		LvItem.iSubItem = GUID_INDEX;
-		LvItem.pszText = GUIDToTCHAR(&pad->info.guidInstance);
-		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
 
 	}
 
@@ -1054,6 +1066,8 @@ static void InitComboboxes()
 	}
 
 	RefreshPlayerSelectComboBoxes();
+	SetEnabled(IDC_INDP_P1SELECT, false);
+	SetEnabled(IDC_INDP_P2SELECT, false);
 }
 
 // ------------------------------------------------------------------------------------------------------------
