@@ -252,7 +252,7 @@ int RunFrame(int bDraw, int bPause, int bInput)
 
 		if (kNetGame) {
 			if (bInput) {
-				GetInput(true);						// Update inputs
+				GetInput(true);						// Update inputs		// This is where we may want to look for the open input dialog......
 				VidDisplayInputs(0, 0);
 				if (NetworkGetInput()) {	// Synchronize input with Network
 					VidDisplayInputs(1, 1);

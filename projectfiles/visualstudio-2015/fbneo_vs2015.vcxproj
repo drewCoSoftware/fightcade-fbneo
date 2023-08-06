@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\src\burner\burner.h" />
     <ClInclude Include="..\..\src\burner\dynhuff.h" />
     <ClInclude Include="..\..\src\burner\gameinp.h" />
+    <ClInclude Include="..\..\src\burner\GUIDComparer.h" />
     <ClInclude Include="..\..\src\burner\ioapi.h" />
     <ClInclude Include="..\..\src\burner\luaengine.h" />
     <ClInclude Include="..\..\src\burner\luasav.h" />

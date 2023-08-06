@@ -946,6 +946,9 @@
     <ClInclude Include="..\..\src\cpu\tms34_intf.h">
       <Filter>cpus</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\burner\GUIDComparer.h">
+      <Filter>burner</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\burn\burn.cpp">

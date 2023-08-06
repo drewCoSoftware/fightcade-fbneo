@@ -2,6 +2,7 @@
 // NOTE: This is the <strike>really lousy</strike> war crime of a mapping + preset dialog that comes with the emulator.
 // This is where we will make the UI less stupid.
 #include "burner.h"
+#include "GUIDComparer.h"
 
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
@@ -76,7 +77,14 @@ EDialogState _CurState = SETUPSTATE_NONE;
 
 #define BORDER_WIDTH 4
 
+// This is used to help suggest / find a profile that is associated with
+// a certain game pad.  This is just a convenience feature so the combo boxes
+// don't always have to start at index zero.
+static std::map<GUID, TCHAR[MAX_ALIAS_CHARS], GUIDComparer> _ProfileHints;
+
+
 static void SetSetupState(EDialogState newState);
+static void RefreshProfileData();
 
 // ---------------------------------------------------------------------------------------------------------
 static INT32 SetComboIndex(HWND handle, int index) {
@@ -336,16 +344,49 @@ static int SetPlayerMappings(int playerIndex, int padIndex, int profileIndex)
 	int buttonOffset = playerIndex == 0 ? 0 : sfiii3nPlayerInputs.buttonCount;
 	SetInputMappings(padIndex, useProfile, buttonOffset);
 
+
+	// Update our hints map...
+	GUID& padGuid = padInfos[_SelectedPadIndex]->info.guidInstance;
+
+	// Copy the name!
+	TCHAR* name = _ProfileHints[padGuid];
+	wcscpy(name, inputProfiles[profileIndex]->Name);
+
 	// SUCCESS!
 	return 0;
 }
 
 
 // --------------------------------------------------------------------------------------------------
+static int ResolveHintIndex() {
+	int res = 0;
+	if (_SelectedPadIndex > 0 && _SelectedPadIndex < nPadCount)
+	{
+		GUID& padGuid = padInfos[_SelectedPadIndex]->info.guidInstance;
+		auto match = _ProfileHints.find(padGuid);
+		if (match != _ProfileHints.end())
+		{
+			// We just need to get the index of the profile now!
+			for (size_t i = 0; i < nProfileCount; i++)
+			{
+				bool areSame = wcscmp(match->second, inputProfiles[i]->Name) == 0;
+				if (areSame)
+				{
+					res = i;
+					break;
+				}
+			}
+		}
+	}
+
+	return res;
+}
+
+// --------------------------------------------------------------------------------------------------
 static void InitProfileSelect(int playerIndex)
 {
 
-	if (_SelectedPadIndex < 0 || _SelectedPadIndex > 1 || nProfileCount < 1)
+	if (_SelectedPadIndex < 0 || _SelectedPadIndex >= nPadCount || nProfileCount < 1)
 	{
 		// Invalid ID or no profiles to choose from.
 		SetSetupState(SETUPSTATE_NONE);
@@ -365,7 +406,11 @@ static void InitProfileSelect(int playerIndex)
 		SetEnabled(IDC_INDP_P2SELECT, true);
 	}
 
-	SetComboIndex(hActivePlayerCombo, 0);
+	// Resolve the pad hint..
+	int useComboIndex = ResolveHintIndex();
+
+
+	SetComboIndex(hActivePlayerCombo, useComboIndex);
 
 	TCHAR textBuffer[256];
 	swprintf(textBuffer, _T("Choose profile for player %d and press a button"), playerIndex + 1);
@@ -1069,9 +1114,67 @@ static void InitComboboxes()
 	SetEnabled(IDC_INDP_P2SELECT, false);
 }
 
+
+// ------------------------------------------------------------------------------------------------------------
+// Changes in pads / profiles means some of the data in our hints map may be stale/invalid.
+// We will update it at this time to fix....
+static void RefreshProfileHints() {
+
+	// For every hint that we have, make sure that both the profile (by name) and gamepad exist.
+	// If they don't, we will remove it.....
+	std::vector<GUID> toRemove;
+	for(auto it = _ProfileHints.begin(); it != _ProfileHints.end(); it++)  {
+
+		bool foundPad = false;
+		const GUID& findGuid = it->first;
+		for (size_t i = 0; i < nPadCount; i++)		{
+			if (findGuid == padInfos[i]->info.guidInstance) {
+				foundPad = true;
+				break;
+			}
+		}
+
+		if (!foundPad) {
+			toRemove.push_back(findGuid);
+		}
+
+		// Let's see if the profile exists too.....
+		bool foundProfile = false;
+		TCHAR* findName = it->second;
+		for (size_t i = 0; i < nProfileCount; i++)
+		{
+			bool areSame = wcscmp(findName, inputProfiles[i]->Name) == 0;
+			if (areSame) {
+				foundProfile = true;
+				break;
+			}
+		}
+		if (!foundProfile) {
+		toRemove.push_back(findGuid);
+		}
+	}
+
+	// Remove all hints where data could not be found.
+	int len = toRemove.size();
+	for (size_t i = 0; i < len; i++)
+	{
+		_ProfileHints.erase(toRemove[i]);
+	}
+
+}
+
+// ------------------------------------------------------------------------------------------------------------
+static void RefreshGamepads() {
+	InputGetGamepads(padInfos, &nPadCount);
+	RefreshProfileData();
+}
+
 // ------------------------------------------------------------------------------------------------------------
 static void RefreshProfileData() {
 	InputGetProfiles(inputProfiles, &nProfileCount);
+
+	// Refresh / update our hint map.....
+	RefreshProfileHints();
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -1099,9 +1202,7 @@ static int InpdInit()
 	}
 	memset(LastVal, 0, nMemLen * sizeof(unsigned short));
 
-
-	InputGetGamepads(padInfos, &nPadCount);
-	RefreshProfileData();
+	RefreshGamepads();
 
 	InpdListBegin();
 	InpdListMake(1);
@@ -1788,7 +1889,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			InputInit();
 
 			// Repopulate the gamepad list....
-			InputGetGamepads(padInfos, &nPadCount);
+			RefreshGamepads();
 			GamepadListMake(1);
 
 			// Update the labels in the UI.

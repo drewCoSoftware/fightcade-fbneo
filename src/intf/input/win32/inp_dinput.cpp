@@ -3,8 +3,8 @@
 
 #include "burner.h"
 #include "inp_keys.h"
-
 #include <InitGuid.h>
+#include "GUIDComparer.h"
 
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
@@ -57,16 +57,6 @@ struct InputProfileFileData {
 } inputProfiles;
 
 // Convenience:
-// Thanks internet!
-// https://stackoverflow.com/questions/29436835/guid-as-stdmap-key
-struct GUIDComparer
-{
-	bool operator()(const GUID& Left, const GUID& Right) const
-	{
-		// comparison logic goes here
-		return memcmp(&Left, &Right, sizeof(Right)) < 0;
-	}
-};
 std::map<GUID, GamepadFileEntry*, GUIDComparer> _entryMap;
 
 struct TCHARComparer
