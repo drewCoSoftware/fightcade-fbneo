@@ -821,16 +821,6 @@ static int GamepadListMake(int bBuild) {
 	for (unsigned int i = 0; i < nPadCount; i++) {
 		GamepadFileEntry* pad = padInfos[i];
 
-		// NOTE: We don't fiddle with pad aliases anymore....
-		//if (pad->info.Alias == 0 || wcscmp(_T(""), pad->info.Alias) == 0) {
-		//	SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, _T("<not set>"));
-		//}
-		//else
-		//{
-		//	SetStrBuffer(textBuffer, MAX_ALIAS_CHARS, pad->info.Alias);
-		//}
-
-
 		LVITEM LvItem;
 
 		// Populate the GUID column

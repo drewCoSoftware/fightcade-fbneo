@@ -1396,19 +1396,22 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 		INT32 nJoy = (c >> 8) & 0x3F;			// Translate the index of the joystick.
 		INT32 nCode = c & 0xFF;
 
-		// Determine the name to use for the 
-		TCHAR gpName[MAX_ALIAS_CHARS];
-		if (padInfos && nJoy >= 0 && nJoy < 8 && padInfos[nJoy]) { // && nJoy > 0 && nJoy < ) {		// LATER: Bounds Check!
-			wcscpy(gpName, padInfos[nJoy]->info.Alias);
-		}
-		else
-		{
-			_stprintf(gpName, _T("Joy % d"), nJoy);
-		}
+		// Determine the name to use for the input.
+		// If there is a profile associated with the pad index, use that.....
+		TCHAR gamepadName[MAX_ALIAS_CHARS];
+		_stprintf(gamepadName, _T("Joy % d"), nJoy);
+
+		//if (padInfos && nJoy >= 0 && nJoy < 8 && padInfos[nJoy]) { // && nJoy > 0 && nJoy < ) {		// LATER: Bounds Check!
+		//	wcscpy(gamepadName, padInfos[nJoy]->info.Alias);
+		//}
+		//else
+		//{
+		//	_stprintf(gamepadName, _T("Joy % d"), nJoy);
+		//}
 
 
 		if (nCode >= 0x80) {
-			_stprintf(szString, _T("%s Button %d"), gpName, nCode & 0x7F);
+			_stprintf(szString, _T("%s Button %d"), gamepadName, nCode & 0x7F);
 			return szString;
 		}
 		// Directional Axes:
@@ -1416,17 +1419,17 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 			TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 			TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
 			if (nCode < 4) {
-				_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+				_stprintf(szString, _T("%s %s (%s %s)"), gamepadName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
 			}
 			else {
-				_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
+				_stprintf(szString, _T("%s %s %s"), gamepadName, szAxis[nCode >> 1], szDir[nCode & 1]);
 			}
 			return szString;
 		}
 		// D-PAD
 		if (nCode < 0x20) {
 			TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+			_stprintf(szString, _T("%s POV-hat %d %s"), gamepadName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
 			return szString;
 		}
 	}
@@ -1508,10 +1511,10 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 		}
 
 		// Get the name of our input first....
-		TCHAR gpName[MAX_ALIAS_CHARS];
-		_stprintf(gpName, _T("Joy % d"), pgi->Input.JoyAxis.nJoy);
+		TCHAR gamepadName[MAX_ALIAS_CHARS];
+		_stprintf(gamepadName, _T("Joy % d"), pgi->Input.JoyAxis.nJoy);
 
-		_stprintf(szInputName, _T("%s %s axis (%s range)"), gpName, szAxis[pgi->Input.JoyAxis.nAxis], szRange[nRange]);
+		_stprintf(szInputName, _T("%s %s axis (%s range)"), gamepadName, szAxis[pgi->Input.JoyAxis.nAxis], szRange[nRange]);
 		return szInputName;
 	}
 
