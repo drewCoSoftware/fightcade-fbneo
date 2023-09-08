@@ -4,6 +4,16 @@
 #include "burner.h"
 #include "GUIDComparer.h"
 
+
+// TODO: These defines would be right at home in the rest of the code!
+// They describe address ranges for input codes!
+// Let's make an effort to remove magic values!
+#define JOYSTICK_LOWER 0x4000
+#define JOYSTICK_UPPER 0x8000
+#define MOUSE_LOWER JOYSTICK_UPPER
+#define MOUSE_UPPER 0xC000
+
+
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
 static HWND hGamepadList = NULL;
@@ -16,8 +26,11 @@ static int bLastValDefined = 0;					//
 static HWND hInpdGi = NULL;
 static HWND hInpdPci = NULL;
 static HWND hInpdAnalog = NULL;
-static HWND hP1Select;
-static HWND hP2Select;
+static HWND hP1Profile = NULL;
+static HWND hP2Profile = NULL;
+
+static HWND hP1DeviceList = NULL;
+static HWND hP2DeviceList = NULL;
 
 // Get the currently plugged gamepad data:
 // NOTE:  We should just get a pointer to this so that we can set the alias directly.
@@ -34,10 +47,10 @@ static HWND hActivePlayerCombo;
 static playerInputs sfiii3nPlayerInputs;
 
 enum EDialogState {
-	SETUPSTATE_NONE = 0
-	, SETUPSTATE_SET_PLAYER			// Set pad index for player.
-	, SETUPSTATE_CHOOSE_PROFILE
-	, SETUPSTATE_QUICKSETUP_COMPLETE
+	QUICKPICK_STATE_NONE = 0
+	, QUICKPICK_STATE_SET_DEVICE_INDEX			// Set pad index for player.
+	, QUICKPICK_STATE_CHOOSE_PROFILE
+	, QUICKPICK_STATE_QUICKSETUP_COMPLETE
 };
 int _TargetPlayerIndex = -1;
 int _SelectedPadIndex = -1;
@@ -53,7 +66,7 @@ INT32 LastPressed = -1;
 bool _IsQuickSetupMode = false;
 INT32 _QuickSetupIndex = 0;
 
-EDialogState _CurState = SETUPSTATE_NONE;
+EDialogState _CurState = QUICKPICK_STATE_NONE;
 
 // #define ALIAS_INDEX 0
 #define STATE_INDEX 1
@@ -101,7 +114,7 @@ static void SetEnabled(int id, BOOL bEnable) {
 
 // -------------------------------------------------------------------------------------
 static int GetIndexFromButton(UINT16 button) {
-	if (button >= 0x4000 && button < 0x8000)
+	if (button >= JOYSTICK_LOWER && button < JOYSTICK_UPPER)
 	{
 		int index = (button >> 8) & 0x3F;
 		return index;
@@ -114,7 +127,7 @@ static int GetIndexFromButton(UINT16 button) {
 // Returns 0 when the values are correctly set.
 static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 
-	if (button >= 0x4000 && button < 0x8000)
+	if (button >= JOYSTICK_LOWER && button < JOYSTICK_UPPER)
 	{
 		UINT16 codePart = button & 0xFF;
 		int indexPart = (button >> 8) & 0x3F;
@@ -309,7 +322,7 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 		if (pi.nInput == 0) { continue; }		// Not set.
 
 		UINT16 code = pi.nCode;
-		if (code >= 0x4000 && code < 0x8000)
+		if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER)
 		{
 			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
 			code = code | (padIndex << 8);
@@ -389,19 +402,19 @@ static void InitProfileSelect(int playerIndex)
 	if (_SelectedPadIndex < 0 || _SelectedPadIndex >= nPadCount || nProfileCount < 1)
 	{
 		// Invalid ID or no profiles to choose from.
-		SetSetupState(SETUPSTATE_NONE);
+		SetSetupState(QUICKPICK_STATE_NONE);
 		return;
 	}
 
 	// We will set a selection in the combo box.
 	hActivePlayerCombo = 0;
 	if (playerIndex == 0) {
-		hActivePlayerCombo = hP1Select;
+		hActivePlayerCombo = hP1Profile;
 		SetEnabled(IDC_INDP_P1PROFILE, true);
 		SetEnabled(IDC_INDP_P2PROFILE, false);
 	}
 	else if (playerIndex == 1) {
-		hActivePlayerCombo = hP2Select;
+		hActivePlayerCombo = hP2Profile;
 		SetEnabled(IDC_INDP_P1PROFILE, false);
 		SetEnabled(IDC_INDP_P2PROFILE, true);
 	}
@@ -422,14 +435,14 @@ static void InitProfileSelect(int playerIndex)
 // --------------------------------------------------------------------------------------------------
 static void InitChooseProfile(int padIndex) {
 	_SelectedPadIndex = padIndex;
-	SetSetupState(SETUPSTATE_CHOOSE_PROFILE);
+	SetSetupState(QUICKPICK_STATE_CHOOSE_PROFILE);
 }
 
 // ------------------------------------------------------------------------------------------
 static void InitSetPlayer(int playerIndex) {
 
 	_TargetPlayerIndex = playerIndex;
-	SetSetupState(SETUPSTATE_SET_PLAYER);
+	SetSetupState(QUICKPICK_STATE_SET_DEVICE_INDEX);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -437,7 +450,7 @@ static void SetSetupState(EDialogState newState) {
 	TCHAR buffer[256];
 
 	switch (newState) {
-	case SETUPSTATE_NONE:
+	case QUICKPICK_STATE_NONE:
 	{
 		// Clear the text.
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
@@ -449,7 +462,7 @@ static void SetSetupState(EDialogState newState) {
 	}
 	break;
 
-	case SETUPSTATE_SET_PLAYER:
+	case QUICKPICK_STATE_SET_DEVICE_INDEX:
 	{
 		TCHAR buffer[256];
 
@@ -470,17 +483,17 @@ static void SetSetupState(EDialogState newState) {
 	break;
 
 
-	case SETUPSTATE_CHOOSE_PROFILE:
+	case QUICKPICK_STATE_CHOOSE_PROFILE:
 	{
 		InitProfileSelect(_TargetPlayerIndex);
 	}
 	break;
 
-	case SETUPSTATE_QUICKSETUP_COMPLETE:
+	case QUICKPICK_STATE_QUICKSETUP_COMPLETE:
 	{
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T("Quick setup complete! Press Escape!"));
 	}
-	break; 
+	break;
 
 	default:
 		break;
@@ -517,14 +530,15 @@ static void ProcessSetupState() {
 		usePressed = LastPressed == -1 ? pressed : -1;
 		LastPressed = pressed;
 	}
-
-	if (pressed == -1 || pressed == 16646)
-	{
-		// Clear the pressed button....
+	else if (pressed == -1) {
 		LastPressed = -1;
 	}
+	else {
+		// No pad index, and nothing pressed.....
+		int x = 10;
+	}
 
-	if (_CurState == SETUPSTATE_NONE)
+	if (_CurState == QUICKPICK_STATE_NONE)
 	{
 		// Check for quick setup mode and handle accordingly......
 		if (_IsQuickSetupMode) {
@@ -532,19 +546,23 @@ static void ProcessSetupState() {
 			return;
 		}
 	}
-	else if (_CurState == SETUPSTATE_SET_PLAYER) {
+	else if (_CurState == QUICKPICK_STATE_SET_DEVICE_INDEX) {
+
 
 		// We have to iterate through inputs and select those that are from gamepads.
 		// From there we can determine the index of that gamepad....
-		if (usePressed != -1 & padIndex != -1)
+		if (usePressed != -1 && padIndex != -1)
 		{
+			// Set the device combo box index:
+			SetComboIndex(hP1DeviceList, padIndex);
+
 			// Now that we have a pad index, we can associate it with the currently selected
 			// input profile!
 			InitChooseProfile(padIndex);
 		}
 
 	}
-	else if (_CurState == SETUPSTATE_CHOOSE_PROFILE) {
+	else if (_CurState == QUICKPICK_STATE_CHOOSE_PROFILE) {
 
 		// Here we want to detect the up/down buttons so that
 		// we can cycle through the available profiles.
@@ -588,7 +606,7 @@ static void ProcessSetupState() {
 
 					// We are done with setup, so let's close the dialog ?? 
 					_IsQuickSetupMode = false;
-					SetSetupState(SETUPSTATE_QUICKSETUP_COMPLETE);
+					SetSetupState(QUICKPICK_STATE_QUICKSETUP_COMPLETE);
 
 					// TODO: Figure out how we close the dialog....
 					// Actually, I think we want to consider it done!
@@ -598,7 +616,7 @@ static void ProcessSetupState() {
 				InitSetPlayer(_QuickSetupIndex);
 			}
 			else {
-				SetSetupState(SETUPSTATE_NONE);
+				SetSetupState(QUICKPICK_STATE_NONE);
 			}
 		}
 	}
@@ -834,7 +852,7 @@ static int GamepadListMake(int bBuild) {
 		LvItem.mask = LVIF_TEXT;
 		LvItem.iItem = i;
 		LvItem.iSubItem = GUID_INDEX;
-		LvItem.pszText =  buffer; //GUIDToTCHAR(&pad->info.guidInstance);
+		LvItem.pszText = buffer; //GUIDToTCHAR(&pad->info.guidInstance);
 		SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the STATE column (empty is fine!)
@@ -1062,16 +1080,40 @@ static void RefreshPlayerSelectComboBoxes() {
 	// and just make associations as we go.  Actually, that would be retty easy to do....
 
 	// Get the list of active gamepads, and populate each combox box with that data.
-	SendMessage(hP1Select, CB_RESETCONTENT, 0, 0);
-	SendMessage(hP2Select, CB_RESETCONTENT, 0, 0);
+	SendMessage(hP1Profile, CB_RESETCONTENT, 0, 0);
+	SendMessage(hP2Profile, CB_RESETCONTENT, 0, 0);
 
 	for (size_t i = 0; i < nProfileCount; i++)
 	{
 		TCHAR* padAlias = inputProfiles[i]->Name;
-		SendMessage(hP1Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
-		SendMessage(hP2Select, CB_ADDSTRING, 0, (LPARAM)padAlias);
+		SendMessage(hP1Profile, CB_ADDSTRING, 0, (LPARAM)padAlias);
+		SendMessage(hP2Profile, CB_ADDSTRING, 0, (LPARAM)padAlias);
 	}
 }
+
+// ------------------------------------------------------------------------------------------
+static void RefreshPlayerDeviceComboBoxes() {
+	// TODO: Keep track of current selections?
+	// This would be kind of part of some feature where we track the pad guid on the background
+	// and just make associations as we go.  Actually, that would be retty easy to do....
+
+	// Get the list of active gamepads, and populate each combox box with that data.
+	SendMessage(hP1DeviceList, CB_RESETCONTENT, 0, 0);
+	SendMessage(hP2DeviceList, CB_RESETCONTENT, 0, 0);
+
+	TCHAR buffer[MAX_ALIAS_CHARS];
+	for (size_t i = 0; i < nPadCount; i++)
+	{
+		// NOTE: We should either read this from the actual populated gamepad list,
+		// or we should create a function to compute the string!
+		wsprintf(buffer, _T("Joy %u"), i);
+//		TCHAR* padAlias = inputProfiles[i]->Name;
+		SendMessage(hP1DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
+		SendMessage(hP2DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
+	}
+}
+
+
 
 // ------------------------------------------------------------------------------------------
 static void InitComboboxes()
@@ -1108,6 +1150,8 @@ static void InitComboboxes()
 	RefreshPlayerSelectComboBoxes();
 	SetEnabled(IDC_INDP_P1PROFILE, false);
 	SetEnabled(IDC_INDP_P2PROFILE, false);
+
+	RefreshPlayerDeviceComboBoxes();
 }
 
 
@@ -1119,11 +1163,11 @@ static void RefreshProfileHints() {
 	// For every hint that we have, make sure that both the profile (by name) and gamepad exist.
 	// If they don't, we will remove it.....
 	std::vector<GUID> toRemove;
-	for(auto it = _ProfileHints.begin(); it != _ProfileHints.end(); it++)  {
+	for (auto it = _ProfileHints.begin(); it != _ProfileHints.end(); it++) {
 
 		bool foundPad = false;
 		const GUID& findGuid = it->first;
-		for (size_t i = 0; i < nPadCount; i++)		{
+		for (size_t i = 0; i < nPadCount; i++) {
 			if (findGuid == padInfos[i]->info.guidInstance) {
 				foundPad = true;
 				break;
@@ -1146,7 +1190,7 @@ static void RefreshProfileHints() {
 			}
 		}
 		if (!foundProfile) {
-		toRemove.push_back(findGuid);
+			toRemove.push_back(findGuid);
 		}
 	}
 
@@ -1212,15 +1256,18 @@ static int InpdInit()
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);
 	hInpdPci = GetDlgItem(hInpdDlg, IDC_INPD_PCI);
 	hInpdAnalog = GetDlgItem(hInpdDlg, IDC_INPD_ANALOG);
-	hP1Select = GetDlgItem(hInpdDlg, IDC_INDP_P1PROFILE);
-	hP2Select = GetDlgItem(hInpdDlg, IDC_INDP_P2PROFILE);
+	hP1Profile = GetDlgItem(hInpdDlg, IDC_INDP_P1PROFILE);
+	hP2Profile = GetDlgItem(hInpdDlg, IDC_INDP_P2PROFILE);
+
+	hP1DeviceList = GetDlgItem(hInpdDlg, IDC_INDP_P1DEVICES);
+	hP2DeviceList = GetDlgItem(hInpdDlg, IDC_INDP_P2DEVICES);
 
 	InitComboboxes();
 
 	DisablePresets();
 
 
-	SetSetupState(SETUPSTATE_NONE);
+	SetSetupState(QUICKPICK_STATE_NONE);
 	return 0;
 }
 
@@ -1732,12 +1779,12 @@ static void saveMappingsInfo() {
 		}
 
 		// NOTE: This is where we need to translated gamepad codes....
-		if (code >= 0x4000 && code < 0x8000) {
+		if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER) {
 			INT32 index = (code >> 8) & 0x3F;
 			code = code & 0xFF;
 
 			// We are going to put in a gamepad bit as this is how the input coding system works...
-			code |= 0x4000;
+			code |= JOYSTICK_LOWER;
 		}
 		pi.nCode = code;
 	}
@@ -1898,13 +1945,13 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (Id == ID_QUICK_SETUP1 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 0;
-			SetSetupState(SETUPSTATE_SET_PLAYER);
+			SetSetupState(QUICKPICK_STATE_SET_DEVICE_INDEX);
 			return 0;
 		}
 		if (Id == ID_QUICK_SETUP2 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 1;
-			SetSetupState(SETUPSTATE_SET_PLAYER);
+			SetSetupState(QUICKPICK_STATE_SET_DEVICE_INDEX);
 			return 0;
 		}
 
