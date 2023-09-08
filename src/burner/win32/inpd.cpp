@@ -397,13 +397,13 @@ static void InitProfileSelect(int playerIndex)
 	hActivePlayerCombo = 0;
 	if (playerIndex == 0) {
 		hActivePlayerCombo = hP1Select;
-		SetEnabled(IDC_INDP_P1SELECT, true);
-		SetEnabled(IDC_INDP_P2SELECT, false);
+		SetEnabled(IDC_INDP_P1PROFILE, true);
+		SetEnabled(IDC_INDP_P2PROFILE, false);
 	}
 	else if (playerIndex == 1) {
 		hActivePlayerCombo = hP2Select;
-		SetEnabled(IDC_INDP_P1SELECT, false);
-		SetEnabled(IDC_INDP_P2SELECT, true);
+		SetEnabled(IDC_INDP_P1PROFILE, false);
+		SetEnabled(IDC_INDP_P2PROFILE, true);
 	}
 
 	// Resolve the pad hint..
@@ -441,8 +441,8 @@ static void SetSetupState(EDialogState newState) {
 	{
 		// Clear the text.
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
-		SetEnabled(ID_SET_PLAYER1, true);
-		SetEnabled(ID_SET_PLAYER2, true);
+		SetEnabled(ID_QUICK_SETUP1, true);
+		SetEnabled(ID_QUICK_SETUP2, true);
 
 		_SelectedPadIndex = -1;
 		_TargetPlayerIndex = -1;
@@ -459,12 +459,12 @@ static void SetSetupState(EDialogState newState) {
 
 		// Disable the correct button....
 		if (_TargetPlayerIndex == 0) {
-			SetEnabled(ID_SET_PLAYER1, true);
-			SetEnabled(ID_SET_PLAYER2, false);
+			SetEnabled(ID_QUICK_SETUP1, true);
+			SetEnabled(ID_QUICK_SETUP2, false);
 		}
 		else {
-			SetEnabled(ID_SET_PLAYER1, false);
-			SetEnabled(ID_SET_PLAYER2, true);
+			SetEnabled(ID_QUICK_SETUP1, false);
+			SetEnabled(ID_QUICK_SETUP2, true);
 		}
 	}
 	break;
@@ -518,7 +518,7 @@ static void ProcessSetupState() {
 		LastPressed = pressed;
 	}
 
-	if (pressed == -1)
+	if (pressed == -1 || pressed == 16646)
 	{
 		// Clear the pressed button....
 		LastPressed = -1;
@@ -579,8 +579,8 @@ static void ProcessSetupState() {
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
 
 			// Disable both combos when the players are set.
-			SetEnabled(IDC_INDP_P1SELECT, false);
-			SetEnabled(IDC_INDP_P2SELECT, false);
+			SetEnabled(IDC_INDP_P1PROFILE, false);
+			SetEnabled(IDC_INDP_P2PROFILE, false);
 
 			if (_IsQuickSetupMode) {
 				_QuickSetupIndex++;
@@ -816,6 +816,8 @@ static int GamepadListMake(int bBuild) {
 		SendMessage(list, LVM_DELETEALLITEMS, 0, 0);
 	}
 
+	TCHAR buffer[MAX_ALIAS_CHARS];
+
 
 	// Populate the list:
 	for (unsigned int i = 0; i < nPadCount; i++) {
@@ -823,12 +825,16 @@ static int GamepadListMake(int bBuild) {
 
 		LVITEM LvItem;
 
+		// Set the name of the gamepad....
+		// memset(buffer, 0, 1);
+		wsprintf(buffer, _T("Joy %u"), i);
+
 		// Populate the GUID column
 		memset(&LvItem, 0, sizeof(LvItem));
 		LvItem.mask = LVIF_TEXT;
 		LvItem.iItem = i;
 		LvItem.iSubItem = GUID_INDEX;
-		LvItem.pszText =  GUIDToTCHAR(&pad->info.guidInstance);
+		LvItem.pszText =  buffer; //GUIDToTCHAR(&pad->info.guidInstance);
 		SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&LvItem);
 
 		// Populate the STATE column (empty is fine!)
@@ -837,7 +843,7 @@ static int GamepadListMake(int bBuild) {
 		LvItem.mask = LVIF_TEXT;
 		LvItem.iItem = i;
 		LvItem.iSubItem = STATE_INDEX;
-		LvItem.pszText = _T("STATE");
+		LvItem.pszText = _T("");
 		SendMessage(list, LVM_SETITEM, 0, (LPARAM)&LvItem);
 
 
@@ -1100,8 +1106,8 @@ static void InitComboboxes()
 	}
 
 	RefreshPlayerSelectComboBoxes();
-	SetEnabled(IDC_INDP_P1SELECT, false);
-	SetEnabled(IDC_INDP_P2SELECT, false);
+	SetEnabled(IDC_INDP_P1PROFILE, false);
+	SetEnabled(IDC_INDP_P2PROFILE, false);
 }
 
 
@@ -1206,8 +1212,8 @@ static int InpdInit()
 	hInpdGi = GetDlgItem(hInpdDlg, IDC_INPD_GI);
 	hInpdPci = GetDlgItem(hInpdDlg, IDC_INPD_PCI);
 	hInpdAnalog = GetDlgItem(hInpdDlg, IDC_INPD_ANALOG);
-	hP1Select = GetDlgItem(hInpdDlg, IDC_INDP_P1SELECT);
-	hP2Select = GetDlgItem(hInpdDlg, IDC_INDP_P2SELECT);
+	hP1Select = GetDlgItem(hInpdDlg, IDC_INDP_P1PROFILE);
+	hP2Select = GetDlgItem(hInpdDlg, IDC_INDP_P2PROFILE);
 
 	InitComboboxes();
 
@@ -1889,13 +1895,13 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 
-		if (Id == ID_SET_PLAYER1 && Notify == BN_CLICKED)
+		if (Id == ID_QUICK_SETUP1 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 0;
 			SetSetupState(SETUPSTATE_SET_PLAYER);
 			return 0;
 		}
-		if (Id == ID_SET_PLAYER2 && Notify == BN_CLICKED)
+		if (Id == ID_QUICK_SETUP2 && Notify == BN_CLICKED)
 		{
 			_TargetPlayerIndex = 1;
 			SetSetupState(SETUPSTATE_SET_PLAYER);

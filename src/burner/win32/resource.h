@@ -14,7 +14,9 @@
 #define ID_SET_PLAYER_MAPPINGS          5
 #define ID_SAVE_MAPPINGS                6
 #define ID_SET_PLAYER2                  7
+#define ID_QUICK_SETUP2                 7
 #define ID_SET_PLAYER1                  8
+#define ID_QUICK_SETUP1                 8
 #define IDC_SET_PLAYER_MESSAGE          9
 #define IDI_APP                         10
 #define ID_NEW_PROFILE                  10
@@ -559,10 +561,14 @@
 #define IDC_INPD_DEFAULT                20006
 #define IDC_INPS_GRABMOUSE              20007
 #define IDC_INDP_P1SELECT               20007
+#define IDC_INDP_P1PROFILE              20007
 #define IDC_INPS_CONTROL                20008
 #define IDC_INDP_P2SELECT               20008
+#define IDC_INDP_P2PROFILE              20008
 #define IDC_INPS_CONTROL_NAME           20009
+#define IDC_INDP_P2DEVICE               20009
 #define IDC_INPC_VALUE                  20010
+#define IDC_INDP_P1DEVICE               20010
 #define IDC_INPS_PUSH                   20011
 #define IDC_INPCX1_VALUE                20012
 #define IDC_INPC_RESET                  20013
