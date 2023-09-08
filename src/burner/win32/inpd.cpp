@@ -53,7 +53,7 @@ enum EDialogState {
 	, QUICKPICK_STATE_QUICKSETUP_COMPLETE
 };
 int _TargetPlayerIndex = -1;
-int _SelectedPadIndex = -1;
+int _SelectedPadIndex = -1;			// NOTE: This can and should be replaced with the index of the combobox that lists the selected device!
 
 // Choose profile stuff (placeholder)
 int _ProfileIndex = -1;
@@ -98,6 +98,12 @@ static std::map<GUID, TCHAR[MAX_ALIAS_CHARS], GUIDComparer> _ProfileHints;
 
 static void SetSetupState(EDialogState newState);
 static void RefreshProfileData();
+
+// ---------------------------------------------------------------------------------------------------------
+static INT32 GetComboIndex(HWND handle) {
+	INT32 res = SendMessage(handle, CB_GETCURSEL, 0, 0);
+	return res;
+}
 
 // ---------------------------------------------------------------------------------------------------------
 static INT32 SetComboIndex(HWND handle, int index) {
@@ -518,10 +524,15 @@ static INT32 BeginQuickSetup() {
 // --------------------------------------------------------------------------------------------------
 static void ProcessSetupState() {
 
-	// We only want to update the pressed button code the first time it is pushed.
-	// If we still have a pressed button on the next cycle we will ignore it.
-	INT32 pressed = InputFind(8);
-	int padIndex = GetIndexFromButton(pressed);
+	INT32 pressed = -1;
+	int padIndex = -1;
+
+	if (_CurState != QUICKPICK_STATE_NONE) {
+		// We only want to update the pressed button code the first time it is pushed.
+		// If we still have a pressed button on the next cycle we will ignore it.
+		INT32 pressed = InputFind(8);
+		int padIndex = GetIndexFromButton(pressed);
+	}
 
 	// We only care about pad buttons for this stuff.....
 	INT32 usePressed = -1;
@@ -578,7 +589,7 @@ static void ProcessSetupState() {
 		if (dirChanged) {
 			_LastUpDown = dirDelta;
 
-			int curIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
+			int curIndex = GetComboIndex(hActivePlayerCombo);
 			int newIndex = curIndex + dirDelta;
 
 			int maxIndex = nProfileCount - 1;
@@ -593,7 +604,7 @@ static void ProcessSetupState() {
 			// User didn't press a direction button, but did press something
 			// else.  They must be happy with their profile selection....
 			// This is where we will copy the profile buttons over to the input interface.....
-			int profileIndex = SendMessage(hActivePlayerCombo, CB_GETCURSEL, 0, 0);
+			int profileIndex = GetComboIndex(hActivePlayerCombo);
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
 
 			// Disable both combos when the players are set.
@@ -732,9 +743,9 @@ int InpdUpdate()
 		LvItem.pszText = szVal;
 
 		SendMessage(hInpdList, LVM_SETITEM, 0, (LPARAM)&LvItem);
-
 		j++;
 	}
+
 
 	bLastValDefined = 1;										// LastVal is now defined
 
@@ -1107,7 +1118,7 @@ static void RefreshPlayerDeviceComboBoxes() {
 		// NOTE: We should either read this from the actual populated gamepad list,
 		// or we should create a function to compute the string!
 		wsprintf(buffer, _T("Joy %u"), i);
-//		TCHAR* padAlias = inputProfiles[i]->Name;
+		//		TCHAR* padAlias = inputProfiles[i]->Name;
 		SendMessage(hP1DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
 		SendMessage(hP2DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
@@ -1148,8 +1159,10 @@ static void InitComboboxes()
 	}
 
 	RefreshPlayerSelectComboBoxes();
-	SetEnabled(IDC_INDP_P1PROFILE, false);
-	SetEnabled(IDC_INDP_P2PROFILE, false);
+
+	// We want to always leave these comobos on for manual setting!
+	//SetEnabled(IDC_INDP_P1PROF"),ILE, false);
+	//SetEnabled(IDC_INDP_P2PROFILE, false);
 
 	RefreshPlayerDeviceComboBoxes();
 }
@@ -1955,10 +1968,26 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			return 0;
 		}
 
-		//if (Id == ID_SET_PLAYER_MAPPINGS && Notify == BN_CLICKED) {
-		//	SetPlayerMappings();
-		//	return 0;
-		//}
+		// The manual 'Set!' buttons....
+		// Player 1
+		if (Id == ID_SET_INPUT1 && Notify == BN_CLICKED) {
+			UINT32 deviceIndex = GetComboIndex(hP1DeviceList);
+			// HACK: This value should be passed to the associatd functions!
+			UINT32 profileIndex = GetComboIndex(hP1Profile);
+
+			_SelectedPadIndex = deviceIndex;
+			SetPlayerMappings(0, deviceIndex, profileIndex);
+			return 0;
+		}
+		// Player 2
+		if (Id == ID_SET_INPUT2 && Notify == BN_CLICKED) {
+			UINT32 deviceIndex = GetComboIndex(hP2DeviceList);
+			UINT32 profileIndex = GetComboIndex(hP2Profile);
+
+			_SelectedPadIndex = deviceIndex;
+			SetPlayerMappings(0, deviceIndex, profileIndex);
+			return 0;
+		}
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
 

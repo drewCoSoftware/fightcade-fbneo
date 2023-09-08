@@ -26,6 +26,7 @@
 #define ID_REMOVE_PROFILE               11
 #define IDI_TV_MINUS                    12
 #define ID_SET_INPUT_1                  12
+#define ID_SET_INPUT1                   12
 #define IDI_TV_NOTWORKING               13
 #define IDC_PROFILE_NAME                13
 #define IDI_TV_NOTFOUND_ESS             14
@@ -568,7 +569,6 @@
 #define IDC_INDP_P2SELECT               20008
 #define IDC_INDP_P2PROFILE              20008
 #define IDC_INPS_CONTROL_NAME           20009
-#define IDC_INDP_P2DEVICE               20009
 #define IDC_INDP_P2DEVICES              20009
 #define IDC_INPC_VALUE                  20010
 #define IDC_INDP_P1DEVICES              20010
