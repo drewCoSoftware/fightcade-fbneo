@@ -14,6 +14,8 @@
 #define MOUSE_UPPER 0xC000
 
 
+#define CB_ITEM_SIZE	20			// TBD
+
 HWND hInpdDlg = NULL;							// Handle to the Input Dialog
 static HWND hInpdList = NULL;
 static HWND hGamepadList = NULL;
@@ -1085,6 +1087,23 @@ static void DisablePresets()
 }
 
 // ------------------------------------------------------------------------------------------
+static void SetComboBoxDropdownSize(HWND cb, int itemCount, int itemSize) {
+	if (cb)
+	{
+		RECT r;
+		GetWindowRect(cb, &r);
+		LONG useWidth = r.right - r.left;
+
+		//auto selSize=  SendMessage(cb, CB_GETITEMHEIGHT, -1, NULL);
+		
+		//auto itemSize = SendMessage(cb, CB_GETITEMHEIGHT, 0, NULL);		// NOTE: This sometimes returns zero....
+
+		int totalSize = (itemCount + 1) * itemSize;
+		SetWindowPos(cb,  NULL, 0, 0 , useWidth, totalSize, SWP_NOMOVE);
+	}
+}
+
+// ------------------------------------------------------------------------------------------
 static void RefreshPlayerSelectComboBoxes() {
 	// TODO: Keep track of current selections?
 	// This would be kind of part of some feature where we track the pad guid on the background
@@ -1100,6 +1119,13 @@ static void RefreshPlayerSelectComboBoxes() {
 		SendMessage(hP1Profile, CB_ADDSTRING, 0, (LPARAM)padAlias);
 		SendMessage(hP2Profile, CB_ADDSTRING, 0, (LPARAM)padAlias);
 	}
+
+	// Set an appropriate size for the combos.  Note that we can base this on the number of items.
+	int useCount = (std::max)(4, nProfileCount);
+	useCount = (std::min)(16, useCount);
+	useCount = (std::min)(16, useCount);
+	SetComboBoxDropdownSize(hP1Profile, useCount, CB_ITEM_SIZE);
+	SetComboBoxDropdownSize(hP2Profile, useCount, CB_ITEM_SIZE);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -1122,6 +1148,11 @@ static void RefreshPlayerDeviceComboBoxes() {
 		SendMessage(hP1DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
 		SendMessage(hP2DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
+
+	int useCount = (std::max)(4, nPadCount);
+	SetComboBoxDropdownSize(hP1DeviceList, useCount, CB_ITEM_SIZE);
+	SetComboBoxDropdownSize(hP2DeviceList, useCount, CB_ITEM_SIZE);
+
 }
 
 
@@ -1220,6 +1251,7 @@ static void RefreshProfileHints() {
 static void RefreshGamepads() {
 	InputGetGamepads(padInfos, &nPadCount);
 	RefreshProfileData();
+	RefreshPlayerDeviceComboBoxes();
 }
 
 // ------------------------------------------------------------------------------------------------------------
@@ -1827,6 +1859,7 @@ static void addNewProfile() {
 		ProfileListMake(1);
 
 		RefreshPlayerSelectComboBoxes();
+		RefreshPlayerDeviceComboBoxes();
 	}
 
 }
@@ -1840,6 +1873,7 @@ static void removeProfile() {
 	OnProfileListDeselect();
 
 	RefreshPlayerSelectComboBoxes();
+	RefreshPlayerDeviceComboBoxes();
 	RefreshProfileData();
 	ProfileListMake(1);
 }
@@ -1911,18 +1945,12 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 		if (Id == IDOK && Notify == BN_CLICKED) {
 			ActivateInputListItem();
-			//			SelectGamepadListItem();
 			return 0;
 		}
 		if (Id == IDCANCEL && Notify == BN_CLICKED) {
 			SendMessage(hDlg, WM_CLOSE, 0, 0);
 			return 0;
 		}
-
-		//if (Id == IDSAVEALIAS && Notify == BN_CLICKED) {
-		//	saveAliasInfo();
-		//	return 0;
-		//}
 
 		if (Id == ID_ADDPROFILE && Notify == BN_CLICKED) {
 			addNewProfile();
@@ -1985,14 +2013,11 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 			UINT32 profileIndex = GetComboIndex(hP2Profile);
 
 			_SelectedPadIndex = deviceIndex;
-			SetPlayerMappings(0, deviceIndex, profileIndex);
+			SetPlayerMappings(1, deviceIndex, profileIndex);
 			return 0;
 		}
 
 		if (Id == IDC_INPD_NEWMACRO && Notify == BN_CLICKED) {
-
-			//			NewMacroButton();
-
 			return 0;
 		}
 
