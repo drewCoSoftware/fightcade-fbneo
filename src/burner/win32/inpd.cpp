@@ -5,6 +5,7 @@
 #include "GUIDComparer.h"
 
 
+// ==============================================================================================================================
 // A simple way to track when a certain button is up/down/etc.
 struct CButtonState {
 
@@ -27,7 +28,7 @@ struct CButtonState {
 	}
 };
 
-
+// ==============================================================================================================================
 // Simple way to track the directions + buttons on a gamepad and their up/down state,etc.
 class CGamepadState {
 
@@ -93,6 +94,20 @@ public:
 		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
 		{
 			if (Buttons[i].IsDown) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Is any direction being pressed?
+	/// </summary>
+	/// <returns></returns>
+	bool AnyDir() {
+		for (size_t i = 0; i < MAX_DIRS; i++)
+		{
+			if (Dirs[i].IsDown) {
 				return true;
 			}
 		}
@@ -485,12 +500,12 @@ static void SetSetupState(EDialogState newState) {
 
 		// Disable the correct button....
 		if (_TargetPlayerIndex == 0) {
-			SetEnabled(ID_QUICK_SETUP1, true);
-			SetEnabled(ID_QUICK_SETUP2, false);
+			//SetEnabled(ID_QUICK_SETUP1, true);
+			//SetEnabled(ID_QUICK_SETUP2, false);
 		}
 		else {
-			SetEnabled(ID_QUICK_SETUP1, false);
-			SetEnabled(ID_QUICK_SETUP2, true);
+			//SetEnabled(ID_QUICK_SETUP1, false);
+			//SetEnabled(ID_QUICK_SETUP2, true);
 		}
 	}
 	break;
@@ -545,23 +560,41 @@ static void UpdateGamepadState(int padIndex) {
 	PadStates[padIndex].Update(dirs, btns, btnCount);
 }
 
+
+// --------------------------------------------------------------------------------------------------
+static void UpdateGamepadStatuses() {
+
+	LVITEM LvItem;
+	TCHAR szVal[16];
+
+	memset(&LvItem, 0, sizeof(LvItem));
+	LvItem.mask = LVIF_TEXT;
+	//	LvItem.iItem = j;
+	LvItem.iSubItem = 1;
+	LvItem.pszText = szVal;
+
+
+	for (size_t i = 0; i < nPadCount; i++)
+	{
+		bool isActive = PadStates[i].AnyDown() || PadStates[i].AnyDir();
+		if (isActive) {
+			_tcscpy(szVal, _T("CHECK!"));
+		}
+		else {
+			szVal[0] = 0;
+		}
+
+		LvItem.iItem = i;
+		SendMessage(hGamepadList, LVM_SETITEM, 0, (LPARAM)&LvItem);
+	}
+
+}
+
 // --------------------------------------------------------------------------------------------------
 static void ProcessQuickpickState() {
 
 	INT32 pressed = -1;
 	int padIndex = -1;
-
-	if (_CurState != QUICKPICK_STATE_NONE) {
-		// We only want to update the pressed button code the first time it is pushed.
-		// If we still have a pressed button on the next cycle we will ignore it.
-		INT32 pressed = InputFind(8);
-		int padIndex = GetIndexFromButton(pressed);
-
-		// This is how we can update all of the pad states....
-		for (int i = 0; i < nPadCount; i++) {
-			UpdateGamepadState(i);
-		}
-	}
 
 	if (_CurState == QUICKPICK_STATE_NONE)
 	{
@@ -626,8 +659,8 @@ static void ProcessQuickpickState() {
 			SetPlayerMappings(_TargetPlayerIndex, _SelectedPadIndex, profileIndex);
 
 			// Disable both combos when the players are set.
-			SetEnabled(IDC_INDP_P1PROFILE, false);
-			SetEnabled(IDC_INDP_P2PROFILE, false);
+			//SetEnabled(IDC_INDP_P1PROFILE, false);
+			//SetEnabled(IDC_INDP_P2PROFILE, false);
 
 			if (_IsQuickSetupMode) {
 				_QuickSetupIndex++;
@@ -669,6 +702,12 @@ int InpdUpdate()
 		return 1;
 	}
 
+	// Update all states so we can signal activity in the gamepad list.
+	for (int i = 0; i < nPadCount; i++) {
+		UpdateGamepadState(i);
+	}
+
+	UpdateGamepadStatuses();
 	ProcessQuickpickState();
 
 
@@ -1519,7 +1558,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-	}
+}
 #endif
 
 static int DeleteInput(unsigned int i)
