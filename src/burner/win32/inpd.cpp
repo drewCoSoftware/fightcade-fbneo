@@ -19,6 +19,12 @@ struct CButtonState {
 	bool JustDown = false;
 	bool JustUp = false;
 	bool IsDown = false;
+
+	void Reset() {
+		JustDown = false;
+		JustUp = false;
+		IsDown = false;
+	}
 };
 
 
@@ -34,13 +40,61 @@ public:
 	void Update(UINT16* dirStates, UINT16* btnStates, DWORD btnCount) {
 		for (size_t i = 0; i < MAX_DIRS; i++)
 		{
-			Dirs[i].Update(dirStates[0]);
+			Dirs[i].Update(dirStates[i]);
 		}
 
 		int maxbuttons = (std::min)((int)btnCount, MAX_GAMEPAD_BUTTONS);
-		for (size_t i = 0; i < MAX_DIRS; i++)
+		for (size_t i = 0; i < maxbuttons; i++)
 		{
-			Buttons[i].Update(dirStates[0]);
+			Buttons[i].Update(btnStates[i]);
+		}
+	}
+
+	/// <summary>
+	/// Are any of the buttons just down?
+	/// </summary>
+	bool AnyJustDown() {
+		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
+		{
+			if (Buttons[i].JustDown) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Are any of the buttons just up?
+	/// </summary>
+	bool AnyJustUp() {
+		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
+		{
+			if (Buttons[i].JustUp) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/// <summary>
+	/// Are any of the buttons down?
+	/// </summary>
+	bool AnyDown() {
+		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
+		{
+			if (Buttons[i].IsDown) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	void Reset() {
+		for (size_t i = 0; i < MAX_DIRS; i++) {
+			Dirs[i].Reset();
+		}
+		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++) {
+			Buttons[i].Reset();
 		}
 	}
 
@@ -198,94 +252,101 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 // For the given pad index, returns an int that is -1 for left, 1 for right, and zero
 // if neither are pressed.
 // 'allButtons' is passed in so we can detect keyboard keys.
-static int GetLeftOrRightButton(int padIndex, INT32 gamepadButtons, INT32 allButtons) {
+static int GetLeftOrRightButton(int padIndex) {
 
-	int index = 0;
-	UINT16 nCode = 0;
-
-	if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
-	{
-		if (index != padIndex) { return DIR_NONE; }
-
-		// See the comments in 'GetUpOrDownButton' for information on how the button codes are derived.
-		if (nCode < 0x10) {
-			if (nCode < 4) {
-				UINT16 axisCode = nCode >> 1;
-				UINT16 dirCode = nCode + 2;
-				if (axisCode != X_AXIS_CODE) { return DIR_NONE; }
-				if (dirCode == 2) { return DIR_LEFT; }
-				if (dirCode == 3) { return DIR_RIGHT; }
-			}
-			else {
-				// Is this a condition we care about?
-				int x = 10;
-			}
-		}
-		if (nCode < 0x20) {
-			UINT16 dirCode = nCode & 3;
-			if (dirCode == 0) { return DIR_LEFT; }
-			if (dirCode == 1) { return DIR_RIGHT; }
-		}
-	}
-
-	// We might have some keyboard buttons....
-	if (allButtons == KEYB_LEFT) { return DIR_LEFT; }
-	if (allButtons == KEYB_RIGHT) { return DIR_RIGHT; }
-
+	// TEMP: Do Nothing:
+	// TODO: Move this function to the padstate class...
 	return DIR_NONE;
+
+	//int index = 0;
+	//UINT16 nCode = 0;
+
+	//if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
+	//{
+	//	if (index != padIndex) { return DIR_NONE; }
+
+	//	// See the comments in 'GetUpOrDownButton' for information on how the button codes are derived.
+	//	if (nCode < 0x10) {
+	//		if (nCode < 4) {
+	//			UINT16 axisCode = nCode >> 1;
+	//			UINT16 dirCode = nCode + 2;
+	//			if (axisCode != X_AXIS_CODE) { return DIR_NONE; }
+	//			if (dirCode == 2) { return DIR_LEFT; }
+	//			if (dirCode == 3) { return DIR_RIGHT; }
+	//		}
+	//		else {
+	//			// Is this a condition we care about?
+	//			int x = 10;
+	//		}
+	//	}
+	//	if (nCode < 0x20) {
+	//		UINT16 dirCode = nCode & 3;
+	//		if (dirCode == 0) { return DIR_LEFT; }
+	//		if (dirCode == 1) { return DIR_RIGHT; }
+	//	}
+	//}
+
+	//// We might have some keyboard buttons....
+	//if (allButtons == KEYB_LEFT) { return DIR_LEFT; }
+	//if (allButtons == KEYB_RIGHT) { return DIR_RIGHT; }
+
+	//return DIR_NONE;
 }
 
 // --------------------------------------------------------------------------------------------------
 // For the given pad index, returns an int that is -1 for up, 1 for down, and zero
 // if an up or down button is not pressed.
 // TODO: These need to be able to detect up/down keys from the keyboard too!
-static int GetUpOrDownButton(int padIndex, INT32 gamepadButtons, INT32 allButtons) {
+static int GetUpOrDownButton(int padIndex) {
 
-	int index = 0;
-	UINT16 nCode = 0;
+	// TEMP: Do Nothing:
+	// TODO: Move this function to the padstate class...
 
-	if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
-	{
-		if (index != padIndex) { return DIR_NONE; }
+	//int index = 0;
+	//UINT16 nCode = 0;
 
-		// NOTE: The commented blocks come from the code that formats the labels
-		// when printing out the button lists:
-		// This is how I determined what is up and what is down, left and right.
-		if (nCode < 0x10) {
-			//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
-			//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			//if (nCode < 4) {
-			//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-			//}
-			//else {
-			//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
-			//}
-			//return szString;
-			if (nCode < 4) {
-				UINT16 axisCode = nCode >> 1;
-				UINT16 dirCode = nCode + 2;
-				if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
-				if (dirCode == 4) { return DIR_UP; }
-				if (dirCode == 5) { return DIR_DOWN; }
-			}
-			else {
-				// Is this a condition we care about?
-				int x = 10;
-			}
-		}
-		if (nCode < 0x20) {
-			UINT16 dirCode = nCode & 3;
-			if (dirCode == 2) { return DIR_UP; }
-			if (dirCode == 3) { return DIR_DOWN; }
-			//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-			//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
-			//return szString;
-		}
-	}
+	//if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
+	//{
+	//	if (index != padIndex) { return DIR_NONE; }
 
-	// We might have some keyboard buttons....
-	if (allButtons == KEYB_UP) { return DIR_UP; }
-	if (allButtons == KEYB_DOWN) { return DIR_DOWN; }
+	//	// NOTE: The commented blocks come from the code that formats the labels
+	//	// when printing out the button lists:
+	//	// This is how I determined what is up and what is down, left and right.
+	//	if (nCode < 0x10) {
+	//		//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
+	//		//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+	//		//if (nCode < 4) {
+	//		//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
+	//		//}
+	//		//else {
+	//		//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
+	//		//}
+	//		//return szString;
+	//		if (nCode < 4) {
+	//			UINT16 axisCode = nCode >> 1;
+	//			UINT16 dirCode = nCode + 2;
+	//			if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
+	//			if (dirCode == 4) { return DIR_UP; }
+	//			if (dirCode == 5) { return DIR_DOWN; }
+	//		}
+	//		else {
+	//			// Is this a condition we care about?
+	//			int x = 10;
+	//		}
+	//	}
+	//	if (nCode < 0x20) {
+	//		UINT16 dirCode = nCode & 3;
+	//		if (dirCode == 2) { return DIR_UP; }
+	//		if (dirCode == 3) { return DIR_DOWN; }
+	//		//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
+	//		//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
+	//		//return szString;
+	//	}
+	//}
+
+	//// We might have some keyboard buttons....
+	//if (allButtons == KEYB_UP) { return DIR_UP; }
+	//if (allButtons == KEYB_DOWN) { return DIR_DOWN; }
 
 	return DIR_NONE;
 }
@@ -561,6 +622,11 @@ static INT32 BeginQuickSetup() {
 	_QuickSetupIndex = 0;
 	InitSetPlayer(_QuickSetupIndex);
 
+	for (size_t i = 0; i < nPadCount; i++)
+	{
+		PadStates[i].Reset();
+	}
+
 	return 0;
 }
 
@@ -572,9 +638,9 @@ static void UpdateGamepadState(int padIndex) {
 	// NOTE: We should just be able to pass in the struct (by pointer) vs. constantly
 	// remapping all of the values + doing these stack allocs....
 	DWORD btnCount = 0;
-	InputGetGamepadState(i, dirs, btns, &btnCount);
+	InputGetGamepadState(padIndex, dirs, btns, &btnCount);
 
-	PadStates[i].Update(dirs, btns, btnCount);
+	PadStates[padIndex].Update(dirs, btns, btnCount);
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -590,8 +656,8 @@ static void ProcessQuickpickState() {
 		int padIndex = GetIndexFromButton(pressed);
 
 		// This is how we can update all of the pad states....
-		for(int i = 0; i < nPadCount; i++) {
-			UpdateGamepadState(i);			
+		for (int i = 0; i < nPadCount; i++) {
+			UpdateGamepadState(i);
 		}
 	}
 
@@ -619,7 +685,18 @@ static void ProcessQuickpickState() {
 		}
 	}
 	else if (_CurState == QUICKPICK_STATE_SET_DEVICE_INDEX) {
-		
+
+		for (size_t i = 0; i < nPadCount; i++) {
+			if (PadStates[i].AnyJustDown()) {
+				padIndex = i;
+				break;
+			}
+		}
+
+		if (padIndex != -1) {
+			SetComboIndex(hP1DeviceList, padIndex);
+			InitChooseProfile(padIndex);
+		}
 		// We just have to ask the pad states if any are just down.  First pad
 		// to have data is the index!
 
@@ -638,14 +715,19 @@ static void ProcessQuickpickState() {
 	}
 	else if (_CurState == QUICKPICK_STATE_CHOOSE_PROFILE) {
 
+		// We only care about the active gamepad.
+		// This lets the spazz next to you bang away on their hitbox like a coked up monkey while you
+		// make your pick.
+		bool buttonPressed = PadStates[_SelectedPadIndex].AnyJustDown();
+
 		// Here we want to detect the up/down buttons so that
 		// we can cycle through the available profiles.
-		int dirDelta = GetUpOrDownButton(_SelectedPadIndex, usePressed, pressed);
+		int dirDelta = GetUpOrDownButton(_SelectedPadIndex);
 
 		// Maybe left or right?
 		if (dirDelta == 0)
 		{
-			dirDelta = GetLeftOrRightButton(_SelectedPadIndex, usePressed, pressed);
+			dirDelta = GetLeftOrRightButton(_SelectedPadIndex);
 		}
 
 		bool dirChanged = dirDelta != _LastUpDown;
@@ -662,7 +744,7 @@ static void ProcessQuickpickState() {
 
 			SetComboIndex(hActivePlayerCombo, newIndex);
 		}
-		else if (usePressed != -1 && dirDelta == 0 && padIndex == _SelectedPadIndex) {
+		else if (buttonPressed) {
 
 			// User didn't press a direction button, but did press something
 			// else.  They must be happy with their profile selection....
