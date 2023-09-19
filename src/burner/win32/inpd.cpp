@@ -5,13 +5,52 @@
 #include "GUIDComparer.h"
 
 
-// TODO: These defines would be right at home in the rest of the code!
-// They describe address ranges for input codes!
-// Let's make an effort to remove magic values!
-#define JOYSTICK_LOWER 0x4000
-#define JOYSTICK_UPPER 0x8000
-#define MOUSE_LOWER JOYSTICK_UPPER
-#define MOUSE_UPPER 0xC000
+// A simple way to track when a certain button is up/down/etc.
+struct CButtonState {
+
+	void Update(UINT16 val) {
+		bool down = val == 1;
+
+		JustDown = !IsDown & down;
+		JustUp = IsDown & !down;
+		IsDown = down;
+	}
+
+	bool JustDown = false;
+	bool JustUp = false;
+	bool IsDown = false;
+};
+
+
+// Simple way to track the directions + buttons on a gamepad and their up/down state,etc.
+class CGamepadState {
+
+public:
+	CGamepadState() {
+		memset(&Dirs, 0, sizeof(CButtonState) * MAX_DIRS);
+		memset(&Buttons, 0, sizeof(CButtonState) * MAX_GAMEPAD_BUTTONS);
+	}
+
+	void Update(UINT16* dirStates, UINT16* btnStates, DWORD btnCount) {
+		for (size_t i = 0; i < MAX_DIRS; i++)
+		{
+			Dirs[i].Update(dirStates[0]);
+		}
+
+		int maxbuttons = (std::min)((int)btnCount, MAX_GAMEPAD_BUTTONS);
+		for (size_t i = 0; i < MAX_DIRS; i++)
+		{
+			Buttons[i].Update(dirStates[0]);
+		}
+	}
+
+private:
+	CButtonState Dirs[MAX_DIRS];
+	CButtonState Buttons[MAX_GAMEPAD_BUTTONS];
+};
+
+
+
 
 
 #define CB_ITEM_SIZE	20			// TBD
@@ -36,9 +75,12 @@ static HWND hP2DeviceList = NULL;
 
 // Get the currently plugged gamepad data:
 // NOTE:  We should just get a pointer to this so that we can set the alias directly.
+// NOTE: This is just the max number of plugged in devices....
 #define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
 static INT32 nPadCount;
+
+static CGamepadState PadStates[MAX_GAMEPAD];
 
 
 static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
@@ -522,9 +564,21 @@ static INT32 BeginQuickSetup() {
 	return 0;
 }
 
+// --------------------------------------------------------------------------------------------------
+static void UpdateGamepadState(int padIndex) {
+	UINT16 dirs[MAX_DIRS];
+	UINT16 btns[MAX_GAMEPAD_BUTTONS];
+
+	// NOTE: We should just be able to pass in the struct (by pointer) vs. constantly
+	// remapping all of the values + doing these stack allocs....
+	DWORD btnCount = 0;
+	InputGetGamepadState(i, dirs, btns, &btnCount);
+
+	PadStates[i].Update(dirs, btns, btnCount);
+}
 
 // --------------------------------------------------------------------------------------------------
-static void ProcessSetupState() {
+static void ProcessQuickpickState() {
 
 	INT32 pressed = -1;
 	int padIndex = -1;
@@ -534,22 +588,27 @@ static void ProcessSetupState() {
 		// If we still have a pressed button on the next cycle we will ignore it.
 		INT32 pressed = InputFind(8);
 		int padIndex = GetIndexFromButton(pressed);
+
+		// This is how we can update all of the pad states....
+		for(int i = 0; i < nPadCount; i++) {
+			UpdateGamepadState(i);			
+		}
 	}
 
-	// We only care about pad buttons for this stuff.....
-	INT32 usePressed = -1;
-	if (padIndex != -1)
-	{
-		usePressed = LastPressed == -1 ? pressed : -1;
-		LastPressed = pressed;
-	}
-	else if (pressed == -1) {
-		LastPressed = -1;
-	}
-	else {
-		// No pad index, and nothing pressed.....
-		int x = 10;
-	}
+	//// We only care about pad buttons for this stuff.....
+	//INT32 usePressed = -1;
+	//if (padIndex != -1)
+	//{
+	//	usePressed = LastPressed == -1 ? pressed : -1;
+	//	LastPressed = pressed;
+	//}
+	//else if (pressed == -1) {
+	//	LastPressed = -1;
+	//}
+	//else {
+	//	// No pad index, and nothing pressed.....
+	//	int x = 10;
+	//}
 
 	if (_CurState == QUICKPICK_STATE_NONE)
 	{
@@ -560,19 +619,21 @@ static void ProcessSetupState() {
 		}
 	}
 	else if (_CurState == QUICKPICK_STATE_SET_DEVICE_INDEX) {
+		
+		// We just have to ask the pad states if any are just down.  First pad
+		// to have data is the index!
 
+		//// We have to iterate through inputs and select those that are from gamepads.
+		//// From there we can determine the index of that gamepad....
+		//if (usePressed != -1 && padIndex != -1)
+		//{
+		//	// Set the device combo box index:
+		//	SetComboIndex(hP1DeviceList, padIndex);
 
-		// We have to iterate through inputs and select those that are from gamepads.
-		// From there we can determine the index of that gamepad....
-		if (usePressed != -1 && padIndex != -1)
-		{
-			// Set the device combo box index:
-			SetComboIndex(hP1DeviceList, padIndex);
-
-			// Now that we have a pad index, we can associate it with the currently selected
-			// input profile!
-			InitChooseProfile(padIndex);
-		}
+		//	// Now that we have a pad index, we can associate it with the currently selected
+		//	// input profile!
+		//	InitChooseProfile(padIndex);
+		//}
 
 	}
 	else if (_CurState == QUICKPICK_STATE_CHOOSE_PROFILE) {
@@ -655,7 +716,7 @@ int InpdUpdate()
 		return 1;
 	}
 
-	ProcessSetupState();
+	ProcessQuickpickState();
 
 
 	// Update the values of all the inputs.
@@ -975,6 +1036,7 @@ static int SelectProfileListItem()
 	SetEnabled(ID_REMOVE_PROFILE, true);
 	SetEnabled(ID_SAVE_MAPPINGS, true);
 
+	return 0;
 }
 
 
@@ -1094,12 +1156,13 @@ static void SetComboBoxDropdownSize(HWND cb, int itemCount, int itemSize) {
 		GetWindowRect(cb, &r);
 		LONG useWidth = r.right - r.left;
 
+		// In theory we would use code like this to automatically size the content.
+		// Not getting it to work reliably, but our heuristic is good enough so NBD.
 		//auto selSize=  SendMessage(cb, CB_GETITEMHEIGHT, -1, NULL);
-		
 		//auto itemSize = SendMessage(cb, CB_GETITEMHEIGHT, 0, NULL);		// NOTE: This sometimes returns zero....
 
 		int totalSize = (itemCount + 1) * itemSize;
-		SetWindowPos(cb,  NULL, 0, 0 , useWidth, totalSize, SWP_NOMOVE);
+		SetWindowPos(cb, NULL, 0, 0, useWidth, totalSize, SWP_NOMOVE);
 	}
 }
 

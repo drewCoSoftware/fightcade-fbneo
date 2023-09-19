@@ -160,6 +160,12 @@ INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount) {
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
+INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount) {
+	INT32 res = pInputInOut[nInputSelect]->GetGamepadState(padIndex, dirStates, btnStates, btnCount);
+	return res;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount) {
 	INT32 nRet = 0;
 

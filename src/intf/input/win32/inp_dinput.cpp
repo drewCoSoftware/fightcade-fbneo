@@ -34,7 +34,7 @@ struct keyboardData {
 struct gamepadData {
 	IDirectInputDevice8W* lpdid;
 	GUID guidInstance;								// Per-Machine identifier for the gamepad.
-	DIJOYSTATE2 dijs;
+	DIJOYSTATE2 dijs;								// This is the current state of the gamepad.
 	DWORD dwAxisType[MAX_JOYAXIS];
 	DWORD dwAxisBaseline[MAX_JOYAXIS];
 	DWORD dwAxes;
@@ -319,21 +319,6 @@ T ReadData_G(FILE* f) {
 	fread(&res, sizeof(T), 1, f);
 	return res;
 }
-//
-//
-//// ---------------------------------------------------------------------------------------------------------
-//void WriteData(FILE* f, GUID g) {
-//	WriteData_G(f, g.Data1);
-//	WriteData_G(f, g.Data2);
-//	WriteData_G(f, g.Data3);
-//	WriteData_G(f, g.Data4);
-//}
-//
-//// ---------------------------------------------------------------------------------------------------------
-//GUID ReadGUID(FILE* f) {
-//	GUID res;
-//	res.Data1 = 
-//}
 
 // ---------------------------------------------------------------------------------------------------------
 void WriteData(FILE* f, UINT16 data) {
@@ -1220,6 +1205,34 @@ int readMouseAxis(int i, int axis)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
+// Get the state of the directions + buttons on the given gamepad by index.
+// This is represented as 1 for down, and 0 for up.
+// This data is really only used to help with some UI functionality for quick pick modes.
+INT32 getGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount) {
+	if (padIndex >= gamepadCount) {
+		return 1;
+	}
+
+	gamepadData* gamepad = &gamepadProperties[padIndex];
+	*btnCount = gamepad->dwButtons;
+
+	// We can think of a function similar to 'find' where we just get the whole list
+	// of all of the current buttons states for a gamepad.
+	int index = 0;
+	for (unsigned int j = 0x80; j < 0x80 + gamepad->dwButtons; j++) {		// Buttons
+		UINT16 val = gamepadState(gamepad, j) ? 1 : 0;
+		btnStates[index] = val;
+		++index;
+	}
+
+	// TODO: We can update the data for the direction states as well.
+	// There should be some code in indp.cpp that is already doing the heavy lifting...
+
+	return 0;
+}
+
+
 // This function finds the FIRST which key is pressed.
 // NOTE: It would be nice to have a similar function that can just give us a set of state information
 // vs the first thing that it finds.
@@ -1263,6 +1276,8 @@ int find(bool createBaseline)
 			}
 		}
 
+		// We can think of a function similar to 'find' where we just get the whole list
+		// of all of the current buttons states for a gamepad.
 		for (unsigned int j = 0x80; j < 0x80 + gamepad->dwButtons; j++) {		// Buttons
 			if (gamepadState(gamepad, j)) {
 				retVal = 0x4000 | (i << 8) | j;
@@ -1467,4 +1482,4 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, removeInputProfile, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, getGamepadState, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, removeInputProfile, _T("DirectInput8 input") };

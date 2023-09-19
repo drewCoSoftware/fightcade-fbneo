@@ -68,6 +68,19 @@ struct InputProfileEntry {
 	GamepadInput Inputs[MAX_INPUTS];
 };
 
+// Other Input Related Defines:
+#define MAX_GAMEPAD_BUTTONS	(16)
+
+// TODO: These defines would be right at home in the rest of the code!
+// They describe address ranges for input codes!
+// Let's make an effort to remove magic values!
+#define JOYSTICK_LOWER 0x4000
+#define JOYSTICK_UPPER 0x8000
+#define MOUSE_LOWER JOYSTICK_UPPER
+#define MOUSE_UPPER 0xC000
+
+#define MAX_DIRS 4
+
 
 // Input plugin:
 struct InputInOut {
@@ -91,6 +104,8 @@ struct InputInOut {
 	// Get Gamepads...
 	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
 	
+	INT32 (*GetGamepadState)(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
+
 	// Save the current set of mapping data!
 	INT32 (*SaveGamepadMappings)();
 
@@ -116,6 +131,7 @@ std::vector<const InputInOut *> InputGetInterfaces();
 INT32 InputSaveGamepadMappings();
 
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
+INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
 
 INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount);
 INT32 InputSaveProfiles();
