@@ -1138,11 +1138,11 @@ int getState(int code)
 }
 
 // Read one gamepad axis
-int readGamepadAxis(int i, int axis)
+int readGamepadAxis(int padIndex, int axis)
 {
-	gamepadData* gamepad = &gamepadProperties[i];
+	gamepadData* gamepad = &gamepadProperties[padIndex];
 
-	if (i < 0 || i >= gamepadCount) {		// This gamepad isn't connected
+	if (padIndex < 0 || padIndex >= gamepadCount) {		// This gamepad isn't connected
 		return 0;
 	}
 	if (readGamepad(gamepad)) {				// Error polling the gamepad
@@ -1215,15 +1215,54 @@ INT32 getGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD*
 	}
 
 	gamepadData* gamepad = &gamepadProperties[padIndex];
+	if (readGamepad(gamepad)) {						// There was an error polling the gamepad
+		return 1;
+	}
+
 	*btnCount = gamepad->dwButtons;
 
 	// We can think of a function similar to 'find' where we just get the whole list
 	// of all of the current buttons states for a gamepad.
 	int index = 0;
-	for (unsigned int j = 0x80; j < 0x80 + gamepad->dwButtons; j++) {		// Buttons
-		UINT16 val = gamepadState(gamepad, j) ? 1 : 0;
+	for (unsigned int nCode = 0x80; nCode < 0x80 + gamepad->dwButtons; nCode++) {		// Buttons
+		UINT16 val = gamepadState(gamepad, nCode) ? 1 : 0;
 		btnStates[index] = val;
 		++index;
+	}
+
+	// NOTE: We combine the up/down states from the axes + POV hat vs. keeping track of
+	// each.  This goes along with our approach of keeping the state as easy as possible.
+	// Check axes controls first.....
+	for (unsigned int nCode = 0; nCode < 0x10; nCode++) {								// Axes
+		int delta = gamepad->dwAxisBaseline[nCode >> 1] - readGamepadAxis(padIndex, (nCode >> 1));
+		if (delta < -0x4000 || delta > 0x4000) {
+			if (gamepadState(gamepad, nCode)) {
+				UINT16 dirCode = nCode;
+				UINT16 dirIndex = 0;
+
+				if (dirCode == 0) { dirIndex = DIR_LEFT; }
+				if (dirCode == 1) { dirIndex = DIR_RIGHT; }
+				if (dirCode == 2) { dirIndex = DIR_UP; }
+				if (dirCode == 3) { dirIndex = DIR_DOWN; }
+
+				dirStates[dirIndex] = 1;
+			}
+		}
+	}
+
+	// Now POV hats....
+	for (unsigned int nCode = 0x10; nCode < 0x10 + (gamepad->dwPOVs << 2); nCode++) {
+		if (gamepadState(gamepad, nCode)) {
+			UINT16 dirCode = nCode & 3;
+			UINT dirIndex = 0;
+
+			if (dirCode == 0) { dirIndex = DIR_LEFT; }
+			if (dirCode == 1) { dirIndex = DIR_RIGHT; }
+			if (dirCode == 2) { dirIndex = DIR_UP; }
+			if (dirCode == 3) { dirIndex = DIR_DOWN; }
+
+			dirStates[dirIndex] = 1;
+		}
 	}
 
 	// TODO: We can update the data for the direction states as well.

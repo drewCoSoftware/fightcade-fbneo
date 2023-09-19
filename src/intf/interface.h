@@ -81,6 +81,31 @@ struct InputProfileEntry {
 
 #define MAX_DIRS 4
 
+#define DELTA_UP -1
+#define DELTA_DOWN 1
+
+#define DELTA_LEFT -1
+#define DELTA_RIGHT 1
+
+#define DELTA_NONE 0
+#define Y_AXIS_CODE 1
+#define X_AXIS_CODE 0
+
+//#define DIR_NONE -1
+#define DIR_UP 0
+#define DIR_DOWN 1
+#define DIR_LEFT 2
+#define DIR_RIGHT 3
+
+// NOTE: The above defs come from an enum def in gami.cpp
+//enum {
+//	UP,
+//	DOWN,
+//	LEFT,
+//	RIGHT,
+//	COUNT
+//};
+
 
 // Input plugin:
 struct InputInOut {

@@ -50,6 +50,16 @@ public:
 		}
 	}
 
+	int GetUpOrDownDelta() {
+		if (Dirs[DIR_UP].JustDown) { return DELTA_UP; }
+		if (Dirs[DIR_DOWN].JustDown) { return DELTA_DOWN; }
+	}
+
+	int GetLeftOrRightDelta() {
+		if (Dirs[DIR_LEFT].JustDown) { return DELTA_LEFT; }
+		if (Dirs[DIR_RIGHT].JustDown) { return DELTA_RIGHT; }
+	}
+
 	/// <summary>
 	/// Are any of the buttons just down?
 	/// </summary>
@@ -155,7 +165,7 @@ int _SelectedPadIndex = -1;			// NOTE: This can and should be replaced with the 
 
 // Choose profile stuff (placeholder)
 int _ProfileIndex = -1;
-int _LastUpDown = 0;
+int _LastDirDelta = 0;
 
 // The last button code that we detected as pressed.
 // The input system has a makework system of checking for button presses,
@@ -170,15 +180,6 @@ EDialogState _CurState = QUICKPICK_STATE_NONE;
 #define STATE_INDEX 1
 #define GUID_INDEX 0
 
-#define DIR_UP -1
-#define DIR_DOWN 1
-
-#define DIR_LEFT -1
-#define DIR_RIGHT 1
-
-#define DIR_NONE 0
-#define Y_AXIS_CODE 1
-#define X_AXIS_CODE 0
 
 // Keyboard arrow key codes.
 #define KEYB_LEFT 203
@@ -246,109 +247,6 @@ static int GetIndexAndCodeFromButton(UINT16 button, int& index, UINT16& code) {
 		// Not a gamepad input.
 		return 0;
 	}
-}
-
-// --------------------------------------------------------------------------------------------------
-// For the given pad index, returns an int that is -1 for left, 1 for right, and zero
-// if neither are pressed.
-// 'allButtons' is passed in so we can detect keyboard keys.
-static int GetLeftOrRightButton(int padIndex) {
-
-	// TEMP: Do Nothing:
-	// TODO: Move this function to the padstate class...
-	return DIR_NONE;
-
-	//int index = 0;
-	//UINT16 nCode = 0;
-
-	//if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
-	//{
-	//	if (index != padIndex) { return DIR_NONE; }
-
-	//	// See the comments in 'GetUpOrDownButton' for information on how the button codes are derived.
-	//	if (nCode < 0x10) {
-	//		if (nCode < 4) {
-	//			UINT16 axisCode = nCode >> 1;
-	//			UINT16 dirCode = nCode + 2;
-	//			if (axisCode != X_AXIS_CODE) { return DIR_NONE; }
-	//			if (dirCode == 2) { return DIR_LEFT; }
-	//			if (dirCode == 3) { return DIR_RIGHT; }
-	//		}
-	//		else {
-	//			// Is this a condition we care about?
-	//			int x = 10;
-	//		}
-	//	}
-	//	if (nCode < 0x20) {
-	//		UINT16 dirCode = nCode & 3;
-	//		if (dirCode == 0) { return DIR_LEFT; }
-	//		if (dirCode == 1) { return DIR_RIGHT; }
-	//	}
-	//}
-
-	//// We might have some keyboard buttons....
-	//if (allButtons == KEYB_LEFT) { return DIR_LEFT; }
-	//if (allButtons == KEYB_RIGHT) { return DIR_RIGHT; }
-
-	//return DIR_NONE;
-}
-
-// --------------------------------------------------------------------------------------------------
-// For the given pad index, returns an int that is -1 for up, 1 for down, and zero
-// if an up or down button is not pressed.
-// TODO: These need to be able to detect up/down keys from the keyboard too!
-static int GetUpOrDownButton(int padIndex) {
-
-	// TEMP: Do Nothing:
-	// TODO: Move this function to the padstate class...
-
-	//int index = 0;
-	//UINT16 nCode = 0;
-
-	//if (GetIndexAndCodeFromButton(gamepadButtons, index, nCode))
-	//{
-	//	if (index != padIndex) { return DIR_NONE; }
-
-	//	// NOTE: The commented blocks come from the code that formats the labels
-	//	// when printing out the button lists:
-	//	// This is how I determined what is up and what is down, left and right.
-	//	if (nCode < 0x10) {
-	//		//TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
-	//		//TCHAR szDir[6][16] = { _T("negative"), _T("positive"), _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-	//		//if (nCode < 4) {
-	//		//	_stprintf(szString, _T("%s %s (%s %s)"), gpName, szDir[nCode + 2], szAxis[nCode >> 1], szDir[nCode & 1]);
-	//		//}
-	//		//else {
-	//		//	_stprintf(szString, _T("%s %s %s"), gpName, szAxis[nCode >> 1], szDir[nCode & 1]);
-	//		//}
-	//		//return szString;
-	//		if (nCode < 4) {
-	//			UINT16 axisCode = nCode >> 1;
-	//			UINT16 dirCode = nCode + 2;
-	//			if (axisCode != Y_AXIS_CODE) { return DIR_NONE; }
-	//			if (dirCode == 4) { return DIR_UP; }
-	//			if (dirCode == 5) { return DIR_DOWN; }
-	//		}
-	//		else {
-	//			// Is this a condition we care about?
-	//			int x = 10;
-	//		}
-	//	}
-	//	if (nCode < 0x20) {
-	//		UINT16 dirCode = nCode & 3;
-	//		if (dirCode == 2) { return DIR_UP; }
-	//		if (dirCode == 3) { return DIR_DOWN; }
-	//		//TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
-	//		//_stprintf(szString, _T("%s POV-hat %d %s"), gpName, (nCode & 0x0F) >> 2, szDir[nCode & 3]);
-	//		//return szString;
-	//	}
-	//}
-
-	//// We might have some keyboard buttons....
-	//if (allButtons == KEYB_UP) { return DIR_UP; }
-	//if (allButtons == KEYB_DOWN) { return DIR_DOWN; }
-
-	return DIR_NONE;
 }
 
 
@@ -521,13 +419,17 @@ static void InitProfileSelect(int playerIndex)
 	hActivePlayerCombo = 0;
 	if (playerIndex == 0) {
 		hActivePlayerCombo = hP1Profile;
-		SetEnabled(IDC_INDP_P1PROFILE, true);
-		SetEnabled(IDC_INDP_P2PROFILE, false);
+
+		// NOTE: We don't disable inputs anymore...
+		//SetEnabled(IDC_INDP_P1PROFILE, true);
+		//SetEnabled(IDC_INDP_P2PROFILE, false);
 	}
 	else if (playerIndex == 1) {
 		hActivePlayerCombo = hP2Profile;
-		SetEnabled(IDC_INDP_P1PROFILE, false);
-		SetEnabled(IDC_INDP_P2PROFILE, true);
+
+		// NOTE: We don't disable inputs anymore...
+		//SetEnabled(IDC_INDP_P1PROFILE, false);
+		//SetEnabled(IDC_INDP_P2PROFILE, true);
 	}
 
 	// Resolve the pad hint..
@@ -540,7 +442,7 @@ static void InitProfileSelect(int playerIndex)
 	swprintf(textBuffer, _T("Choose profile for player %d and press a button"), playerIndex + 1);
 	SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, textBuffer);
 	_ProfileIndex = -1;
-	_LastUpDown = -2;
+	_LastDirDelta = -2;
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -661,21 +563,6 @@ static void ProcessQuickpickState() {
 		}
 	}
 
-	//// We only care about pad buttons for this stuff.....
-	//INT32 usePressed = -1;
-	//if (padIndex != -1)
-	//{
-	//	usePressed = LastPressed == -1 ? pressed : -1;
-	//	LastPressed = pressed;
-	//}
-	//else if (pressed == -1) {
-	//	LastPressed = -1;
-	//}
-	//else {
-	//	// No pad index, and nothing pressed.....
-	//	int x = 10;
-	//}
-
 	if (_CurState == QUICKPICK_STATE_NONE)
 	{
 		// Check for quick setup mode and handle accordingly......
@@ -697,20 +584,6 @@ static void ProcessQuickpickState() {
 			SetComboIndex(hP1DeviceList, padIndex);
 			InitChooseProfile(padIndex);
 		}
-		// We just have to ask the pad states if any are just down.  First pad
-		// to have data is the index!
-
-		//// We have to iterate through inputs and select those that are from gamepads.
-		//// From there we can determine the index of that gamepad....
-		//if (usePressed != -1 && padIndex != -1)
-		//{
-		//	// Set the device combo box index:
-		//	SetComboIndex(hP1DeviceList, padIndex);
-
-		//	// Now that we have a pad index, we can associate it with the currently selected
-		//	// input profile!
-		//	InitChooseProfile(padIndex);
-		//}
 
 	}
 	else if (_CurState == QUICKPICK_STATE_CHOOSE_PROFILE) {
@@ -722,17 +595,17 @@ static void ProcessQuickpickState() {
 
 		// Here we want to detect the up/down buttons so that
 		// we can cycle through the available profiles.
-		int dirDelta = GetUpOrDownButton(_SelectedPadIndex);
+		int dirDelta = PadStates[_SelectedPadIndex].GetUpOrDownDelta();
 
 		// Maybe left or right?
 		if (dirDelta == 0)
 		{
-			dirDelta = GetLeftOrRightButton(_SelectedPadIndex);
+			dirDelta = PadStates[_SelectedPadIndex].GetLeftOrRightDelta();
 		}
 
-		bool dirChanged = dirDelta != _LastUpDown;
+		bool dirChanged = dirDelta != _LastDirDelta;
 		if (dirChanged) {
-			_LastUpDown = dirDelta;
+			_LastDirDelta = dirDelta;
 
 			int curIndex = GetComboIndex(hActivePlayerCombo);
 			int newIndex = curIndex + dirDelta;
@@ -784,8 +657,6 @@ static void ProcessQuickpickState() {
 // This is where we can wait for p1/p2 to check in and what-not....
 int InpdUpdate()
 {
-	//std::vector<UINT16> pressedPadButtons;
-	//GetPressedGamepadButtons(pressedPadButtons);
 
 	unsigned int i, j = 0;
 	struct GameInp* pGameInput = NULL;			// Pointer to the game input.
@@ -1648,7 +1519,7 @@ static int NewMacroButton()
 	InpMacroCreate(nSel);
 
 	return 0;
-}
+	}
 #endif
 
 static int DeleteInput(unsigned int i)

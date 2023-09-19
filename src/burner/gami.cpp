@@ -1401,9 +1401,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 		TCHAR gamepadName[MAX_ALIAS_CHARS];
 		_stprintf(gamepadName, _T("Joy % d"), nJoy);
 
-		// NOTE: We are no longer aliasing the gamepads because of the inevitable GUID conflicts that
-		// happen when people plug in/out and have the same kind of controller.
-
+		// NOTE: We are no longer aliasing the gamepads because f
 		//if (padInfos && nJoy >= 0 && nJoy < 8 && padInfos[nJoy]) { // && nJoy > 0 && nJoy < ) {		// LATER: Bounds Check!
 		//	wcscpy(gamepadName, padInfos[nJoy]->info.Alias);
 		//}
