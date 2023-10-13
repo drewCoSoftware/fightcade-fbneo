@@ -614,7 +614,8 @@ static void ProcessQuickpickState() {
 		}
 
 		if (padIndex != -1) {
-			SetComboIndex(hP1DeviceList, padIndex);
+			HWND deviceCombo = _TargetPlayerIndex == 0 ? hP1DeviceList : hP2DeviceList;
+			SetComboIndex(deviceCombo, padIndex);
 			InitChooseProfile(padIndex);
 		}
 
