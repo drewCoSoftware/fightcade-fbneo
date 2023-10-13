@@ -388,7 +388,10 @@ static void SetSetupState(EDialogState newState) {
 // --------------------------------------------------------------------------------------------------
 static INT32 BeginQuickSetup() {
 
-	if (nPadCount == 0) { return 1; }
+	if (nPadCount == 0) {
+		_IsQuickSetupMode = false;
+		return 1;
+	}
 
 	// Quick setup puts us in a state where we do profile input for p1, then p2.....
 	_QuickSetupIndex = 0;
@@ -1380,13 +1383,13 @@ static int ActivateInputListItem()
 #if 0
 			InpMacroCreate(nSel);
 #endif
-		}
+	}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-	}
+}
 
 	GameInpCheckLeftAlt();
 
@@ -2158,9 +2161,6 @@ int InpdCreate(bool quickSetup)
 	WndInMid(hInpdDlg, hScrnWnd);
 	ShowWindow(hInpdDlg, SW_NORMAL);
 
-	// Hacky attempt to cut down on weird behaviour when there is a PS5 controller connected.....
-	nPadCount = 0;
-	nProfileCount = 0;
 
 	// NOTE: We can't really send this data to the FBACreateDialog function (and then to the WM_INITDIALOG code)
 	// So we will just set the flag here.
