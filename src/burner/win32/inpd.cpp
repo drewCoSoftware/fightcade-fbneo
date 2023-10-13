@@ -31,13 +31,13 @@ static HWND hP2DeviceList = NULL;
 // NOTE: This is just the max number of plugged in devices....
 #define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
-static UINT32 nPadCount;
+static UINT32 nPadCount = 0;
 
 static CGamepadState PadStates[MAX_GAMEPAD];
 
 
 static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
-static UINT32 nProfileCount;
+static UINT32 nProfileCount = 0;
 static int nSelectedProfileIndex = -1;
 static HWND hActivePlayerCombo;
 
@@ -2157,6 +2157,10 @@ int InpdCreate(bool quickSetup)
 
 	WndInMid(hInpdDlg, hScrnWnd);
 	ShowWindow(hInpdDlg, SW_NORMAL);
+
+	// Hacky attempt to cut down on weird behaviour when there is a PS5 controller connected.....
+	nPadCount = 0;
+	nProfileCount = 0;
 
 	// NOTE: We can't really send this data to the FBACreateDialog function (and then to the WM_INITDIALOG code)
 	// So we will just set the flag here.
