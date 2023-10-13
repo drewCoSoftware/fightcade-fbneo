@@ -31,13 +31,13 @@ static HWND hP2DeviceList = NULL;
 // NOTE: This is just the max number of plugged in devices....
 #define MAX_GAMEPAD 8			// Should match the version in inp_dinput.cpp
 static GamepadFileEntry* padInfos[MAX_GAMEPAD];
-static INT32 nPadCount;
+static UINT32 nPadCount;
 
 static CGamepadState PadStates[MAX_GAMEPAD];
 
 
 static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
-static INT32 nProfileCount;
+static UINT32 nProfileCount;
 static int nSelectedProfileIndex = -1;
 static HWND hActivePlayerCombo;
 
@@ -1044,9 +1044,9 @@ static void RefreshPlayerSelectComboBoxes() {
 	}
 
 	// Set an appropriate size for the combos.  Note that we can base this on the number of items.
-	int useCount = (std::max)(4, nProfileCount);
-	useCount = (std::min)(16, useCount);
-	useCount = (std::min)(16, useCount);
+	UINT32 useCount = (std::max)(4u, nProfileCount);
+	useCount = (std::min)(16u, useCount);
+	useCount = (std::min)(16u, useCount);
 	SetComboBoxDropdownSize(hP1Profile, useCount, CB_ITEM_SIZE);
 	SetComboBoxDropdownSize(hP2Profile, useCount, CB_ITEM_SIZE);
 }
@@ -1072,7 +1072,7 @@ static void RefreshPlayerDeviceComboBoxes() {
 		SendMessage(hP2DeviceList, CB_ADDSTRING, 0, (LPARAM)buffer);
 	}
 
-	int useCount = (std::max)(4, nPadCount);
+	UINT32 useCount = (std::max)(4u, nPadCount);
 	SetComboBoxDropdownSize(hP1DeviceList, useCount, CB_ITEM_SIZE);
 	SetComboBoxDropdownSize(hP2DeviceList, useCount, CB_ITEM_SIZE);
 

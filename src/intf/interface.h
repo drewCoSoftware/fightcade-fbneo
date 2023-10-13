@@ -127,7 +127,7 @@ struct InputInOut {
 	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
 
 	// Get Gamepads...
-	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
+	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
 	
 	INT32 (*GetGamepadState)(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
 
@@ -135,7 +135,7 @@ struct InputInOut {
 	INT32 (*SaveGamepadMappings)();
 
 	// Get Input profiles...
-	INT32(*GetProfileList)(InputProfileEntry** ppProfiles, INT32* nProfileCount);
+	INT32(*GetProfileList)(InputProfileEntry** ppProfiles, UINT32* nProfileCount);
 
 	// Save the current set of input profiles!
 	INT32(*SaveInputProfiles)();
@@ -155,10 +155,10 @@ InterfaceInfo* InputGetInfo();
 std::vector<const InputInOut *> InputGetInterfaces();
 INT32 InputSaveGamepadMappings();
 
-INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount);
+INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
 INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
 
-INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount);
+INT32 InputGetProfiles(InputProfileEntry** ppProfiles, UINT32* nProfileCount);
 INT32 InputSaveProfiles();
 INT32 InputAddInputProfile(const TCHAR* name);
 INT32 InputRemoveProfile(size_t index);

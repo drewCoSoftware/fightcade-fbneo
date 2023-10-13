@@ -773,7 +773,7 @@ INT32 loadGamepadMappings() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, INT32* nProfileCount)
+INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, UINT32* nProfileCount)
 {
 	// This is where we will load our mapping information.
 	for (size_t i = 0; i < MAX_INPUT_PROFILE; i++)
@@ -792,7 +792,7 @@ INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, INT32* nProfileCount)
 }
 
 // ---------------------------------------------------------------------------------------------------------
-INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, INT32* nPadCount)
+INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, UINT32* nPadCount)
 {
 	// This is where we will load our mapping information.
 	for (size_t i = 0; i < MAX_GAMEPAD; i++)

@@ -147,7 +147,7 @@ static INT32 InputTick()
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
-INT32 InputGetProfiles(InputProfileEntry** ppProfiles, INT32* nProfileCount) {
+INT32 InputGetProfiles(InputProfileEntry** ppProfiles, UINT32* nProfileCount) {
 	INT32 nRet = 0;
 
 	// Fail on index mismatch.
@@ -166,7 +166,7 @@ INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, D
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
-INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, INT32* nPadCount) {
+INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, UINT32* nPadCount) {
 	INT32 nRet = 0;
 
 	// Fail on index mismatch.
