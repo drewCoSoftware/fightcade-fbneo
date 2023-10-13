@@ -31,6 +31,7 @@
     <ClInclude Include="..\..\src\burner\un7z.h" />
     <ClInclude Include="..\..\src\burner\unzip.h" />
     <ClInclude Include="..\..\src\burner\win32\burner_win32.h" />
+    <ClInclude Include="..\..\src\burner\win32\CGamepadState.h" />
     <ClInclude Include="..\..\src\burner\win32\d3dkmt_sync.h" />
     <ClInclude Include="..\..\src\burner\win32\resource.h" />
     <ClInclude Include="..\..\src\burner\win32\resource_string.h" />
@@ -356,6 +357,7 @@
     <ClCompile Include="..\..\src\burner\win32\about.cpp" />
     <ClCompile Include="..\..\src\burner\win32\avi.cpp" />
     <ClCompile Include="..\..\src\burner\win32\bzip.cpp" />
+    <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp" />
     <ClCompile Include="..\..\src\burner\win32\choose_monitor.cpp" />
     <ClCompile Include="..\..\src\burner\win32\cona.cpp" />
     <ClCompile Include="..\..\src\burner\win32\d3dkmt_sync.cpp" />

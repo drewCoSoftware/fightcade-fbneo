@@ -3,133 +3,7 @@
 // This is where we will make the UI less stupid.
 #include "burner.h"
 #include "GUIDComparer.h"
-
-
-// ==============================================================================================================================
-// A simple way to track when a certain button is up/down/etc.
-struct CButtonState {
-
-	void Update(UINT16 val) {
-		bool down = val == 1;
-
-		JustDown = !IsDown & down;
-		JustUp = IsDown & !down;
-		IsDown = down;
-	}
-
-	bool JustDown = false;
-	bool JustUp = false;
-	bool IsDown = false;
-
-	void Reset() {
-		JustDown = false;
-		JustUp = false;
-		IsDown = false;
-	}
-};
-
-// ==============================================================================================================================
-// Simple way to track the directions + buttons on a gamepad and their up/down state,etc.
-class CGamepadState {
-
-public:
-	CGamepadState() {
-		memset(&Dirs, 0, sizeof(CButtonState) * MAX_DIRS);
-		memset(&Buttons, 0, sizeof(CButtonState) * MAX_GAMEPAD_BUTTONS);
-	}
-
-	void Update(UINT16* dirStates, UINT16* btnStates, DWORD btnCount) {
-		for (size_t i = 0; i < MAX_DIRS; i++)
-		{
-			Dirs[i].Update(dirStates[i]);
-		}
-
-		int maxbuttons = (std::min)((int)btnCount, MAX_GAMEPAD_BUTTONS);
-		for (size_t i = 0; i < maxbuttons; i++)
-		{
-			Buttons[i].Update(btnStates[i]);
-		}
-	}
-
-	int GetUpOrDownDelta() {
-		if (Dirs[DIR_UP].JustDown) { return DELTA_UP; }
-		if (Dirs[DIR_DOWN].JustDown) { return DELTA_DOWN; }
-	}
-
-	int GetLeftOrRightDelta() {
-		if (Dirs[DIR_LEFT].JustDown) { return DELTA_LEFT; }
-		if (Dirs[DIR_RIGHT].JustDown) { return DELTA_RIGHT; }
-	}
-
-	/// <summary>
-	/// Are any of the buttons just down?
-	/// </summary>
-	bool AnyJustDown() {
-		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
-		{
-			if (Buttons[i].JustDown) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/// <summary>
-	/// Are any of the buttons just up?
-	/// </summary>
-	bool AnyJustUp() {
-		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
-		{
-			if (Buttons[i].JustUp) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/// <summary>
-	/// Are any of the buttons down?
-	/// </summary>
-	bool AnyDown() {
-		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++)
-		{
-			if (Buttons[i].IsDown) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/// <summary>
-	/// Is any direction being pressed?
-	/// </summary>
-	/// <returns></returns>
-	bool AnyDir() {
-		for (size_t i = 0; i < MAX_DIRS; i++)
-		{
-			if (Dirs[i].IsDown) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	void Reset() {
-		for (size_t i = 0; i < MAX_DIRS; i++) {
-			Dirs[i].Reset();
-		}
-		for (size_t i = 0; i < MAX_GAMEPAD_BUTTONS; i++) {
-			Buttons[i].Reset();
-		}
-	}
-
-private:
-	CButtonState Dirs[MAX_DIRS];
-	CButtonState Buttons[MAX_GAMEPAD_BUTTONS];
-};
-
-
-
+#include "CGamepadState.h"
 
 
 #define CB_ITEM_SIZE	20			// TBD
@@ -434,22 +308,13 @@ static void InitProfileSelect(int playerIndex)
 	hActivePlayerCombo = 0;
 	if (playerIndex == 0) {
 		hActivePlayerCombo = hP1Profile;
-
-		// NOTE: We don't disable inputs anymore...
-		//SetEnabled(IDC_INDP_P1PROFILE, true);
-		//SetEnabled(IDC_INDP_P2PROFILE, false);
 	}
 	else if (playerIndex == 1) {
 		hActivePlayerCombo = hP2Profile;
-
-		// NOTE: We don't disable inputs anymore...
-		//SetEnabled(IDC_INDP_P1PROFILE, false);
-		//SetEnabled(IDC_INDP_P2PROFILE, true);
 	}
 
 	// Resolve the pad hint..
 	int useComboIndex = ResolveHintIndex();
-
 
 	SetComboIndex(hActivePlayerCombo, useComboIndex);
 
@@ -481,7 +346,7 @@ static void SetSetupState(EDialogState newState) {
 	case QUICKPICK_STATE_NONE:
 	{
 		// Clear the text.
-		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, 0);
+		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, _T(""));
 		SetEnabled(ID_QUICK_SETUP1, true);
 		SetEnabled(ID_QUICK_SETUP2, true);
 
@@ -497,16 +362,6 @@ static void SetSetupState(EDialogState newState) {
 		int label = _TargetPlayerIndex + 1;
 		swprintf(buffer, _T("Press button for player %d"), label);
 		SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, buffer);
-
-		// Disable the correct button....
-		if (_TargetPlayerIndex == 0) {
-			//SetEnabled(ID_QUICK_SETUP1, true);
-			//SetEnabled(ID_QUICK_SETUP2, false);
-		}
-		else {
-			//SetEnabled(ID_QUICK_SETUP1, false);
-			//SetEnabled(ID_QUICK_SETUP2, true);
-		}
 	}
 	break;
 
@@ -631,11 +486,23 @@ static void ProcessQuickpickState() {
 		// we can cycle through the available profiles.
 		int dirDelta = PadStates[_SelectedPadIndex].GetUpOrDownDelta();
 
+
+
 		// Maybe left or right?
 		if (dirDelta == 0)
 		{
 			dirDelta = PadStates[_SelectedPadIndex].GetLeftOrRightDelta();
 		}
+		//else{
+		//	// TEMP: release mode debugging.....
+		//	// We are getting weird values for the deltas, and even when the mouse is
+		//	// moved.  This indicates a memory problem
+		//  // Indeed, the calls for getting the direction deltas didn't always return a value.
+		//	TCHAR textBuffer[256];
+		//	swprintf(textBuffer, _T("DELTA IS: %i"), dirDelta);
+		//	SetDlgItemText(hInpdDlg, IDC_SET_PLAYER_MESSAGE, textBuffer);
+		//}
+
 
 		bool dirChanged = dirDelta != _LastDirDelta;
 		if (dirChanged) {
