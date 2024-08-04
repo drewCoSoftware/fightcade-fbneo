@@ -946,12 +946,6 @@
     <ClInclude Include="..\..\src\cpu\tms34_intf.h">
       <Filter>cpus</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\burner\GUIDComparer.h">
-      <Filter>burner</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\burner\win32\CGamepadState.h">
-      <Filter>burner\win32</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\burn\burn.cpp">
@@ -4233,9 +4227,8 @@
     <ClCompile Include="..\..\src\intf\audio\win32\aud_wasapi.cpp">
       <Filter>interfaces\audio\win32</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\burner\win32\input_devices.cpp" />
-    <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp">
-      <Filter>burner\win32</Filter>
+    <ClCompile Include="..\..\src\burn\drv\sega\d_segac2.cpp">
+      <Filter>Burn\drv\sega</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -4532,16 +4525,5 @@
     <CustomBuild Include="..\..\src\burn\drv\pgm\pgm_sprite_create.cpp">
       <Filter>Burn\drv\pgm</Filter>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\src\burner\resource\splash.bmp" />
-    <Image Include="..\..\src\burner\resource\about.bmp" />
-    <Image Include="..\..\src\burner\resource\misc.bmp" />
-    <Image Include="..\..\src\burner\resource\fba.ico" />
-    <Image Include="..\..\src\burner\resource\TV Plus.ico" />
-    <Image Include="..\..\src\burner\resource\TV Minus.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Working.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Found.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Found Non Essential.ico" />
   </ItemGroup>
 </Project>

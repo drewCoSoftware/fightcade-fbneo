@@ -22,7 +22,6 @@
     <ClInclude Include="..\..\src\burner\burner.h" />
     <ClInclude Include="..\..\src\burner\dynhuff.h" />
     <ClInclude Include="..\..\src\burner\gameinp.h" />
-    <ClInclude Include="..\..\src\burner\GUIDComparer.h" />
     <ClInclude Include="..\..\src\burner\ioapi.h" />
     <ClInclude Include="..\..\src\burner\luaengine.h" />
     <ClInclude Include="..\..\src\burner\luasav.h" />
@@ -31,7 +30,6 @@
     <ClInclude Include="..\..\src\burner\un7z.h" />
     <ClInclude Include="..\..\src\burner\unzip.h" />
     <ClInclude Include="..\..\src\burner\win32\burner_win32.h" />
-    <ClInclude Include="..\..\src\burner\win32\CGamepadState.h" />
     <ClInclude Include="..\..\src\burner\win32\d3dkmt_sync.h" />
     <ClInclude Include="..\..\src\burner\win32\resource.h" />
     <ClInclude Include="..\..\src\burner\win32\resource_string.h" />
@@ -357,7 +355,6 @@
     <ClCompile Include="..\..\src\burner\win32\about.cpp" />
     <ClCompile Include="..\..\src\burner\win32\avi.cpp" />
     <ClCompile Include="..\..\src\burner\win32\bzip.cpp" />
-    <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp" />
     <ClCompile Include="..\..\src\burner\win32\choose_monitor.cpp" />
     <ClCompile Include="..\..\src\burner\win32\cona.cpp" />
     <ClCompile Include="..\..\src\burner\win32\d3dkmt_sync.cpp" />
@@ -522,6 +519,7 @@
     <ClCompile Include="..\..\src\burn\drv\pst90s\d_rabbit.cpp" />
     <ClCompile Include="..\..\src\burn\drv\pst90s\d_vamphalf.cpp" />
     <ClCompile Include="..\..\src\burn\drv\pst90s\d_vegaeo.cpp" />
+    <ClCompile Include="..\..\src\burn\drv\sega\d_segac2.cpp" />
     <ClCompile Include="..\..\src\burn\drv\sega\d_sys24.cpp" />
     <ClCompile Include="..\..\src\burn\drv\sega\fd1094_intf.cpp" />
     <ClCompile Include="..\..\src\burn\drv\sms\smspio.cpp" />
@@ -580,7 +578,6 @@
     <ClCompile Include="..\..\src\intf\video\win32\vid_memorybuffer.cpp" />
     <ClCompile Include="..\..\src\intf\video\win32\vid_overlay.cpp" />
     <ClCompile Include="generated\m68kops.c" />
-    <ClCompile Include="..\..\src\burner\win32\input_devices.cpp" />
     <CustomBuild Include="..\..\src\burn\drv\capcom\ctv_make.cpp">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl ..\..\src\burn\drv\capcom\%(Filename).cpp 
 %(Filename).exe &gt; generated\ctv.h 
@@ -1529,17 +1526,6 @@ del build_details.exe
     </ResourceCompile>
     <ResourceCompile Include="..\..\src\dep\libs\lib7z\7zVersion.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\src\burner\resource\about.bmp" />
-    <Image Include="..\..\src\burner\resource\fba.ico" />
-    <Image Include="..\..\src\burner\resource\misc.bmp" />
-    <Image Include="..\..\src\burner\resource\splash.bmp" />
-    <Image Include="..\..\src\burner\resource\TV Minus.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Found Non Essential.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Found.ico" />
-    <Image Include="..\..\src\burner\resource\TV Not Working.ico" />
-    <Image Include="..\..\src\burner\resource\TV Plus.ico" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{86D06C32-A849-4988-A176-A38D014C36C1}</ProjectGuid>
     <RootNamespace>fbneo_vs2015</RootNamespace>
@@ -1629,8 +1615,6 @@ del build_details.exe
     <PreBuildEvent>
       <Command>
       </Command>
-      <Message>
-      </Message>
     </PreBuildEvent>
     <Manifest>
       <VerboseOutput>false</VerboseOutput>
@@ -1638,16 +1622,6 @@ del build_details.exe
     <Xdcmake>
       <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
     </Xdcmake>
-    <CustomBuildStep>
-      <Message>Doing Custom Stuff!</Message>
-    </CustomBuildStep>
-    <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)..\..\ui" "$(OutDir)ui" /E /I /Y /D
-xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>Make sure ui/ folder + data is available.</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -1666,12 +1640,6 @@ xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D</Comma
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <OutputFile>..\..\build\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
-    <PreBuildEvent>
-      <Command>xcopy </Command>
-    </PreBuildEvent>
-    <PreBuildEvent>
-      <Message>Make sure ui/ folder + data is available.</Message>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
