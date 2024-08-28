@@ -21,7 +21,9 @@ static bool bCinpOkay;
     extern struct InputInOut InputInOutQt;
 #endif
 
-static struct InputInOut *pInputInOut[]=
+// Why is this an array?
+// TODO: Make this not an array.
+static struct InputInOut *pInputInOut[] =
 {
 #if defined (BUILD_WIN32)
 	&InputInOutDInput,
@@ -164,6 +166,19 @@ INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, D
 	INT32 res = pInputInOut[nInputSelect]->GetGamepadState(padIndex, dirStates, btnStates, btnCount);
 	return res;
 }
+
+// ------------------------------------------------------------------------------------------------------------------------
+INT32 InputOnInputDeviceAdded(bool isGamepad) {
+	INT32 res = pInputInOut[nInputSelect]->OnGamepadAdded(isGamepad);
+	return res;
+}
+
+// ------------------------------------------------------------------------------------------------------------------------
+INT32 InputOnInputDeviceRemoved(bool isGamepad) {
+	INT32 res = pInputInOut[nInputSelect]->OnGamepadRemoved(isGamepad);
+	return res;
+}
+
 
 // ------------------------------------------------------------------------------------------------------------------------
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, UINT32* nPadCount) {

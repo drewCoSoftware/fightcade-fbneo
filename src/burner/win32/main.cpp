@@ -22,6 +22,8 @@
 #include <wininet.h>
 #include <winsock.h>
 
+#include <Dbt.h>
+
 #if defined (FBNEO_DEBUG)
 bool bDisableDebugConsole = true;
 #endif
@@ -133,7 +135,7 @@ TCHAR* GUIDToTCHAR(const GUID* guid) {
 	// We could use the appropriate TCHAR version of the snprintf
 	// function below, but I didn't feel like it at the time.
 	// Thanks anyway: https://stackoverflow.com/questions/1672677/print-a-guid-variable
-	
+
 	// NOTE:  _stprintf is used in other places in the application!
 	CHAR guid_string[37];
 	snprintf(
@@ -1144,6 +1146,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 	// Provide a custom exception handler
 	SetUnhandledExceptionFilter(ExceptionFilter);
 
+
+
+
 	hAppInst = hInstance;
 
 	// Make version string (@FC version at the end)
@@ -1201,6 +1206,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 			EnableHighResolutionTiming();
 
 			MediaInit();
+
+			static const GUID HID_DEVINTERFACE_GUID = { 0x745a17a0, 0x74d3, 0x11d0, { 0xb6, 0xfe, 0x00, 0xa0, 0xc9, 0x0f, 0x57, 0xda } };
 
 			RunMessageLoop();					// Run the application message loop
 		}

@@ -257,6 +257,10 @@ void ToggleLayer(unsigned char thisLayer);
 // scrn.cpp
 extern HWND hScrnWnd;									// Handle to the screen window
 extern HWND hwndChat;
+
+// indp.cpp
+extern HWND hInpdDlg;									// Handle to the input dialog.
+
 extern bool bRescanRoms;
 extern bool bMenuEnabled;
 

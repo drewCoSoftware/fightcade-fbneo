@@ -956,6 +956,7 @@ int readKeyboard(keyboardData* keyboard)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Read one of the gamepads
 int readGamepad(gamepadData* gamepad)
 {
@@ -991,6 +992,7 @@ int readGamepad(gamepadData* gamepad)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Check a subcode (the 40xx bit in 4001, 4102 etc) for a gamepad input code
 int gamepadState(gamepadData* gamepad, unsigned int subCode)
 {
@@ -1048,6 +1050,7 @@ int gamepadState(gamepadData* gamepad, unsigned int subCode)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Read the mouse
 int readMouse(mouseData* mouse)
 {
@@ -1077,6 +1080,7 @@ int readMouse(mouseData* mouse)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Check a subcode (the 80xx bit in 8001, 8102 etc) for a mouse input code
 int checkMouseState(mouseData* mouse, unsigned int subCode)
 {
@@ -1090,6 +1094,7 @@ int checkMouseState(mouseData* mouse, unsigned int subCode)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Get the state (pressed = 1, not pressed = 0) of a particular input code
 int getState(int code)
 {
@@ -1137,6 +1142,7 @@ int getState(int code)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Read one gamepad axis
 int readGamepadAxis(int padIndex, int axis)
 {
@@ -1176,6 +1182,7 @@ int readGamepadAxis(int padIndex, int axis)
 	return 0;
 }
 
+// -----------------------------------------------------------------------------------------------------------
 // Read one mouse axis
 int readMouseAxis(int i, int axis)
 {
@@ -1272,6 +1279,18 @@ INT32 getGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD*
 }
 
 
+// -----------------------------------------------------------------------------------------------------------
+INT32 onInputDeviceAdded(bool isGamepad) {
+	return 0;
+}
+
+
+// -----------------------------------------------------------------------------------------------------------
+INT32 onInputDeviceRemoved(bool isGamepad) {
+	return 0;
+}
+
+// -----------------------------------------------------------------------------------------------------------
 // This function finds the FIRST which key is pressed.
 // NOTE: It would be nice to have a similar function that can just give us a set of state information
 // vs the first thing that it finds.
@@ -1521,4 +1540,24 @@ static BOOL CALLBACK mouseEnumCallback(LPCDIDEVICEINSTANCE instance, LPVOID /*p*
 	return mouseEnumDevice(instance);
 }
 
-struct InputInOut InputInOutDInput = { init, exit, setCooperativeLevel, newFrame, getState, readGamepadAxis, readMouseAxis, find, getControlName, NULL, getGamepadInfos, getGamepadState, saveGamepadMappings, getInputProfiles, saveInputProfiles, addInputProfile, removeInputProfile, _T("DirectInput8 input") };
+struct InputInOut InputInOutDInput = {
+	init,
+	exit,
+	setCooperativeLevel,
+	newFrame,
+	getState,
+	readGamepadAxis,
+	readMouseAxis,
+	find,
+	getControlName,
+	NULL,
+	getGamepadInfos,
+	getGamepadState,
+	onInputDeviceAdded,
+	onInputDeviceRemoved,
+	saveGamepadMappings,
+	getInputProfiles,
+	saveInputProfiles,
+	addInputProfile,
+	removeInputProfile,
+	_T("DirectInput8 input") };

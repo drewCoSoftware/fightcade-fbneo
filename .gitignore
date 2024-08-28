@@ -12,3 +12,5 @@ src/intf/video/win32/detector_buffers.h
 src/intf/video/win32/detector_loaders.h
 UPDATE_GIT_IGNORE.BAT
 gitlog.txt
+/projectfiles/visualstudio-2022/fbneo_vs2022.vcxproj.user
+/src/burner/win32/app.aps

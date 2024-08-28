@@ -36,6 +36,10 @@ static UINT32 nPadCount = 0;
 static CGamepadState PadStates[MAX_GAMEPAD];
 
 
+// NOTE: These would be game dependent....
+static InputProfileEntry DefaultInputProfile;
+
+
 static InputProfileEntry* inputProfiles[MAX_PROFILE_LEN];
 static UINT32 nProfileCount = 0;
 static int nSelectedProfileIndex = -1;
@@ -209,10 +213,10 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 
 	// Otherwise we are going to iterate over the game input + mapped inputs and set the data accordingly.
 	int i = 0;
-	struct GameInp* pgi;
+	struct GameInp* pGameInput;
 	// Set the correct mem location...
-	for (i = 0, pgi = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pgi++) {
-		if (pgi->Input.pVal == NULL) {
+	for (i = 0, pGameInput = GameInp + inputIndexOffset; i < sfiii3nPlayerInputs.buttonCount; i++, pGameInput++) {
+		if (pGameInput->Input.pVal == NULL) {
 			continue;
 		}
 
@@ -223,22 +227,24 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 		if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER)
 		{
 			// This is a gamepad input.  We need to translate its index in order to set the code correctly.
+			// PS. Making the input codes dependent on the gamepad index is dumb.
 			code = code | (padIndex << 8);
 
-			int checkIndex = (code >> 8) & 0x3F;
-			int x = 10;
+			//int checkIndex = (code >> 8) & 0x3F;
+			//int x = 10;
 		}
 
 		// Now we can set this on the pgi input....
-		pgi->nInput = pi.nInput;
+		pGameInput->nInput = pi.nInput;
 		if (pi.nInput == GIT_SWITCH) {
-			pgi->Input.Switch.nCode = code;
+			pGameInput->Input.Switch.nCode = code;
 		}
 		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
 			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
 		}
 
 	}
+
 	// I think that we need to update the description in the main select box too......
 	InpdUseUpdate();
 
@@ -1837,8 +1843,30 @@ static void SetPlayerSetupMessageFont() {
 }
 
 // ---------------------------------------------------------------------------------------------------------
+static void OnRefreshPadsClicked() {
+	SetEnabled(ID_REFRESH_PADS, FALSE);
+	InputInit();
+
+	// Repopulate the gamepad list....
+	RefreshGamepads();
+	GamepadListMake(1);
+
+	// Update the labels in the UI.
+	InpdUseUpdate();
+
+	SetEnabled(ID_REFRESH_PADS, TRUE);
+}
+
+// ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
+	if (Msg == WM_USER + 1) {
+		if (InSendMessage()) {
+		ReplyMessage(true); }
+
+		OnRefreshPadsClicked();
+	}
+
 	if (Msg == WM_INITDIALOG) {
 		hInpdDlg = hDlg;
 		InpdInit();
@@ -1894,18 +1922,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		}
 
 		if (Id == ID_REFRESH_PADS && Notify == BN_CLICKED) {
-			SetEnabled(ID_REFRESH_PADS, FALSE);
-			// OnGamepadListDeselect();
-			InputInit();
-
-			// Repopulate the gamepad list....
-			RefreshGamepads();
-			GamepadListMake(1);
-
-			// Update the labels in the UI.
-			InpdUseUpdate();
-
-			SetEnabled(ID_REFRESH_PADS, TRUE);
+			OnRefreshPadsClicked();
 			return 0;
 		}
 

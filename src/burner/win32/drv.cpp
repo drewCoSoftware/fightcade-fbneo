@@ -1,6 +1,7 @@
 // Driver Init module
 #include "burner.h"
 #include "neocdlist.h"
+#include <Dbt.h>
 
 int bDrvOkay = 0;						// 1 if the Driver has been initted okay, and it's okay to use the BurnDrv functions
 
@@ -148,6 +149,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 	DrvExit();						// Make sure exitted
 	MediaExit(false);
 
+
 	nBurnDrvActive = nDrvNum;		// Set the driver number
 
 	if ((BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_SNK_MVS) {
@@ -265,6 +267,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 		if (ReadValueAtHardwareAddress(0x638FC63, 1, 0) == 0x0A)
 			WriteValueAtHardwareAddress(0x638FC63, 0x0B, 1, 0);
 	}
+
 
 	return 0;
 }

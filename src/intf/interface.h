@@ -128,8 +128,13 @@ struct InputInOut {
 
 	// Get Gamepads...
 	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
-	
 	INT32 (*GetGamepadState)(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
+
+	// We detected that a gamepad was added to the system.
+	INT32 (*OnGamepadAdded)(bool isGamepad);
+
+	// We detected that a gamepad was removed from the system...
+	INT32 (*OnGamepadRemoved)(bool isGamepad);
 
 	// Save the current set of mapping data!
 	INT32 (*SaveGamepadMappings)();
@@ -157,6 +162,9 @@ INT32 InputSaveGamepadMappings();
 
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
 INT32 InputGetGamepadState(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
+
+INT32 InputOnInputDeviceAdded(bool isGamepad);
+INT32 InputOnInputDeviceRemoved(bool isGamepad);
 
 INT32 InputGetProfiles(InputProfileEntry** ppProfiles, UINT32* nProfileCount);
 INT32 InputSaveProfiles();

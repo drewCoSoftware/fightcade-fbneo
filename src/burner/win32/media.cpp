@@ -13,6 +13,7 @@ int MediaInit()
 		InputInit();					// Init Input
 	}
 
+
 	nAppVirtualFps = nBurnFPS;
 
 	if (!bAudOkay) {

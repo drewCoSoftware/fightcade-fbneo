@@ -1,6 +1,7 @@
 // Run module
 #include "burner.h"
 #include <string.h>
+#include <Dbt.h>
 
 int bRunPause = 0;
 int bAltPause = 0;
@@ -542,6 +543,7 @@ int RunMessageLoop()
 
 		while (1) {
 			if (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE)) {
+
 				// A message is waiting to be processed
 				if (Msg.message == WM_QUIT)	{											// Quit program
 					VidOverlayQuit();
@@ -565,7 +567,9 @@ int RunMessageLoop()
 					break;
 				}
 
-				if (bMenuEnabled && nVidFullscreen == 0) {								// Handle keyboard messages for the menu
+				// Handle keyboard messages for the menu
+				// TODO: Put this into some kind of inline function.
+				if (bMenuEnabled && nVidFullscreen == 0) {								
 					if (MenuHandleKeyboard(&Msg)) {
 						continue;
 					}
