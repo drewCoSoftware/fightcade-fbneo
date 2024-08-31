@@ -73,6 +73,17 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam);
 
 int OnNotify(HWND, int, NMHDR* lpnmhdr);
 
+// Used to track HID devices that are added / removed.
+#define MAX_HID_DEVS 32
+
+const GUID HID_DEVINTERFACE_GUID = { 0x745a17a0, 0x74d3, 0x11d0, { 0xb6, 0xfe, 0x00, 0xa0, 0xc9, 0x0f, 0x57, 0xda } };
+const GUID GUID_DEVINTERFACE_HID = { 0x4D1E55B2L, 0xF16F, 0x11CF, { 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 } };
+
+static DWORD ActiveDeviceIds[MAX_HID_DEVS] = {};			// NOTE: Current Devices!
+static DWORD DeactivatedDeviceIds[MAX_HID_DEVS] = {};
+
+//static bool DeviceListInitialized = false;
+
 static bool UseDialogs()
 {
 	if (/*!bDrvOkay ||*/ !nVidFullscreen) {
@@ -359,9 +370,6 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 // and: https://stackoverflow.com/questions/16528170/using-directinput-to-receive-signal-after-plugging-in-joystick
 static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 {
-	const GUID HID_DEVINTERFACE_GUID = { 0x745a17a0, 0x74d3, 0x11d0, { 0xb6, 0xfe, 0x00, 0xa0, 0xc9, 0x0f, 0x57, 0xda } };
-
-	int x = 10;
 
 	if (wParam == DBT_DEVNODES_CHANGED) {
 		// This is just a general change notification.  There isn't any more data that goes with it....
@@ -371,7 +379,14 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 
 	// NOTE: We need to track the stuff that is being added / removed so we don't go broadcasting too much....
 	bool hidChanged = false;
-	
+
+	// We want to track any new device that may have been detected.
+	int addCount = 0;
+	int removeCount = 0;
+	DWORD addedDevices[MAX_HID_DEVS] = {};
+	DWORD removedDevices[MAX_HID_DEVS] = {};
+
+
 	if (wParam == DBT_DEVICEARRIVAL)
 	{
 		auto deets = (PDEV_BROADCAST_HDR)lParam;
@@ -379,30 +394,34 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 		{
 			// Maybe a gamepad?
 			PDEV_BROADCAST_DEVICEINTERFACE pDevInf = (PDEV_BROADCAST_DEVICEINTERFACE)deets;
+			if (pDevInf->dbcc_classguid != GUID_DEVINTERFACE_HID)
+			{
+				return 0;
+			}
 
-			assert(lstrlen(pDevInf->dbcc_name) > 4);
-			CString szDevId = pDevInf->dbcc_name + 4;
-			int idx = szDevId.ReverseFind(_T('#'));
-			assert(-1 != idx);
-			szDevId.Truncate(idx);
-			szDevId.Replace(_T('#'), _T('\\'));
-			szDevId.MakeUpper();
+			// NOTE: Old class parsing code that we don't really need anymore.
+			//assert(lstrlen(pDevInf->dbcc_name) > 4);
+			//CString szDevId = pDevInf->dbcc_name + 4;
+			//int idx = szDevId.ReverseFind(_T('#'));
+			//assert(-1 != idx);
+			//szDevId.Truncate(idx);
+			//szDevId.Replace(_T('#'), _T('\\'));
+			//szDevId.MakeUpper();
 
-			CString devClass;
-			idx = szDevId.Find(_T('\\'));
-			assert(-1 != idx);
-			devClass = szDevId.Left(idx);
+			//CString devClass;
+			//idx = szDevId.Find(_T('\\'));
+			//assert(-1 != idx);
+			//devClass = szDevId.Left(idx);
 
-
-			auto dwFlag = DIGCF_ALLCLASSES;
-			HDEVINFO hDevInfo = SetupDiGetClassDevs(NULL, devClass, NULL, dwFlag);
+			// NOTE: We are just assuming that we care about HID devices.
+			// For our purposes, that would be gamepads / joysticks.
+			HDEVINFO hDevInfo = SetupDiGetClassDevs(NULL, L"HID", NULL, DIGCF_ALLCLASSES);
 			if (INVALID_HANDLE_VALUE == hDevInfo)
 			{
 				// Can't get the class dev.  I think we just punt in this case?
 				// Maybe log it?
 				return 0;
 			}
-
 
 			SP_DEVINFO_DATA* pspDevInfoData = (SP_DEVINFO_DATA*)HeapAlloc(GetProcessHeap(), 0, sizeof(SP_DEVINFO_DATA));
 			pspDevInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
@@ -412,12 +431,24 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 					continue;
 				}
 
-				hidChanged = true;
-				break;
+				// NOTE: Maybe there is where we can add some kind of signal that would allow us to refresh
+// the gamepad list in the input config?
+// Can we just send our own messages to the window?
 
-				DWORD DataT;
-				DWORD nSize = 0;
-				TCHAR buf[MAX_PATH];
+// Make note of the device id:
+				
+				addedDevices[addCount] = pspDevInfoData->DevInst;
+				
+				// Overflow warning, otherwise we just recycle the index.
+				assert(addCount < MAX_HID_DEVS);
+				addCount = (addCount + 1) % MAX_HID_DEVS;
+
+				hidChanged = true;
+				//break;
+
+				//DWORD DataT;
+				//DWORD nSize = 0;
+				//TCHAR buf[MAX_PATH];
 
 
 				//if (!SetupDiGetDeviceInstanceId(hDevInfo, pspDevInfoData, buf, sizeof(buf), &nSize))
@@ -459,9 +490,6 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 					SendMessage(hInpdDlg, WM_USER + 1, 0, 0);
 				}
 
-				// NOTE: Maybe there is where we can add some kind of signal that would allow us to refresh
-				// the gamepad list in the input config?
-				// Can we just send our own messages to the window?
 			}
 		}
 	}
@@ -3233,7 +3261,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 	}
 
 	MenuUpdate();
-}
+	}
 
 // Block screensaver and windows menu if needed
 static int OnSysCommand(HWND, UINT sysCommand, int, int)
@@ -3636,24 +3664,24 @@ int ScrnInit()
 	// https://web.archive.org/web/20141211154922/http://www.spellofplay.com/blogs/hobbe/detecting-if-game-pad-plugged-or-removed.html
 	// Init device change listener (i.e. gamepad change)
 	// NOT sure why, but as soon as we load a game this notification seems to stop working....
-		{
-			DEV_BROADCAST_DEVICEINTERFACE notificationFilter;
-			ZeroMemory(&notificationFilter, sizeof(notificationFilter));
+	{
+		DEV_BROADCAST_DEVICEINTERFACE notificationFilter;
+		ZeroMemory(&notificationFilter, sizeof(notificationFilter));
 
-			notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-			notificationFilter.dbcc_size = sizeof(notificationFilter);
-			//notificationFilter.dbcc_classguid = HID_DEVINTERFACE_GUID;
+		notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+		notificationFilter.dbcc_size = sizeof(notificationFilter);
+		//notificationFilter.dbcc_classguid = HID_DEVINTERFACE_GUID;
 
-			HDEVNOTIFY hDevNotify;
-			hDevNotify = RegisterDeviceNotification(hScrnWnd, &notificationFilter,
-				DEVICE_NOTIFY_WINDOW_HANDLE |
-				DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
+		HDEVNOTIFY hDevNotify;
+		hDevNotify = RegisterDeviceNotification(hScrnWnd, &notificationFilter,
+			DEVICE_NOTIFY_WINDOW_HANDLE |
+			DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
 
-			if (hDevNotify == NULL) {
-				// do some error handling
-				int x = 10;
-			}
+		if (hDevNotify == NULL) {
+			// do some error handling
+			int x = 10;
 		}
+	}
 
 
 
