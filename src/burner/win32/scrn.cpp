@@ -73,16 +73,11 @@ static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam);
 
 int OnNotify(HWND, int, NMHDR* lpnmhdr);
 
-// Used to track HID devices that are added / removed.
-#define MAX_HID_DEVS 32
 
 const GUID HID_DEVINTERFACE_GUID = { 0x745a17a0, 0x74d3, 0x11d0, { 0xb6, 0xfe, 0x00, 0xa0, 0xc9, 0x0f, 0x57, 0xda } };
 const GUID GUID_DEVINTERFACE_HID = { 0x4D1E55B2L, 0xF16F, 0x11CF, { 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30 } };
 
-static DWORD ActiveDeviceIds[MAX_HID_DEVS] = {};			// NOTE: Current Devices!
-static DWORD DeactivatedDeviceIds[MAX_HID_DEVS] = {};
 
-//static bool DeviceListInitialized = false;
 
 static bool UseDialogs()
 {
@@ -366,163 +361,35 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 
 // --------------------------------------------------------------------------------
 // NOTE: This is where we will detect controllers being plugged in / out.
-// NOTE: A lot of this code was cribbed from: https://www.codeproject.com/articles/14500/detecting-hardware-insertion-and-or-removal
+// NOTE: A lot of this code was cribbed from/inspired by: https://www.codeproject.com/articles/14500/detecting-hardware-insertion-and-or-removal
 // and: https://stackoverflow.com/questions/16528170/using-directinput-to-receive-signal-after-plugging-in-joystick
 static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)
 {
-
-	if (wParam == DBT_DEVNODES_CHANGED) {
-		// This is just a general change notification.  There isn't any more data that goes with it....
-		int x = 10;
-		return 0;
-	}
-
-	// NOTE: We need to track the stuff that is being added / removed so we don't go broadcasting too much....
-	bool hidChanged = false;
-
-	// We want to track any new device that may have been detected.
-	int addCount = 0;
-	int removeCount = 0;
-	DWORD addedDevices[MAX_HID_DEVS] = {};
-	DWORD removedDevices[MAX_HID_DEVS] = {};
-
-
-	if (wParam == DBT_DEVICEARRIVAL)
+	if (wParam == DBT_DEVICEARRIVAL || wParam == DBT_DEVICEREMOVECOMPLETE)
 	{
-		auto deets = (PDEV_BROADCAST_HDR)lParam;
-		if (deets->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
+		auto details = (PDEV_BROADCAST_HDR)lParam;
+		if (details->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE)
 		{
-			// Maybe a gamepad?
-			PDEV_BROADCAST_DEVICEINTERFACE pDevInf = (PDEV_BROADCAST_DEVICEINTERFACE)deets;
+			//// Maybe a gamepad?
+			PDEV_BROADCAST_DEVICEINTERFACE pDevInf = (PDEV_BROADCAST_DEVICEINTERFACE)details;
 			if (pDevInf->dbcc_classguid != GUID_DEVINTERFACE_HID)
 			{
 				return 0;
 			}
 
-			// NOTE: Old class parsing code that we don't really need anymore.
-			//assert(lstrlen(pDevInf->dbcc_name) > 4);
-			//CString szDevId = pDevInf->dbcc_name + 4;
-			//int idx = szDevId.ReverseFind(_T('#'));
-			//assert(-1 != idx);
-			//szDevId.Truncate(idx);
-			//szDevId.Replace(_T('#'), _T('\\'));
-			//szDevId.MakeUpper();
+			// Reinitialze the input system...
+			InputInit();
 
-			//CString devClass;
-			//idx = szDevId.Find(_T('\\'));
-			//assert(-1 != idx);
-			//devClass = szDevId.Left(idx);
-
-			// NOTE: We are just assuming that we care about HID devices.
-			// For our purposes, that would be gamepads / joysticks.
-			HDEVINFO hDevInfo = SetupDiGetClassDevs(NULL, L"HID", NULL, DIGCF_ALLCLASSES);
-			if (INVALID_HANDLE_VALUE == hDevInfo)
-			{
-				// Can't get the class dev.  I think we just punt in this case?
-				// Maybe log it?
-				return 0;
-			}
-
-			SP_DEVINFO_DATA* pspDevInfoData = (SP_DEVINFO_DATA*)HeapAlloc(GetProcessHeap(), 0, sizeof(SP_DEVINFO_DATA));
-			pspDevInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
-			for (int i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, pspDevInfoData); i++)
-			{
-				if (pspDevInfoData->ClassGuid != HID_DEVINTERFACE_GUID) {
-					continue;
-				}
-
-				// NOTE: Maybe there is where we can add some kind of signal that would allow us to refresh
-// the gamepad list in the input config?
-// Can we just send our own messages to the window?
-
-// Make note of the device id:
-				
-				addedDevices[addCount] = pspDevInfoData->DevInst;
-				
-				// Overflow warning, otherwise we just recycle the index.
-				assert(addCount < MAX_HID_DEVS);
-				addCount = (addCount + 1) % MAX_HID_DEVS;
-
-				hidChanged = true;
-				//break;
-
-				//DWORD DataT;
-				//DWORD nSize = 0;
-				//TCHAR buf[MAX_PATH];
-
-
-				//if (!SetupDiGetDeviceInstanceId(hDevInfo, pspDevInfoData, buf, sizeof(buf), &nSize))
-				//{
-				//	// Something failed....
-				//	return -2;
-				//	
-				//	//AfxMessageBox(CString("SetupDiGetDeviceInstanceId(): ")
-				//	//	+ _com_error(GetLastError()).ErrorMessage(), MB_ICONEXCLAMATION);
-				//	// break;
-				//}
-
-				//if (szDevId == buf)
-				//{
-				//	// Some kind of match... can we identify the port?
-				//	int x = 99;
-				//}
-			}
-
-			// Cleanup.....
-			if (pspDevInfoData) HeapFree(GetProcessHeap(), 0, pspDevInfoData);
-			SetupDiDestroyDeviceInfoList(hDevInfo);
-
-			if (hidChanged) {
-				// Signal to input system that we want to refresh the devices....
-				// RefreshInput
-				// I can signal to the input system to refresh the gamepads, but that doesn't really
-				// help when it comes to auto refreshing the input window (if it is open), nor does
-				// it do much to help me re-init the inputs for the gamepads...
-				// .... p.s.  for version one, I think it makes the most sense to just take the first two
-				// detected gamepads and assign them as player1 / player2.  We can look into some other
-				// way of doing that / having an overlay / tag-in type system once we have a basic version
-				// working....
-
-				// NOTE: We are just going to assume that this is a gamepad, for now.
-				InputOnInputDeviceAdded(true);
-
-				if (hInpdDlg) {
-					SendMessage(hInpdDlg, WM_USER + 1, 0, 0);
-				}
-
-			}
-		}
-	}
-	else if (wParam == DBT_DEVICEREMOVECOMPLETE)
-	{
-		if (hInpdDlg) {
-			SendMessage(hInpdDlg, WM_USER + 1, 0, 0);
+			// A device was added or removed.  Let's boradcast the message to reinitialize the DX8 inputs.
+			SendMessage(hInpdDlg, UM_INPUT_CHANGE, wParam, 0);
 		}
 	}
 
 	return 0;
-
-
 }
 
 
-//// I think I need to listen for this elsewhere?
-//if (Msg.message == WM_DEVICECHANGE)
-//{
-//	// controller plugged in / out?
-//	int x = 10;
-//	if (Msg.wParam == DBT_DEVICEARRIVAL)
-//	{
-//		int x = 10;
-//	}
-//	else if (Msg.wParam == DBT_DEVICEREMOVECOMPLETE)
-//	{
-//		int x = 10;
-//	}
-//}
-
-
-
+// --------------------------------------------------------------------------------
 static int OnDisplayChange(HWND, UINT, UINT, UINT)
 {
 	if (!nVidFullscreen) {
@@ -3261,7 +3128,7 @@ static void OnCommand(HWND /*hDlg*/, int id, HWND /*hwndCtl*/, UINT codeNotify)
 	}
 
 	MenuUpdate();
-	}
+}
 
 // Block screensaver and windows menu if needed
 static int OnSysCommand(HWND, UINT sysCommand, int, int)

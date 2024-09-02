@@ -1,6 +1,6 @@
 // Burner Input Editor Dialog module
 // NOTE: This is the <strike>really lousy</strike> war crime of a mapping + preset dialog that comes with the emulator.
-// This is where we will make the UI less stupid.
+// This is where we will make the UI less difficult/cumbersome to use.
 #include "burner.h"
 #include "GUIDComparer.h"
 #include "CGamepadState.h"
@@ -1389,13 +1389,13 @@ static int ActivateInputListItem()
 #if 0
 			InpMacroCreate(nSel);
 #endif
-	}
+		}
 		else {
 			// Assign to a key
 			nInpsInput = nSel;
 			InpsCreate();
 		}
-}
+	}
 
 	GameInpCheckLeftAlt();
 
@@ -1810,42 +1810,15 @@ static void removeProfile() {
 	ProfileListMake(1);
 }
 
-
 HFONT hMsgFont = 0;
 
 // ---------------------------------------------------------------------------------------------------------
-static void SetPlayerSetupMessageFont() {
-
-	// I can't really get this and word wrap to work, and I don't want to spend time on that now.
-	// I will leave this block here as a placeholder.
-	// NOTE: It DOES change the font size, so its kind of working.
-	return;
-
-	//HWND hPadMsg = GetDlgItem(hInpdDlg, IDC_SET_PLAYER_MESSAGE);
-	//if (hPadMsg) {
-
-	//	// OPTIONS:
-	//	int fontSize = 10;
-	//	bool isBold = true;
-
-
-	//	LOGFONT logFont;
-	//	memset(&logFont, 0, sizeof(LOGFONT));
-	//	logFont.lfHeight = -MulDiv(fontSize, GetDeviceCaps(::GetDC(NULL), LOGPIXELSY), 72);
-	//	logFont.lfWeight = isBold ? FW_BOLD : FW_NORMAL;
-	//	logFont.lfItalic = false;
-	//	_tcsncpy_s(logFont.lfFaceName, _T("Arial"), _TRUNCATE);
-
-	//	hMsgFont = CreateFontIndirect(&logFont);
-
-	//	SendMessage(hPadMsg, WM_SETFONT, (WPARAM)hMsgFont, MAKELPARAM(TRUE, 0));
-	//}
-}
-
-// ---------------------------------------------------------------------------------------------------------
-static void OnRefreshPadsClicked() {
+static void OnRefreshPadsClicked(bool reinitializeInput) {
 	SetEnabled(ID_REFRESH_PADS, FALSE);
-	InputInit();
+
+	if (reinitializeInput) {
+		InputInit();
+	}
 
 	// Repopulate the gamepad list....
 	RefreshGamepads();
@@ -1860,11 +1833,16 @@ static void OnRefreshPadsClicked() {
 // ---------------------------------------------------------------------------------------------------------
 static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	if (Msg == WM_USER + 1) {
+	if (Msg == UM_INPUT_CHANGE) {
 		if (InSendMessage()) {
-		ReplyMessage(true); }
+			ReplyMessage(true);
+		}
 
-		OnRefreshPadsClicked();
+		//// NOTE: The wParam can be inspected for the exact change...
+		//if (wParam == DBT_DEVICEARRIVAL) { added... }
+		//if (wParam == DBT_DEVICEREMOVECOMPLETE) { removed... }
+
+		OnRefreshPadsClicked(false);
 	}
 
 	if (Msg == WM_INITDIALOG) {
@@ -1874,9 +1852,6 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		if (!kNetGame && bAutoPause) {
 			bRunPause = 1;
 		}
-
-		SetPlayerSetupMessageFont();
-
 
 		return TRUE;
 	}
@@ -1922,7 +1897,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		}
 
 		if (Id == ID_REFRESH_PADS && Notify == BN_CLICKED) {
-			OnRefreshPadsClicked();
+			OnRefreshPadsClicked(true);
 			return 0;
 		}
 

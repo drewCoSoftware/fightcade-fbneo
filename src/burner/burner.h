@@ -259,3 +259,6 @@ extern TCHAR szAppControlsPath[MAX_PATH];
 extern TCHAR szAppCabinetsPath[MAX_PATH];
 extern TCHAR szAppPCBsPath[MAX_PATH];
 extern TCHAR szAppHistoryPath[MAX_PATH];
+
+// User defined messages.
+#define UM_INPUT_CHANGE (WM_USER + 0x200)
