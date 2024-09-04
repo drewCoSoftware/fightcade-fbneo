@@ -26,6 +26,7 @@ INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString);
 struct GamepadInfo
 {
 	GUID guidInstance;
+	GUID guidProduct;
 	TCHAR Alias[MAX_ALIAS_CHARS];
 };
 

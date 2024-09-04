@@ -1943,6 +1943,9 @@ INT32 SetDefaultGamepadInputs() {
 	for (size_t i = 0; i < usePlayerCount; i++)
 	{
 		// NOTE: Based on the product guid, we need to add some mapping data.. (indexes are not 1:1 across all pads)
+		// In this case we would directly modify gpp to have the correct offsets.....
+		// We will start with a hard-coded set, and then later pull it from disk...
+		auto gp = pads[i]->info.guidProduct;
 		// NOTE: Finally, we can check the system guid, or whatever... to choose a user-specific mapping.
 
 		SetDefaultPadInputs(i, gpp);
@@ -1974,10 +1977,10 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
 		if (ci.nInput == 0) { continue; }
 
 		UINT16 code = ci.nCode;
-			code = code | (playerIndex << 8);
+		code = code | (playerIndex << 8);
 
-			// Ensure this is interpreted as joystick code....
-			code |= JOYSTICK_LOWER;
+		// Ensure this is interpreted as joystick code....
+		code |= JOYSTICK_LOWER;
 
 		auto useInp = (pGameInput + i);
 		useInp->nInput = ci.nInput;
@@ -1988,8 +1991,6 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
 		else if (ci.nInput & GIT_GROUP_JOYSTICK) {
 			// Joysticks don't have a code, it is all encoded in the nType data....
 		}
-
-//		if (gpp.inputs[i].nInput == 
 
 	}
 

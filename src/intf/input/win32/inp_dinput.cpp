@@ -434,6 +434,7 @@ void createGamepadMappingData() {
 	{
 		GamepadFileEntry& e = gamepadFile.entries[i];
 		e.info.guidInstance = gamepadProperties[i].guidInstance;
+		e.info.guidProduct = gamepadProperties[i].guidProduct;
 
 		// Set our nice, internal alias.
 		_entryMap[e.info.guidInstance] = &e;
@@ -646,6 +647,7 @@ void addGamepad(gamepadData& props) {
 	// This is all we need, just to add the guid....
 	GamepadFileEntry& e = gamepadFile.entries[index];
 	e.info.guidInstance = props.guidInstance;
+	e.info.guidProduct = props.guidProduct;
 
 	// This is refreshed in a subsequent step....
 	// _entryMap[e.info.guidInstance] = &e;
@@ -747,6 +749,8 @@ INT32 loadGamepadMappings() {
 		{
 			GamepadFileEntry& e = gamepadFile.entries[i];
 			e.info.guidInstance = ReadData_G<GUID>(fp);
+			e.info.guidProduct = {};
+
 			ReadTCHAR(fp, e.info.Alias, MAX_ALIAS_CHARS);
 
 			UINT16 profileCount = ReadUint16(fp);
