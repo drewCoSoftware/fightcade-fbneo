@@ -204,6 +204,7 @@ static int InpdUseUpdate()
 }
 
 // ------------------------------------------------------------------------------------------------------
+// REFACTOR: This should probably be moved over to gami.cpp!
 static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int inputIndexOffset)
 {
 	if (padIndex == -1 || padIndex >= nPadCount) {

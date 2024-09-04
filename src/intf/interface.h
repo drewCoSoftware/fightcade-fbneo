@@ -1,6 +1,6 @@
 #pragma once
 #ifdef FBNEO_DEBUG
- #define PRINT_DEBUG_INFO
+#define PRINT_DEBUG_INFO
 #endif
 #include <vector>
 
@@ -38,6 +38,24 @@ struct GamepadInput {
 	//UINT8 nAxis;
 	//UINT8 nRange;
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
+
+	// -------------------------------------------------------------
+	GamepadInput() {
+		nInput = 0;
+		nCode = 0;
+	}
+
+	// -------------------------------------------------------------
+	GamepadInput(UINT16 nInput_, UINT16 nCode_) {
+		nInput = nInput_;
+		nCode = nCode_;
+	}
+
+	// -------------------------------------------------------------
+	GamepadInput(UINT16 nCode_) {
+		nInput = GIT_SWITCH;
+		nCode = nCode_;
+	}
 };
 
 // These are guesses....
@@ -47,8 +65,9 @@ struct GamepadInputProfile {
 	TCHAR driverName[MAX_NAME];			// PLACEHOLDER: The game that this profile belongs to.
 	TCHAR profileName[MAX_NAME];		// PLACEHOLDER: The name of the profile.  In theory, there could be many.
 
-	GamepadInput inputs[MAX_INPUTS];	
-	// TOOD
+	GamepadInput inputs[MAX_INPUTS];
+	UINT16 inputCount;
+	bool useAutoDirections;				// PLACEHOLDER: Auto map the directional inputs?
 };
 
 // There can be many entries per file, each of which would map to a game, and any number of input profiles
@@ -109,35 +128,35 @@ struct InputProfileEntry {
 
 // Input plugin:
 struct InputInOut {
-	INT32   (*Init)();
-	INT32   (*Exit)();
-	INT32   (*SetCooperativeLevel)(bool bExclusive, bool bForeground);
+	INT32(*Init)();
+	INT32(*Exit)();
+	INT32(*SetCooperativeLevel)(bool bExclusive, bool bForeground);
 	// Setup new frame
-	INT32   (*NewFrame)();
+	INT32(*NewFrame)();
 	// Read digital
-	INT32   (*ReadSwitch)(INT32 nCode);
+	INT32(*ReadSwitch)(INT32 nCode);
 	// Read analog
-	INT32   (*ReadJoyAxis)(INT32 i, INT32 nAxis);
-	INT32   (*ReadMouseAxis)(INT32 i, INT32 nAxis);
+	INT32(*ReadJoyAxis)(INT32 i, INT32 nAxis);
+	INT32(*ReadMouseAxis)(INT32 i, INT32 nAxis);
 	// Find out which control is activated
-	INT32   (*Find)(bool CreateBaseline);
+	INT32(*Find)(bool CreateBaseline);
 	// Get the name of a control
-	INT32   (*GetControlName)(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
+	INT32(*GetControlName)(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 	// Get plugin info
-	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
+	INT32(*GetPluginSettings)(InterfaceInfo* pInfo);
 
 	// Get Gamepads...
-	INT32 (*GetGamepadList)(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
-	INT32 (*GetGamepadState)(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
+	INT32(*GetGamepadList)(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
+	INT32(*GetGamepadState)(int padIndex, UINT16* dirStates, UINT16* btnStates, DWORD* btnCount);
 
 	// We detected that a gamepad was added to the system.
-	INT32 (*OnGamepadAdded)(bool isGamepad);
+	INT32(*OnGamepadAdded)(bool isGamepad);
 
 	// We detected that a gamepad was removed from the system...
-	INT32 (*OnGamepadRemoved)(bool isGamepad);
+	INT32(*OnGamepadRemoved)(bool isGamepad);
 
 	// Save the current set of mapping data!
-	INT32 (*SaveGamepadMappings)();
+	INT32(*SaveGamepadMappings)();
 
 	// Get Input profiles...
 	INT32(*GetProfileList)(InputProfileEntry** ppProfiles, UINT32* nProfileCount);
@@ -157,7 +176,7 @@ INT32 InputMake(bool bCopy);
 INT32 InputFind(const INT32 nFlags);
 INT32 InputGetControlName(INT32 nCode, TCHAR* pszDeviceName, TCHAR* pszControlName);
 InterfaceInfo* InputGetInfo();
-std::vector<const InputInOut *> InputGetInterfaces();
+std::vector<const InputInOut*> InputGetInterfaces();
 INT32 InputSaveGamepadMappings();
 
 INT32 InputGetGamepads(GamepadFileEntry** ppPadInfos, UINT32* nPadCount);
@@ -177,18 +196,18 @@ extern UINT32 nInputSelect;
 // CD emulation module
 
 struct CDEmuDo {
-	INT32			   (*CDEmuExit)();
-	INT32			   (*CDEmuInit)();
-	INT32			   (*CDEmuStop)();
-	INT32			   (*CDEmuPlay)(UINT8 M, UINT8 S, UINT8 F);
-	INT32			   (*CDEmuLoadSector)(INT32 LBA, char* pBuffer);
-	UINT8*             (*CDEmuReadTOC)(INT32 track);
-	UINT8*             (*CDEmuReadQChannel)();
-	INT32			   (*CDEmuGetSoundBuffer)(INT16* buffer, INT32 samples);
-	INT32              (*CDEmuScan)(INT32 nAction, INT32 *pnMin);
+	INT32(*CDEmuExit)();
+	INT32(*CDEmuInit)();
+	INT32(*CDEmuStop)();
+	INT32(*CDEmuPlay)(UINT8 M, UINT8 S, UINT8 F);
+	INT32(*CDEmuLoadSector)(INT32 LBA, char* pBuffer);
+	UINT8* (*CDEmuReadTOC)(INT32 track);
+	UINT8* (*CDEmuReadQChannel)();
+	INT32(*CDEmuGetSoundBuffer)(INT16* buffer, INT32 samples);
+	INT32(*CDEmuScan)(INT32 nAction, INT32* pnMin);
 	// Get plugin info
-	INT32			   (*GetPluginSettings)(InterfaceInfo* pInfo);
-	const TCHAR*	 szModuleName;
+	INT32(*GetPluginSettings)(InterfaceInfo* pInfo);
+	const TCHAR* szModuleName;
 };
 
 #include "cd_interface.h"
@@ -202,14 +221,14 @@ extern CDEmuStatusValue CDEmuStatus;
 
 // Profiling plugin
 struct ProfileDo {
-	INT32    (*ProfileExit)();
-	INT32    (*ProfileInit)();
-	INT32    (*ProfileStart)(INT32 nSubSystem);
-	INT32    (*ProfileEnd)(INT32 nSubSystem);
+	INT32(*ProfileExit)();
+	INT32(*ProfileInit)();
+	INT32(*ProfileStart)(INT32 nSubSystem);
+	INT32(*ProfileEnd)(INT32 nSubSystem);
 	double (*ProfileReadLast)(INT32 nSubSystem);
 	double (*ProfileReadAverage)(INT32 nSubSystem);
 	// Get plugin info
-	INT32    (*GetPluginSettings)(InterfaceInfo* pInfo);
+	INT32(*GetPluginSettings)(InterfaceInfo* pInfo);
 	const  TCHAR* szModuleName;
 };
 
@@ -226,16 +245,16 @@ InterfaceInfo* ProfileGetInfo();
 
 // Audio Output plugin
 struct AudOut {
-	INT32   (*BlankSound)();
-	INT32   (*SoundInit)();
-	INT32   (*SoundExit)();
-	INT32   (*SoundCheck)();
-	INT32   (*SoundFrame)();
-	INT32   (*SoundPlay)();
-	INT32   (*SoundStop)();
-	INT32   (*SoundSetVolume)();
+	INT32(*BlankSound)();
+	INT32(*SoundInit)();
+	INT32(*SoundExit)();
+	INT32(*SoundCheck)();
+	INT32(*SoundFrame)();
+	INT32(*SoundPlay)();
+	INT32(*SoundStop)();
+	INT32(*SoundSetVolume)();
 	// Get plugin info
-	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
+	INT32(*GetPluginSettings)(InterfaceInfo* pInfo);
 	const TCHAR* szModuleName;
 };
 
@@ -259,7 +278,7 @@ extern INT32 nAudSegCount[8];       // Segs in the pdsbLoop buffer
 extern INT32 nAudSegLen;            // Seg length in samples (calculated from Rate/Fps)
 extern INT32 nAudExclusive;			// Exclusive mode
 extern INT32 nAudAllocSegLen;
-extern INT16 *nAudNextSound;       	// The next sound seg we will add to the sample loop
+extern INT16* nAudNextSound;       	// The next sound seg we will add to the sample loop
 extern UINT8 bAudOkay;    			// True if DSound was initted okay
 extern UINT8 bAudPlaying;			// True if the Loop buffer is playing
 extern INT32 nAudDSPModule[8];		// DSP module to use: 0 = none, 1 = low-pass filter
@@ -267,13 +286,13 @@ extern UINT32 nAudSelect;
 
 // Video Output plugin:
 struct VidOut {
-	INT32   (*Init)();
-	INT32   (*Exit)();
-	INT32   (*Frame)(bool bRedraw);
-	INT32   (*Paint)(INT32 bValidate);
-	INT32   (*ImageSize)(RECT* pRect, INT32 nGameWidth, INT32 nGameHeight);
+	INT32(*Init)();
+	INT32(*Exit)();
+	INT32(*Frame)(bool bRedraw);
+	INT32(*Paint)(INT32 bValidate);
+	INT32(*ImageSize)(RECT* pRect, INT32 nGameWidth, INT32 nGameHeight);
 	// Get plugin info
-	INT32   (*GetPluginSettings)(InterfaceInfo* pInfo);
+	INT32(*GetPluginSettings)(InterfaceInfo* pInfo);
 	const TCHAR* szModuleName;
 };
 
@@ -291,11 +310,11 @@ const TCHAR* VidGetModuleName();
 InterfaceInfo* VidGetInfo();
 
 #ifdef BUILD_WIN32
- extern HWND hVidWnd;
+extern HWND hVidWnd;
 #endif
 
 #if defined (_XBOX)
- extern HWND hVidWnd;
+extern HWND hVidWnd;
 #endif
 
 extern bool bVidOkay;
@@ -366,7 +385,7 @@ extern INT32 nVidImageLeft, nVidImageTop;
 extern INT32 nVidImagePitch, nVidImageBPP;
 extern INT32 nVidImageDepth;
 
-extern "C" UINT32 (__cdecl *VidHighCol) (INT32 r, INT32 g, INT32 b, INT32 i);
+extern "C" UINT32(__cdecl* VidHighCol) (INT32 r, INT32 g, INT32 b, INT32 i);
 
 extern TCHAR szPlaceHolder[MAX_PATH];
 
@@ -379,10 +398,10 @@ void VidSKillShortMsg();
 void VidSKillTinyMsg();
 
 INT32 VidSUpdate();
-INT32 VidSSetGameInfo(const TCHAR *p1, const TCHAR *p2, INT32 spectator, INT32 ranked, INT32 player);
+INT32 VidSSetGameInfo(const TCHAR* p1, const TCHAR* p2, INT32 spectator, INT32 ranked, INT32 player);
 INT32 VidSSetGameScores(INT32 score1, INT32 score2);
 INT32 VidSSetGameSpectators(INT32 num);
-INT32 VidSSetSystemMessage(TCHAR *status);
+INT32 VidSSetSystemMessage(TCHAR* status);
 INT32 VidSSetStats(double fps, INT32 ping, INT32 delay);
 INT32 VidSShowStats(INT32 show);
 INT32 VidSAddChatLine(const TCHAR* pID, INT32 nIDRGB, const TCHAR* pMain, INT32 nMainRGB);
@@ -416,6 +435,14 @@ struct playerInputs {
 	UINT16 buttonCount;				// Total number of mapped buttons.
 	UINT16 maxPlayers;				// Max number of players for the game.
 };
+
+//// System default gamepad mapping.
+//// This is going to be the input codes that are used in gami.cpp and they
+//// should correspond directly to the inputs that are listed in the corresponding
+//// driver.
+//struct defaultGamepadInputs { 
+//	UINT16 inputCode[MAX_INPUTS]
+//};
 
 //
 //struct sfiii3nPlayerInputs{

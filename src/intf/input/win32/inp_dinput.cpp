@@ -12,6 +12,7 @@
 
 #pragma comment(lib, "dinput8")
 
+// TODO: These need to be more accessible!
 #define MAX_KEYBOARD		(1)
 #define MAX_GAMEPAD			(8)
 #define MAX_INPUT_PROFILE	(32)
@@ -34,6 +35,7 @@ struct keyboardData {
 struct gamepadData {
 	IDirectInputDevice8W* lpdid;
 	GUID guidInstance;								// Per-Machine identifier for the gamepad.
+	GUID guidProduct;								// GUID for each product, i.e. XBONE controller, logitech S510, etc.  This is used for applying default button mappings.
 	DIJOYSTATE2 dijs;								// This is the current state of the gamepad.
 	DWORD dwAxisType[MAX_JOYAXIS];
 	DWORD dwAxisBaseline[MAX_JOYAXIS];
@@ -112,6 +114,7 @@ int gamepadInitSingle(LPCDIDEVICEINSTANCE instance)
 	}
 
 	gamepad->guidInstance = instance->guidInstance;
+	gamepad->guidProduct = instance->guidProduct;
 	gamepad->dwAxes = didcl.dwAxes;
 	gamepad->dwPOVs = didcl.dwPOVs;
 	gamepad->dwButtons = didcl.dwButtons;
@@ -826,6 +829,10 @@ int init()
 {
 	hDinpWnd = hScrnWnd;
 
+	// TODO: Get a list of the old gamepads that were plugged in.
+	// This is used to preserve which device is mapped to which
+	// player number, mapping, etc.
+
 	exit();
 
 	memset(&keyboardProperties, 0, sizeof(keyboardProperties));
@@ -857,6 +864,7 @@ int init()
 		return 1;
 	}
 
+
 	// TEMP: We will compose and write our gamepad data to disk....
 	// We only need to read disk data the first time around.
 	if (firstInit)
@@ -871,24 +879,6 @@ int init()
 			loadOK = false;
 			clearInputMappingsData();
 		}
-		//bool loadOK = loadGamepadMappings() == 0;
-		//if (loadOK)
-		//{
-		//	// We can attempt to port mappings to player profiles...
-		//	// This is just an upgrade path that one might use with a new application version....
-		//	if (!FileExists(_T("profiles.dat")))
-		//	{
-		//		// NOTE: This should be the last step!
-		//		//createProfilesFromMappings();
-		//	}
-		//	// We have an input mappings file, so we can go ahead
-		//	// and create our input profiles from it....
-		//	// Nah, fuckit, they can setup new profiles....
-		//}
-		//else
-		//{
-		//	// There is no input mappings file....
-		//}
 	}
 	// NOTE: We don't merge input profiles because they aren't something that is 'detected'
 	// by the input system. See the 'mergeGamepadMappings' code for more information.
@@ -901,6 +891,18 @@ int init()
 	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
 
 	firstInit = false;
+
+	// This is where we will want to load up default mappings for the devices to
+	// match the game that is currently loaded....
+	// Maybe 'GameInpDefault()' in gami.cpp is the place to look?
+	// pDriver[nBurnDrvActive] is the currently loaded game it looks like....
+	int xx = 10;
+
+	// NOTE: We might need to pass in some args to remap / not remap current controllers....
+	SetDefaultGamepadInputs();
+	//GameInpDefault();
+
+
 	return 0;
 }
 

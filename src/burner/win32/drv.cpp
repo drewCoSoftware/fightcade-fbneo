@@ -200,6 +200,9 @@ int DrvInit(int nDrvNum, bool bRestore)
 	}
 	InputMake(true);
 	GameInpDefault();
+	
+	SetDefaultGamepadInputs();
+	
 
 	if (kNetGame) {
 		nBurnCPUSpeedAdjust = 0x0100;

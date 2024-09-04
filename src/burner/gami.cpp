@@ -902,6 +902,7 @@ INT32 GameInpInit()
 
 	nAnalogSpeed = 0x0100;
 
+	// NOTE: This data should be contained in the driver data....
 	// check if game needs clear opposites (SOCD)
 	const char* clearOppositesGameList[] = {
 		"umk3", "umk3p", "umk3uc", "umk3uk", "umk3te",
@@ -1392,29 +1393,18 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 	// NOTE: If formatting for aliases, we would replace 'Joy' below with the alias name!
 	if (c >= 0x4000 && c < 0x8000) {
 
-
 		INT32 nJoy = (c >> 8) & 0x3F;			// Translate the index of the joystick.
 		INT32 nCode = c & 0xFF;
 
 		// Determine the name to use for the input.
-		// If there is a profile associated with the pad index, use that.....
 		TCHAR gamepadName[MAX_ALIAS_CHARS];
 		_stprintf(gamepadName, _T("Joy % d"), nJoy);
-
-		// NOTE: We are no longer aliasing the gamepads because f
-		//if (padInfos && nJoy >= 0 && nJoy < 8 && padInfos[nJoy]) { // && nJoy > 0 && nJoy < ) {		// LATER: Bounds Check!
-		//	wcscpy(gamepadName, padInfos[nJoy]->info.Alias);
-		//}
-		//else
-		//{
-		//	_stprintf(gamepadName, _T("Joy % d"), nJoy);
-		//}
-
 
 		if (nCode >= 0x80) {
 			_stprintf(szString, _T("%s Button %d"), gamepadName, nCode & 0x7F);
 			return szString;
 		}
+
 		// Directional Axes:
 		if (nCode < 0x10) {
 			TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
@@ -1427,6 +1417,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 			}
 			return szString;
 		}
+
 		// D-PAD
 		if (nCode < 0x20) {
 			TCHAR szDir[4][16] = { _T("Left"), _T("Right"), _T("Up"), _T("Down") };
@@ -1495,6 +1486,7 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 		_stprintf(szInputName, _T("Mouse %i %c axis"), pgi->Input.MouseAxis.nMouse, nAxis);
 		return szInputName;
 	}
+
 	if (pgi->nInput & GIT_GROUP_JOYSTICK) {
 		TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 		TCHAR szRange[4][16] = { _T("unknown"), _T("full"), _T("negative"), _T("positive") };
@@ -1885,7 +1877,128 @@ INT32 ConfigGameLoadHardwareDefaults()
 	return 0;
 }
 
+// --------------------------------------------------------------------------------
+// Since we almost always play on gamepads / joysticks, we will auto detect +
+// set those inputs.  This should happen as controllers are plugged in / out.
+// Because of the janky input system, this isn't as easy as it may seem....
+// In reality, inputs shouldn't be a loose collection of 'buttons', rather there
+// should be a device associated with each player....  A 'mixed-mode' device could even
+// exist that could be mouse + keyboard + etc.
+INT32 SetDefaultGamepadInputs() {
+
+	// NOTE: Check for specific game that supports this notion.
+	// TODO: Some way to list the games that support this feature.  Probably
+	// something to add to the drivers, or metadriver system.
+	auto drvName = BurnDrvGetTextA(DRV_NAME);
+	if (strcmp(drvName, "sfiii3nr1"))
+	{
+		return 0;
+	}
+
+	GamepadInputProfile gpp;
+	ZeroMemory(&gpp, sizeof(gpp));
+
+	gpp.inputCount = 12;
+	// gpp.driverName = _T("sfiii3nr1");
+	gpp.useAutoDirections = true;
+	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin
+	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start
+
+	// POV HAT
+	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up
+	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down
+	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left
+	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right
+
+	gpp.inputs[6] = GamepadInput(0x80 | 0x02);		// LP
+	gpp.inputs[7] = GamepadInput(0x80 | 0x03);		// MP
+	gpp.inputs[8] = GamepadInput(0x80 | 0x05);		// HP
+	gpp.inputs[9] = GamepadInput(0x80 | 0x00);		// LK
+	gpp.inputs[10] = GamepadInput(0x80 | 0x01);		// MK
+
+	// ANALOG - AXIS (z-neg)
+	gpp.inputs[11] = GamepadInput(0x00 | 0x04);		// HK
+
+
+
+	playerInputs pi;
+	pi.p1Index = 0;
+	pi.p2Index = 12;
+	pi.buttonCount = 12;
+	pi.maxPlayers = 2;
+
+
+	const int MAX_PLAYERS = 8; // --> MAX_GAMEPAD --> TODO: Use this define if possible!  means refactoring...;
+	GamepadFileEntry* pads[MAX_PLAYERS];
+	UINT32 nPadCount = 0;
+	InputGetGamepads(pads, &nPadCount);
+	
+	int usePlayerCount = nPadCount;
+	if (pi.maxPlayers < usePlayerCount) {
+		usePlayerCount = pi.maxPlayers;
+	}
+
+
+	int padsSet = 0;
+	for (size_t i = 0; i < usePlayerCount; i++)
+	{
+		// NOTE: Based on the product guid, we need to add some mapping data.. (indexes are not 1:1 across all pads)
+		// NOTE: Finally, we can check the system guid, or whatever... to choose a user-specific mapping.
+
+		SetDefaultPadInputs(i, gpp);
+
+		++padsSet;
+	}
+
+	if (padsSet < usePlayerCount) {
+		// TODO:
+		// Clear or otherwise set the other player inputs p.x... to default.
+		int abc = 10;
+	}
+	//pInputInOut[nInputSelect]
+
+	return 0;
+}
+
+// --------------------------------------------------------------------------------
+INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
+
+	if (!GameInp) { return 0; }
+
+	auto offset = playerIndex * gpp.inputCount;
+
+	auto pGameInput = GameInp + offset;
+	for (size_t i = 0; i < gpp.inputCount; i++)
+	{
+		auto& ci = gpp.inputs[i];
+		if (ci.nInput == 0) { continue; }
+
+		UINT16 code = ci.nCode;
+			code = code | (playerIndex << 8);
+
+			// Ensure this is interpreted as joystick code....
+			code |= JOYSTICK_LOWER;
+
+		auto useInp = (pGameInput + i);
+		useInp->nInput = ci.nInput;
+		
+		if (ci.nInput == GIT_SWITCH) {
+			useInp->Input.Switch.nCode = code;
+		}
+		else if (ci.nInput & GIT_GROUP_JOYSTICK) {
+			// Joysticks don't have a code, it is all encoded in the nType data....
+		}
+
+//		if (gpp.inputs[i].nInput == 
+
+	}
+
+	return 0;
+}
+
+// --------------------------------------------------------------------------------
 // Auto-configure any undefined inputs to defaults
+// NOTE: This is where we could properly apply default mappings for joysticks / assigned players.
 INT32 GameInpDefault()
 {
 	struct GameInp* pgi;
@@ -1934,6 +2047,10 @@ INT32 GameInpDefault()
 
 		GameInpAutoOne(pgi, pgi->Macro.szName);
 	}
+
+
+	// Now set the inputs for the 
+
 
 	return 0;
 }
