@@ -1880,11 +1880,11 @@ INT32 ConfigGameLoadHardwareDefaults()
 
 // --------------------------------------------------------------------------------
 // Given a producxt guid, this will lookup alternate mappings tables.
-INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
+INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 
 	// NOTE: The mappings that we create a game dependent.  A check
 	// for this might need to take place at some point.
-	ZeroMemory(&gpp, sizeof(GamepadInputProfile));
+	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
 
 
 	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
@@ -1895,29 +1895,29 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
 	gpp.inputCount = 12;
 	// gpp.driverName = _T("sfiii3nr1");			// NAME		-- GP2040 -- SDL
 	gpp.useAutoDirections = true;
-	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin		-- S1		-- BACK
-	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start	-- S2		-- START
+	gpp.inputs[0] = GamepadInputEx(0x80 | 0x06);		// Coin		-- S1		-- BACK
+	gpp.inputs[1] = GamepadInputEx(0x80 | 0x07);		// Start	-- S2		-- START
 
 	// POV HAT (0x10)
-	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up		-- -		-- h0.1
-	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down					-- h0.4
-	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left					-- h0.2
-	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right				-- h0.8
+	gpp.inputs[2] = GamepadInputEx(0x10 | 0x02);		// Up		-- -		-- h0.1
+	gpp.inputs[3] = GamepadInputEx(0x10 | 0x03);		// Down					-- h0.4
+	gpp.inputs[4] = GamepadInputEx(0x10 | 0x00);		// Left					-- h0.2
+	gpp.inputs[5] = GamepadInputEx(0x10 | 0x01);		// Right				-- h0.8
 
 	//// ANALOG STICK (0x0)
-	//gpp.inputs[2] = GamepadInput(0x00 | 0x02);		// Up		
-	//gpp.inputs[3] = GamepadInput(0x00 | 0x03);		// Down
-	//gpp.inputs[4] = GamepadInput(0x00 | 0x00);		// Left
-	//gpp.inputs[5] = GamepadInput(0x00 | 0x01);		// Right
+	//gpp.inputs[2] = GamepadInputEx(0x00 | 0x02);		// Up		
+	//gpp.inputs[3] = GamepadInputEx(0x00 | 0x03);		// Down
+	//gpp.inputs[4] = GamepadInputEx(0x00 | 0x00);		// Left
+	//gpp.inputs[5] = GamepadInputEx(0x00 | 0x01);		// Right
 
-	gpp.inputs[6] = GamepadInput(0x80 | 0x02);		// LP		-- B3
-	gpp.inputs[7] = GamepadInput(0x80 | 0x03);		// MP		-- B4
-	gpp.inputs[8] = GamepadInput(0x80 | 0x05);		// HP		-- LB
-	gpp.inputs[9] = GamepadInput(0x80 | 0x00);		// LK		-- B1
-	gpp.inputs[10] = GamepadInput(0x80 | 0x01);		// MK		-- B2
+	gpp.inputs[6] = GamepadInputEx(0x80 | 0x02);		// LP		-- B3
+	gpp.inputs[7] = GamepadInputEx(0x80 | 0x03);		// MP		-- B4
+	gpp.inputs[8] = GamepadInputEx(0x80 | 0x05);		// HP		-- LB
+	gpp.inputs[9] = GamepadInputEx(0x80 | 0x00);		// LK		-- B1
+	gpp.inputs[10] = GamepadInputEx(0x80 | 0x01);		// MK		-- B2
 
 	// ANALOG - AXIS (z-neg)
-	gpp.inputs[11] = GamepadInput(ITYPE_TRIGGER, 0x00 | 0x04);		// HK -- LT
+	gpp.inputs[11] = GamepadInputEx(ITYPE_TRIGGER, 0x00 | 0x04);		// HK -- LT
 
 
 
@@ -1956,11 +1956,6 @@ INT32 SetDefaultGamepadInputs() {
 	pi.maxPlayers = 2;
 
 
-
-
-
-
-
 	const int MAX_PLAYERS = 8; // --> MAX_GAMEPAD --> TODO: Use this define if possible!  means refactoring...;
 	GamepadFileEntry* pads[MAX_PLAYERS];
 	UINT32 nPadCount = 0;
@@ -1980,9 +1975,8 @@ INT32 SetDefaultGamepadInputs() {
 		// We will start with a hard-coded set, and then later pull it from disk...
 		GUID& gp = pads[i]->info.guidProduct;
 
-		GamepadInputProfile gpp;
+		GamepadInputProfileEx gpp;
 		GetGamepadMapping(gp, gpp);
-
 
 		
 		// NOTE: Finally, we can check the system guid, or whatever... to choose a user-specific mapping.
@@ -2003,7 +1997,7 @@ INT32 SetDefaultGamepadInputs() {
 }
 
 // --------------------------------------------------------------------------------
-INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
+INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 
 	if (!GameInp) { return 0; }
 

@@ -236,7 +236,7 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 		}
 
 		// Now we can set this on the pgi input....
-		UINT8 nInput = pi.GetBurnInput();
+		UINT8 nInput = pGameInput->nType;
 		if (nInput == GIT_SWITCH) {
 			pGameInput->Input.Switch.nCode = code;
 		}

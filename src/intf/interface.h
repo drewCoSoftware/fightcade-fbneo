@@ -31,9 +31,20 @@ struct GamepadInfo
 };
 
 // Gamepad listing info.....
-// NOTE: We will probably just start returning the whole file structure instead of just this little bit....
-// GamepadInfo PadInfos[MAX_GAMEPAD_INFOS];
+// Legacy type for keeping track of older input mappings files.
 struct GamepadInput {
+	EInputType type;			// Type of input.  Switch, analog, etc.
+	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	//UINT8 nAxis;
+	//UINT8 nRange;
+	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
+};
+
+// Gamepad listing info.....
+// New type that we are using to properly abstract a gamepad for use in the emulator.
+// NOTE: I fully intend to do a full rewrite of the input system as the current version
+// is super janky IMO.
+struct GamepadInputEx {
 	EInputType type;			// Type of input.  Switch, analog, etc.
 	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 	//UINT8 nAxis;
@@ -41,26 +52,26 @@ struct GamepadInput {
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
 
 	// -------------------------------------------------------------
-	GamepadInput() {
+	GamepadInputEx() {
 		type = ITYPE_UNSET;
 		nCode = 0;
 	}
 
 	// -------------------------------------------------------------
-	GamepadInput(EInputType type_, UINT16 nCode_) {
+	GamepadInputEx(EInputType type_, UINT16 nCode_) {
 		type = type_;
 		nCode = nCode_;
 	}
 
 	// -------------------------------------------------------------
-	GamepadInput(UINT16 nCode_) {
+	GamepadInputEx(UINT16 nCode_) {
 		type = ITYPE_BUTTON;
 		nCode = nCode_;
 	}
 
 	// -------------------------------------------------------------
-	// Return a nType value that is compatible with burner system.
-	UINT8 GetBurnInput() const {
+	// Return an input code (nCode) that is compatible with the emulator.
+	UINT32 GetBurnCode() const {
 		switch (type) {
 		case ITYPE_UNSET:
 			return 0;
@@ -90,6 +101,16 @@ struct GamepadInputProfile {
 
 	GamepadInput inputs[MAX_INPUTS];
 	UINT16 inputCount;
+	bool useAutoDirections;				// PLACEHOLDER: Auto map the directional inputs?
+};
+
+// These are guesses....
+#define MAX_NAME 32
+#define MAX_INPUTS 16
+struct GamepadInputProfileEx {
+	GamepadInputEx inputs[MAX_INPUTS];
+	UINT16 inputCount;
+
 	bool useAutoDirections;				// PLACEHOLDER: Auto map the directional inputs?
 };
 
