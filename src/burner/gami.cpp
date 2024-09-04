@@ -1,5 +1,6 @@
 // Burner Game Input
 #include "burner.h"
+#include "CGamepadMappingsFile.h"
 
 // Player Default Controls
 INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
@@ -1883,7 +1884,7 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
 
 	// NOTE: The mappings that we create a game dependent.  A check
 	// for this might need to take place at some point.
-	ZeroMemory(&gpp, sizeof(gpp));
+	ZeroMemory(&gpp, sizeof(GamepadInputProfile));
 
 
 	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
@@ -1892,16 +1893,22 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
 
 
 	gpp.inputCount = 12;
-	// gpp.driverName = _T("sfiii3nr1");
+	// gpp.driverName = _T("sfiii3nr1");			// NAME		-- GP2040 -- SDL
 	gpp.useAutoDirections = true;
-	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin		-- S1
-	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start	-- S2
+	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin		-- S1		-- BACK
+	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start	-- S2		-- START
 
-	// POV HAT
-	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up		
-	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down
-	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left
-	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right
+	// POV HAT (0x10)
+	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up		-- -		-- h0.1
+	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down					-- h0.4
+	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left					-- h0.2
+	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right				-- h0.8
+
+	//// ANALOG STICK (0x0)
+	//gpp.inputs[2] = GamepadInput(0x00 | 0x02);		// Up		
+	//gpp.inputs[3] = GamepadInput(0x00 | 0x03);		// Down
+	//gpp.inputs[4] = GamepadInput(0x00 | 0x00);		// Left
+	//gpp.inputs[5] = GamepadInput(0x00 | 0x01);		// Right
 
 	gpp.inputs[6] = GamepadInput(0x80 | 0x02);		// LP		-- B3
 	gpp.inputs[7] = GamepadInput(0x80 | 0x03);		// MP		-- B4
@@ -1910,8 +1917,16 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
 	gpp.inputs[10] = GamepadInput(0x80 | 0x01);		// MK		-- B2
 
 	// ANALOG - AXIS (z-neg)
-	gpp.inputs[11] = GamepadInput(ITYPE_TRIGGER, 0x00 | 0x04);		// HK		-- LT
+	gpp.inputs[11] = GamepadInput(ITYPE_TRIGGER, 0x00 | 0x04);		// HK -- LT
 
+
+
+	// Let's get those indexes shuffled as needed....
+	CGamepadButtonIndex index;
+	CGamepadMappingsFile padMaps;
+	padMaps.GetButtonIndex(productGuid, index);
+
+	int x = 10;
 
 	return 0;
 }
