@@ -367,7 +367,7 @@ void WriteButtonData(FILE* fp, GamepadInputProfile& profile) {
 		GamepadInput& input = profile.inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		WriteData(fp, input.nInput);
+		WriteData(fp, input.type);
 		WriteData(fp, input.nCode);
 	}
 
@@ -381,7 +381,7 @@ void WriteButtonData(FILE* fp, InputProfileEntry& profile) {
 		GamepadInput& input = profile.Inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		WriteData(fp, input.nInput);
+		WriteData(fp, input.type);
 		WriteData(fp, input.nCode);
 	}
 
@@ -394,7 +394,7 @@ void ReadButtonData(FILE* fp, InputProfileEntry& profile) {
 		GamepadInput& input = profile.Inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		input.nInput = ReadUint16(fp);
+		input.type = (EInputType)ReadUint16(fp);
 		input.nCode = ReadUint16(fp);
 	}
 }
@@ -407,7 +407,7 @@ void ReadButtonData(FILE* fp, GamepadInputProfile& profile) {
 		GamepadInput& input = profile.inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		input.nInput = ReadUint16(fp);
+		input.type = (EInputType)ReadUint16(fp);
 		input.nCode = ReadUint16(fp);
 	}
 

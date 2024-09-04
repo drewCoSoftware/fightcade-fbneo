@@ -1878,6 +1878,45 @@ INT32 ConfigGameLoadHardwareDefaults()
 }
 
 // --------------------------------------------------------------------------------
+// Given a producxt guid, this will lookup alternate mappings tables.
+INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp) {
+
+	// NOTE: The mappings that we create a game dependent.  A check
+	// for this might need to take place at some point.
+	ZeroMemory(&gpp, sizeof(gpp));
+
+
+	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
+	// for now, we will just hard-code some defaults.
+
+
+
+	gpp.inputCount = 12;
+	// gpp.driverName = _T("sfiii3nr1");
+	gpp.useAutoDirections = true;
+	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin		-- S1
+	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start	-- S2
+
+	// POV HAT
+	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up		
+	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down
+	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left
+	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right
+
+	gpp.inputs[6] = GamepadInput(0x80 | 0x02);		// LP		-- B3
+	gpp.inputs[7] = GamepadInput(0x80 | 0x03);		// MP		-- B4
+	gpp.inputs[8] = GamepadInput(0x80 | 0x05);		// HP		-- LB
+	gpp.inputs[9] = GamepadInput(0x80 | 0x00);		// LK		-- B1
+	gpp.inputs[10] = GamepadInput(0x80 | 0x01);		// MK		-- B2
+
+	// ANALOG - AXIS (z-neg)
+	gpp.inputs[11] = GamepadInput(ITYPE_TRIGGER, 0x00 | 0x04);		// HK		-- LT
+
+
+	return 0;
+}
+
+// --------------------------------------------------------------------------------
 // Since we almost always play on gamepads / joysticks, we will auto detect +
 // set those inputs.  This should happen as controllers are plugged in / out.
 // Because of the janky input system, this isn't as easy as it may seem....
@@ -1895,32 +1934,6 @@ INT32 SetDefaultGamepadInputs() {
 		return 0;
 	}
 
-	GamepadInputProfile gpp;
-	ZeroMemory(&gpp, sizeof(gpp));
-
-	gpp.inputCount = 12;
-	// gpp.driverName = _T("sfiii3nr1");
-	gpp.useAutoDirections = true;
-	gpp.inputs[0] = GamepadInput(0x80 | 0x06);		// Coin
-	gpp.inputs[1] = GamepadInput(0x80 | 0x07);		// Start
-
-	// POV HAT
-	gpp.inputs[2] = GamepadInput(0x10 | 0x02);		// Up
-	gpp.inputs[3] = GamepadInput(0x10 | 0x03);		// Down
-	gpp.inputs[4] = GamepadInput(0x10 | 0x00);		// Left
-	gpp.inputs[5] = GamepadInput(0x10 | 0x01);		// Right
-
-	gpp.inputs[6] = GamepadInput(0x80 | 0x02);		// LP
-	gpp.inputs[7] = GamepadInput(0x80 | 0x03);		// MP
-	gpp.inputs[8] = GamepadInput(0x80 | 0x05);		// HP
-	gpp.inputs[9] = GamepadInput(0x80 | 0x00);		// LK
-	gpp.inputs[10] = GamepadInput(0x80 | 0x01);		// MK
-
-	// ANALOG - AXIS (z-neg)
-	gpp.inputs[11] = GamepadInput(0x00 | 0x04);		// HK
-
-
-
 	playerInputs pi;
 	pi.p1Index = 0;
 	pi.p2Index = 12;
@@ -1928,24 +1941,35 @@ INT32 SetDefaultGamepadInputs() {
 	pi.maxPlayers = 2;
 
 
+
+
+
+
+
 	const int MAX_PLAYERS = 8; // --> MAX_GAMEPAD --> TODO: Use this define if possible!  means refactoring...;
 	GamepadFileEntry* pads[MAX_PLAYERS];
 	UINT32 nPadCount = 0;
 	InputGetGamepads(pads, &nPadCount);
 	
-	int usePlayerCount = nPadCount;
+	UINT32 usePlayerCount = nPadCount;
 	if (pi.maxPlayers < usePlayerCount) {
 		usePlayerCount = pi.maxPlayers;
 	}
 
 
-	int padsSet = 0;
+	UINT32 padsSet = 0;
 	for (size_t i = 0; i < usePlayerCount; i++)
 	{
 		// NOTE: Based on the product guid, we need to add some mapping data.. (indexes are not 1:1 across all pads)
 		// In this case we would directly modify gpp to have the correct offsets.....
 		// We will start with a hard-coded set, and then later pull it from disk...
-		auto gp = pads[i]->info.guidProduct;
+		GUID& gp = pads[i]->info.guidProduct;
+
+		GamepadInputProfile gpp;
+		GetGamepadMapping(gp, gpp);
+
+
+		
 		// NOTE: Finally, we can check the system guid, or whatever... to choose a user-specific mapping.
 
 		SetDefaultPadInputs(i, gpp);
@@ -1974,7 +1998,7 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
 	for (size_t i = 0; i < gpp.inputCount; i++)
 	{
 		auto& ci = gpp.inputs[i];
-		if (ci.nInput == 0) { continue; }
+		if (ci.type == ITYPE_UNSET) { continue; }
 
 		UINT16 code = ci.nCode;
 		code = code | (playerIndex << 8);
@@ -1983,13 +2007,14 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp) {
 		code |= JOYSTICK_LOWER;
 
 		auto useInp = (pGameInput + i);
-		useInp->nInput = ci.nInput;
+		UINT8 nInput = useInp->nInput; //  ci.GetBurnInput();
 		
-		if (ci.nInput == GIT_SWITCH) {
+		if (nInput == GIT_SWITCH) {
 			useInp->Input.Switch.nCode = code;
 		}
-		else if (ci.nInput & GIT_GROUP_JOYSTICK) {
-			// Joysticks don't have a code, it is all encoded in the nType data....
+		else if (nInput & GIT_GROUP_JOYSTICK) {
+			// Joysticks / analogs don't have a code, it is all encoded in the nType data....
+			int x = 10;
 		}
 
 	}

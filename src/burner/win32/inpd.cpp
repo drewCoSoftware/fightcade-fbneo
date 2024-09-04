@@ -221,8 +221,8 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 			continue;
 		}
 
-		auto& pi = profile->Inputs[i];
-		if (pi.nInput == 0) { continue; }		// Not set.
+		const GamepadInput& pi = profile->Inputs[i];
+		if (pi.type == ITYPE_UNSET) { continue; }		// Not set.
 
 		UINT16 code = pi.nCode;
 		if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER)
@@ -236,11 +236,11 @@ static int SetInputMappings(int padIndex, const InputProfileEntry* profile, int 
 		}
 
 		// Now we can set this on the pgi input....
-		pGameInput->nInput = pi.nInput;
-		if (pi.nInput == GIT_SWITCH) {
+		UINT8 nInput = pi.GetBurnInput();
+		if (nInput == GIT_SWITCH) {
 			pGameInput->Input.Switch.nCode = code;
 		}
-		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
+		else if (nInput & GIT_GROUP_JOYSTICK) {
 			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
 		}
 
@@ -1740,15 +1740,18 @@ static void saveMappingsInfo() {
 		}
 
 		GamepadInput& pi = profile->Inputs[i];
-		pi.nInput = pgi->nInput;
+		UINT8 nInput = pgi->nInput;
+
+		//pi.SetInputType(pgi->nInput);
+		//pi.nInput = pgi->nInput;
 
 		UINT16 code = 0; //pgi->Input.nVal;
 
 
-		if (pi.nInput == GIT_SWITCH) {
+		if (nInput == GIT_SWITCH) {
 			code = pgi->Input.Switch.nCode;
 		}
-		else if (pi.nInput & GIT_GROUP_JOYSTICK) {
+		else if (nInput & GIT_GROUP_JOYSTICK) {
 			code = 0;		// Joysticks don't have a code, it is all encoded in the nType data....
 		}
 		else {

@@ -34,7 +34,7 @@ struct GamepadInfo
 // NOTE: We will probably just start returning the whole file structure instead of just this little bit....
 // GamepadInfo PadInfos[MAX_GAMEPAD_INFOS];
 struct GamepadInput {
-	UINT16 nInput;				// Type of input.  Switch, analog, etc.
+	EInputType type;			// Type of input.  Switch, analog, etc.
 	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 	//UINT8 nAxis;
 	//UINT8 nRange;
@@ -42,21 +42,43 @@ struct GamepadInput {
 
 	// -------------------------------------------------------------
 	GamepadInput() {
-		nInput = 0;
+		type = ITYPE_UNSET;
 		nCode = 0;
 	}
 
 	// -------------------------------------------------------------
-	GamepadInput(UINT16 nInput_, UINT16 nCode_) {
-		nInput = nInput_;
+	GamepadInput(EInputType type_, UINT16 nCode_) {
+		type = type_;
 		nCode = nCode_;
 	}
 
 	// -------------------------------------------------------------
 	GamepadInput(UINT16 nCode_) {
-		nInput = GIT_SWITCH;
+		type = ITYPE_BUTTON;
 		nCode = nCode_;
 	}
+
+	// -------------------------------------------------------------
+	// Return a nType value that is compatible with burner system.
+	UINT8 GetBurnInput() const {
+		switch (type) {
+		case ITYPE_UNSET:
+			return 0;
+		case ITYPE_BUTTON:
+			return GIT_SWITCH;
+		case ITYPE_STICK:
+			return GIT_GROUP_JOYSTICK;
+
+		case ITYPE_TRIGGER:
+			// Decide how to represent this....
+			return GIT_GROUP_JOYSTICK;
+			// if (nCode == 0
+
+		default:
+			throw std::exception("NOT SUPPORTTED!");
+		}
+	}
+
 };
 
 // These are guesses....

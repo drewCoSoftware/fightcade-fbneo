@@ -87,6 +87,17 @@ struct giMacro {
 #define GIT_MACRO_AUTO		(0x80)
 #define GIT_MACRO_CUSTOM	(0x81)
 
+// Input types for gamepads.  This is part of an effort to get things
+// a bit more standard, a bit more SDL like...
+enum EInputType {
+	ITYPE_UNSET = 0,
+	ITYPE_BUTTON,				// on/off
+	ITYPE_DPAD,
+	ITYPE_STICK,				// analog stick
+	ITYPE_TRIGGER				// triggers, like LT/RT on gamepad
+};
+
+
 struct GameInp {
 	UINT8 nInput;				// PC side: see above
 	UINT8 nType;				// game side: see burn.h

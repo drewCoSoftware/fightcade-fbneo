@@ -33,6 +33,7 @@
     <ClInclude Include="..\..\src\burner\win32\burner_win32.h" />
     <ClInclude Include="..\..\src\burner\win32\CGamepadState.h" />
     <ClInclude Include="..\..\src\burner\win32\d3dkmt_sync.h" />
+    <ClInclude Include="..\..\src\burner\win32\CGamepadMappingsFile.h" />
     <ClInclude Include="..\..\src\burner\win32\resource.h" />
     <ClInclude Include="..\..\src\burner\win32\resource_string.h" />
     <ClInclude Include="..\..\src\burn\bitswap.h" />
@@ -367,6 +368,7 @@
     <ClCompile Include="..\..\src\burner\win32\fbn_ggpo_perfmon.cpp" />
     <ClCompile Include="..\..\src\burner\win32\fbn_network.cpp" />
     <ClCompile Include="..\..\src\burner\win32\gameinfo.cpp" />
+    <ClCompile Include="..\..\src\burner\win32\CGamepadMappingsFile.cpp" />
     <ClCompile Include="..\..\src\burner\win32\image_win32.cpp" />
     <ClCompile Include="..\..\src\burner\win32\inpc.cpp" />
     <ClCompile Include="..\..\src\burner\win32\inpcheat.cpp" />

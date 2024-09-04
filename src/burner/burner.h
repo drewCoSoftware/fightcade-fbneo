@@ -111,8 +111,11 @@ void GameInpCheckMouse();
 INT32 GameInpBlank(INT32 bDipSwitch);
 INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
+
+INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfile& gpp);
 INT32 SetDefaultGamepadInputs();
 INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfile& gpp);
+
 INT32 GameInpDefault();
 INT32 GameInpWrite(FILE* h);
 INT32 GameInpRead(TCHAR* szVal, bool bOverWrite);

@@ -952,6 +952,9 @@
     <ClInclude Include="..\..\src\burner\win32\CGamepadState.h">
       <Filter>burner\win32</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\burner\win32\CGamepadMappingsFile.h">
+      <Filter>burner\win32</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\burn\burn.cpp">
@@ -4235,6 +4238,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\burner\win32\input_devices.cpp" />
     <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp">
+      <Filter>burner\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\burner\win32\CGamepadMappingsFile.cpp">
       <Filter>burner\win32</Filter>
     </ClCompile>
   </ItemGroup>
