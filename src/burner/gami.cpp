@@ -1895,14 +1895,14 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 	gpp.inputCount = 12;
 	// gpp.driverName = _T("sfiii3nr1");			// NAME		-- GP2040 -- SDL
 	gpp.useAutoDirections = true;
-	gpp.inputs[0] = GamepadInputEx(0x80 | 0x06);		// Coin		-- S1		-- BACK
-	gpp.inputs[1] = GamepadInputEx(0x80 | 0x07);		// Start	-- S2		-- START
+	gpp.inputs[0] = GamepadInputEx(ITYPE_BUTTON, 0x06);		// Coin		-- S1		-- BACK
+	gpp.inputs[1] = GamepadInputEx(ITYPE_BUTTON, 0x07);		// Start	-- S2		-- START
 
 	// POV HAT (0x10)
-	gpp.inputs[2] = GamepadInputEx(0x10 | 0x02);		// Up		-- -		-- h0.1
-	gpp.inputs[3] = GamepadInputEx(0x10 | 0x03);		// Down					-- h0.4
-	gpp.inputs[4] = GamepadInputEx(0x10 | 0x00);		// Left					-- h0.2
-	gpp.inputs[5] = GamepadInputEx(0x10 | 0x01);		// Right				-- h0.8
+	gpp.inputs[2] = GamepadInputEx(ITYPE_DPAD, 0x02);		// Up		-- -		-- h0.1
+	gpp.inputs[3] = GamepadInputEx(ITYPE_DPAD, 0x03);		// Down					-- h0.4
+	gpp.inputs[4] = GamepadInputEx(ITYPE_DPAD, 0x00);		// Left					-- h0.2
+	gpp.inputs[5] = GamepadInputEx(ITYPE_DPAD, 0x01);		// Right				-- h0.8
 
 	//// ANALOG STICK (0x0)
 	//gpp.inputs[2] = GamepadInputEx(0x00 | 0x02);		// Up		
@@ -1910,11 +1910,11 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 	//gpp.inputs[4] = GamepadInputEx(0x00 | 0x00);		// Left
 	//gpp.inputs[5] = GamepadInputEx(0x00 | 0x01);		// Right
 
-	gpp.inputs[6] = GamepadInputEx(0x80 | 0x02);		// LP		-- B3
-	gpp.inputs[7] = GamepadInputEx(0x80 | 0x03);		// MP		-- B4
-	gpp.inputs[8] = GamepadInputEx(0x80 | 0x05);		// HP		-- LB
-	gpp.inputs[9] = GamepadInputEx(0x80 | 0x00);		// LK		-- B1
-	gpp.inputs[10] = GamepadInputEx(0x80 | 0x01);		// MK		-- B2
+	gpp.inputs[6] = GamepadInputEx(ITYPE_BUTTON, 0x02);		// LP		-- B3
+	gpp.inputs[7] = GamepadInputEx(ITYPE_BUTTON, 0x03);		// MP		-- B4
+	gpp.inputs[8] = GamepadInputEx(ITYPE_BUTTON, 0x05);		// HP		-- LB
+	gpp.inputs[9] = GamepadInputEx(ITYPE_BUTTON, 0x00);		// LK		-- B1
+	gpp.inputs[10] = GamepadInputEx(ITYPE_BUTTON, 0x01);		// MK		-- B2
 
 	// ANALOG - AXIS (z-neg)
 	gpp.inputs[11] = GamepadInputEx(ITYPE_TRIGGER, 0x00 | 0x04);		// HK -- LT
@@ -1960,7 +1960,7 @@ INT32 SetDefaultGamepadInputs() {
 	GamepadFileEntry* pads[MAX_PLAYERS];
 	UINT32 nPadCount = 0;
 	InputGetGamepads(pads, &nPadCount);
-	
+
 	UINT32 usePlayerCount = nPadCount;
 	if (pi.maxPlayers < usePlayerCount) {
 		usePlayerCount = pi.maxPlayers;
@@ -1978,7 +1978,7 @@ INT32 SetDefaultGamepadInputs() {
 		GamepadInputProfileEx gpp;
 		GetGamepadMapping(gp, gpp);
 
-		
+
 		// NOTE: Finally, we can check the system guid, or whatever... to choose a user-specific mapping.
 
 		SetDefaultPadInputs(i, gpp);
@@ -2009,7 +2009,7 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 		auto& ci = gpp.inputs[i];
 		if (ci.type == ITYPE_UNSET) { continue; }
 
-		UINT16 code = ci.nCode;
+		UINT16 code = ci.GetBurnCode();
 		code = code | (playerIndex << 8);
 
 		// Ensure this is interpreted as joystick code....
@@ -2017,7 +2017,7 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 
 		auto useInp = (pGameInput + i);
 		UINT8 nInput = useInp->nInput; //  ci.GetBurnInput();
-		
+
 		if (nInput == GIT_SWITCH) {
 			useInp->Input.Switch.nCode = code;
 		}

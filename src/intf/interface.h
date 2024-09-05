@@ -40,13 +40,17 @@ struct GamepadInput {
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
 };
 
+#define BURNER_BUTTON	0x80
+#define BURNER_DPAD		0x10
+#define BURNER_ANALOG	0x00
+
 // Gamepad listing info.....
 // New type that we are using to properly abstract a gamepad for use in the emulator.
 // NOTE: I fully intend to do a full rewrite of the input system as the current version
 // is super janky IMO.
 struct GamepadInputEx {
 	EInputType type;			// Type of input.  Switch, analog, etc.
-	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	UINT16 index;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 	//UINT8 nAxis;
 	//UINT8 nRange;
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
@@ -54,20 +58,20 @@ struct GamepadInputEx {
 	// -------------------------------------------------------------
 	GamepadInputEx() {
 		type = ITYPE_UNSET;
-		nCode = 0;
+		index = 0;
 	}
 
 	// -------------------------------------------------------------
-	GamepadInputEx(EInputType type_, UINT16 nCode_) {
+	GamepadInputEx(EInputType type_, UINT16 index_) {
 		type = type_;
-		nCode = nCode_;
+		index = index_;
 	}
 
-	// -------------------------------------------------------------
-	GamepadInputEx(UINT16 nCode_) {
-		type = ITYPE_BUTTON;
-		nCode = nCode_;
-	}
+	//// -------------------------------------------------------------
+	//GamepadInputEx(UINT16 index_) {
+	//	type = ITYPE_BUTTON;
+	//	index  = index_;
+	//}
 
 	// -------------------------------------------------------------
 	// Return an input code (nCode) that is compatible with the emulator.
@@ -76,14 +80,16 @@ struct GamepadInputEx {
 		case ITYPE_UNSET:
 			return 0;
 		case ITYPE_BUTTON:
-			return GIT_SWITCH;
+			return BURNER_BUTTON | index;
+			//			return GIT_SWITCH;
 		case ITYPE_STICK:
-			return GIT_GROUP_JOYSTICK;
+			return BURNER_ANALOG | index;
 
 		case ITYPE_TRIGGER:
-			// Decide how to represent this....
-			return GIT_GROUP_JOYSTICK;
-			// if (nCode == 0
+			return BURNER_ANALOG | index;
+
+		case ITYPE_DPAD:
+			return BURNER_DPAD | index;
 
 		default:
 			throw std::exception("NOT SUPPORTTED!");
