@@ -1,3 +1,6 @@
+#ifndef GAMEINP_H
+#define GAMEINP_H
+
 
 struct giConstant {
 	UINT8 nConst;				// The constant value
@@ -87,15 +90,7 @@ struct giMacro {
 #define GIT_MACRO_AUTO		(0x80)
 #define GIT_MACRO_CUSTOM	(0x81)
 
-// Input types for gamepads.  This is part of an effort to get things
-// a bit more standard, a bit more SDL like...
-enum EInputType {
-	ITYPE_UNSET = 0,
-	ITYPE_BUTTON,				// on/off
-	ITYPE_DPAD,
-	ITYPE_STICK,				// analog stick
-	ITYPE_TRIGGER				// triggers, like LT/RT on gamepad
-};
+
 
 
 struct GameInp {
@@ -109,3 +104,53 @@ struct GameInp {
 	};
 };
 
+
+// Input types for gamepads.  This is part of an effort to get things
+// a bit more standard, a bit more SDL like...
+enum EInputType {
+	ITYPE_UNSET = 0,
+	ITYPE_BUTTON,				// on/off
+	ITYPE_DPAD,
+	ITYPE_STICK,				// analog stick
+	ITYPE_TRIGGER				// triggers, like LT/RT on gamepad
+};
+
+
+// =============================================================================================
+// Standardized names for gamepad inputs.
+enum EGamepadInput {
+	GPINPUT_UNKNOWN = 0x00,
+
+	GPINPUT_LSTICK_UP,
+	GPINPUT_LSTICK_DOWN,
+	GPINPUT_LSTICK_LEFT,
+	GPINPUT_LSTICK_RIGHT,
+
+	GPINPUT_RSTICK_UP,
+	GPINPUT_RSTICK_DOWN,
+	GPINPUT_RSTICK_LEFT,
+	GPINPUT_RSTICK_RIGHT,
+
+	GPINPUT_DPAD_UP,
+	GPINPUT_DPAD_DOWN,
+	GPINPUT_DPAD_LEFT,
+	GPINPUT_DPAD_RIGHT,
+
+	GPINPUT_BACK,				// back / select button.
+	GPINPUT_START,
+
+	GPINPUT_X,				// PS - square		: SWITCH - Y
+	GPINPUT_Y,				// PS - triangle	: SWITCH - X
+	GPINPUT_A,				// PS - cross / x	: SWITCH - B
+	GPINPUT_B,				// PS - circle		: SWITCH - A
+
+	GPINPUT_LEFT_TRIGGER,
+	GPINPUT_LEFT_BUMPER,
+
+	GPINPUT_RIGHT_TRIGGER,
+	GPINPUT_RIGHT_BUMPER,
+
+	// TODO: Add more as needed.
+};
+
+#endif

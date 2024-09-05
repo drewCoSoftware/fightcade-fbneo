@@ -1882,51 +1882,69 @@ INT32 ConfigGameLoadHardwareDefaults()
 // Given a producxt guid, this will lookup alternate mappings tables.
 INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 
+
+	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
+	// for now, we will just hard-code some defaults.
+	// NOTE: I started working on this with an XBONE controller, so I am just going to say
+	// that all of the indexes presented here are the ones that we want to use.
+
+	// These are really describing the default inputs for the game, not the
+	// defualt indexes for things like RB,RT,X,A,Y
+
+	// NOTE: This is for sfiii3nr1 ONLY!
+	GameInputSet playerInputs;
+	ZeroMemory(&playerInputs, sizeof(GameInputSet));
+
+	// Set reasonable defaults for the inputs, in terms of a gamepad:
+	playerInputs.inputCount = 12;
+	playerInputs.inputs[0] = GPINPUT_BACK; 
+	playerInputs.inputs[1] = GPINPUT_START;
+
+	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs.)
+	playerInputs.inputs[2] = GPINPUT_DPAD_UP;		// Up		-- -		-- h0.1
+	playerInputs.inputs[3] = GPINPUT_DPAD_DOWN;		// Down					-- h0.4
+	playerInputs.inputs[4] = GPINPUT_DPAD_LEFT;		// Left					-- h0.2
+	playerInputs.inputs[5] = GPINPUT_DPAD_RIGHT;	// Right				-- h0.8
+
+	////// ANALOG STICK (0x0)
+	////playerInputs.inputs[2] = GamepadInputEx(0x00 | 0x02);		// Up		
+	////playerInputs.inputs[3] = GamepadInputEx(0x00 | 0x03);		// Down
+	////playerInputs.inputs[4] = GamepadInputEx(0x00 | 0x00);		// Left
+	////playerInputs.inputs[5] = GamepadInputEx(0x00 | 0x01);		// Right
+
+	playerInputs.inputs[6] = GPINPUT_X; 
+	playerInputs.inputs[7] = GPINPUT_Y; 
+	playerInputs.inputs[8] = GPINPUT_RIGHT_BUMPER;
+	playerInputs.inputs[9] = GPINPUT_A;  
+	playerInputs.inputs[10] = GPINPUT_B; 
+	playerInputs.inputs[11] = GPINPUT_RIGHT_TRIGGER;
+
+
+	// Let's get those indexes shuffled as needed....
+	CGamepadMappingsFile padMaps;
+
+	CGamepadButtonMapping mapping;
+	padMaps.GetGamepadMapping(productGuid, mapping);
+
+
 	// NOTE: The mappings that we create a game dependent.  A check
 	// for this might need to take place at some point.
 	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
 
 
-	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
-	// for now, we will just hard-code some defaults.
-
-
-
-	gpp.inputCount = 12;
-	// gpp.driverName = _T("sfiii3nr1");			// NAME		-- GP2040 -- SDL
-	gpp.useAutoDirections = true;
-	gpp.inputs[0] = GamepadInputEx(ITYPE_BUTTON, 0x06);		// Coin		-- S1		-- BACK
-	gpp.inputs[1] = GamepadInputEx(ITYPE_BUTTON, 0x07);		// Start	-- S2		-- START
-
-	// POV HAT (0x10)
-	gpp.inputs[2] = GamepadInputEx(ITYPE_DPAD, 0x02);		// Up		-- -		-- h0.1
-	gpp.inputs[3] = GamepadInputEx(ITYPE_DPAD, 0x03);		// Down					-- h0.4
-	gpp.inputs[4] = GamepadInputEx(ITYPE_DPAD, 0x00);		// Left					-- h0.2
-	gpp.inputs[5] = GamepadInputEx(ITYPE_DPAD, 0x01);		// Right				-- h0.8
-
-	//// ANALOG STICK (0x0)
-	//gpp.inputs[2] = GamepadInputEx(0x00 | 0x02);		// Up		
-	//gpp.inputs[3] = GamepadInputEx(0x00 | 0x03);		// Down
-	//gpp.inputs[4] = GamepadInputEx(0x00 | 0x00);		// Left
-	//gpp.inputs[5] = GamepadInputEx(0x00 | 0x01);		// Right
-
-	gpp.inputs[6] = GamepadInputEx(ITYPE_BUTTON, 0x02);		// LP		-- B3
-	gpp.inputs[7] = GamepadInputEx(ITYPE_BUTTON, 0x03);		// MP		-- B4
-	gpp.inputs[8] = GamepadInputEx(ITYPE_BUTTON, 0x05);		// HP		-- LB
-	gpp.inputs[9] = GamepadInputEx(ITYPE_BUTTON, 0x00);		// LK		-- B1
-	gpp.inputs[10] = GamepadInputEx(ITYPE_BUTTON, 0x01);		// MK		-- B2
-
-	// ANALOG - AXIS (z-neg)
-	gpp.inputs[11] = GamepadInputEx(ITYPE_TRIGGER, 0x00 | 0x04);		// HK -- LT
-
-
-
-	// Let's get those indexes shuffled as needed....
-	CGamepadButtonIndex index;
-	CGamepadMappingsFile padMaps;
-	padMaps.GetButtonIndex(productGuid, index);
-
-	int x = 10;
+	// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
+	gpp.inputCount = playerInputs.inputCount;
+	for (size_t i = 0; i < gpp.inputCount; i++)
+	{
+		EGamepadInput pi = playerInputs.inputs[i];
+		const CGamepadMappingEntry* e = mapping.GetMappingFor(pi);
+		if (e) {
+			gpp.inputs[i] = { e->Type, e->Index };
+		}
+		else {
+			gpp.inputs[i] = { ITYPE_UNSET, 0 };
+		}
+	}
 
 	return 0;
 }
@@ -2009,14 +2027,18 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 		auto& ci = gpp.inputs[i];
 		if (ci.type == ITYPE_UNSET) { continue; }
 
-		UINT16 code = ci.GetBurnCode();
+		UINT16 code = ci.GetBurnerCode();
+
+		// NOTE: We probably want to actually set it to 'not used'
+		if (code == 0) { continue; }
+
 		code = code | (playerIndex << 8);
 
 		// Ensure this is interpreted as joystick code....
 		code |= JOYSTICK_LOWER;
 
 		auto useInp = (pGameInput + i);
-		UINT8 nInput = useInp->nInput; //  ci.GetBurnInput();
+		UINT8 nInput = useInp->nInput;
 
 		if (nInput == GIT_SWITCH) {
 			useInp->Input.Switch.nCode = code;

@@ -51,37 +51,17 @@ struct GamepadInput {
 struct GamepadInputEx {
 	EInputType type;			// Type of input.  Switch, analog, etc.
 	UINT16 index;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
-	//UINT8 nAxis;
-	//UINT8 nRange;
-	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
-
-	// -------------------------------------------------------------
-	GamepadInputEx() {
-		type = ITYPE_UNSET;
-		index = 0;
-	}
-
-	// -------------------------------------------------------------
-	GamepadInputEx(EInputType type_, UINT16 index_) {
-		type = type_;
-		index = index_;
-	}
-
-	//// -------------------------------------------------------------
-	//GamepadInputEx(UINT16 index_) {
-	//	type = ITYPE_BUTTON;
-	//	index  = index_;
-	//}
 
 	// -------------------------------------------------------------
 	// Return an input code (nCode) that is compatible with the emulator.
-	UINT32 GetBurnCode() const {
+	// NOTE: 'burner/burn' is a term used often as fbNeo = 'final burn neo'
+	UINT32 GetBurnerCode() const {
 		switch (type) {
 		case ITYPE_UNSET:
 			return 0;
 		case ITYPE_BUTTON:
 			return BURNER_BUTTON | index;
-			//			return GIT_SWITCH;
+
 		case ITYPE_STICK:
 			return BURNER_ANALOG | index;
 
@@ -113,11 +93,27 @@ struct GamepadInputProfile {
 // These are guesses....
 #define MAX_NAME 32
 #define MAX_INPUTS 16
+
+// Describes a set of inputs (player, system, etc.) for a game.
+// For all reasonable purposes, the set for p1/p2/px should be the same.
+struct GameInputSet {
+	EGamepadInput inputs[MAX_INPUTS];
+	UINT16 inputCount;
+};
+
+
 struct GamepadInputProfileEx {
 	GamepadInputEx inputs[MAX_INPUTS];
 	UINT16 inputCount;
 
 	bool useAutoDirections;				// PLACEHOLDER: Auto map the directional inputs?
+
+	//// ------------------------------------------------------------------------------------------
+	//// Remap an existing input.  This is used as the 'standardization' step for gamepads.
+	//void RemapInput(size_t index, EInputType type, size_t inputIndex) {
+	//	assert(index < MAX_INPUTS);
+	//	inputs[index] = GamepadInputEx(type, inputIndex);
+	//}
 };
 
 // There can be many entries per file, each of which would map to a game, and any number of input profiles
@@ -485,21 +481,3 @@ struct playerInputs {
 	UINT16 buttonCount;				// Total number of mapped buttons.
 	UINT16 maxPlayers;				// Max number of players for the game.
 };
-
-//// System default gamepad mapping.
-//// This is going to be the input codes that are used in gami.cpp and they
-//// should correspond directly to the inputs that are listed in the corresponding
-//// driver.
-//struct defaultGamepadInputs { 
-//	UINT16 inputCode[MAX_INPUTS]
-//};
-
-//
-//struct sfiii3nPlayerInputs{
-//}
-//
-//// Per-Player input mappings definitions.
-//// NOTE: We only have this for sfiii since I don't care about other games rn.
-//static struct sfiii3nPlayerInputs x[] = {
-//
-//}
