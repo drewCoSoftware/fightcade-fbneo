@@ -122,6 +122,9 @@ inline static void SetCurrentFrame(const UINT32 n) {
 	nCurrentFrame = n;
 }
 
+// Indicates that there is no currently active driver / game.
+#define NOT_ACTIVE ~0U
+
 // ---------------------------------------------------------------------------
 // Driver info structures
 

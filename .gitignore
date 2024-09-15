@@ -14,3 +14,9 @@ UPDATE_GIT_IGNORE.BAT
 gitlog.txt
 /projectfiles/visualstudio-2022/fbneo_vs2022.vcxproj.user
 /src/burner/win32/app.aps
+/src/burner/win32/RCa32256
+/src/burner/win32/RCb32256
+/src/burner/win32/RCc32256
+/src/burner/win32/RCd32256
+/src/dep/ggpo/lib/data.txt
+/src/dep/libs/lib7z/7zVersion.aps

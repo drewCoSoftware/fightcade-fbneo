@@ -1,6 +1,6 @@
 // Burner Game Input
 #include "burner.h"
-#include "CGamepadMappingsFile.h"
+#include "CGamepadDatabase.h"
 
 // Player Default Controls
 INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
@@ -31,6 +31,15 @@ static INT32 InpDirections[2][COUNT] = {};
 static INT32 InpDataPrev[2][COUNT] = {};
 static INT32 InpDataNext[2][COUNT] = {};
 static bool bClearOpposites = false;
+
+static CGamepadDatabase GamepadDatabase;
+
+INT32 LoadGamepadDatabase() {
+	if (!GamepadDatabase.IsInitialized()) {
+		GamepadDatabase.Init(L"config\\gamecontrollerdb.txt", L"Windows");
+	}
+	return 0;
+}
 
 static int GetInpFrame(INT32 player, INT32 dir)
 {
@@ -880,6 +889,7 @@ INT32 GameInpInit()
 	memset(GameInp, 0, nSize);
 
 	// cache input directions for clearing opposites
+	// TODO: Input system needs to be reworked so that it can be aware of directional inputs in a sane way.
 	memset(InpDirections[0], 0, 4 * sizeof(INT32));
 	memset(InpDirections[1], 0, 4 * sizeof(INT32));
 	struct BurnInputInfo bii;
@@ -1921,11 +1931,13 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 
 
 	// Let's get those indexes shuffled as needed....
-	CGamepadMappingsFile padMaps;
+	// CGamepadMappingsFile padMaps;
 
 	CGamepadButtonMapping mapping;
-	padMaps.GetGamepadMapping(productGuid, mapping);
-
+	if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
+	{
+		GamepadDatabase.GetDefaultMapping(mapping);
+	}
 
 	// NOTE: The mappings that we create a game dependent.  A check
 	// for this might need to take place at some point.
@@ -1961,8 +1973,11 @@ INT32 SetDefaultGamepadInputs() {
 	// NOTE: Check for specific game that supports this notion.
 	// TODO: Some way to list the games that support this feature.  Probably
 	// something to add to the drivers, or metadriver system.
-	auto drvName = BurnDrvGetTextA(DRV_NAME);
-	if (strcmp(drvName, "sfiii3nr1"))
+	char* drvName = 0;
+	if (nBurnDrvActive != NOT_ACTIVE){
+		drvName = BurnDrvGetTextA(DRV_NAME);
+	}
+	if (drvName == nullptr || strcmp(drvName, "sfiii3nr1"))
 	{
 		return 0;
 	}

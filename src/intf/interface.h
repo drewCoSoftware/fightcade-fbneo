@@ -62,10 +62,8 @@ struct GamepadInputEx {
 		case ITYPE_BUTTON:
 			return BURNER_BUTTON | index;
 
-		case ITYPE_STICK:
-			return BURNER_ANALOG | index;
-
-		case ITYPE_TRIGGER:
+		case ITYPE_FULL_ANALOG:
+		case ITYPE_HALF_ANALOG:
 			return BURNER_ANALOG | index;
 
 		case ITYPE_DPAD:
@@ -214,6 +212,8 @@ struct InputInOut {
 
 	const TCHAR* szModuleName;
 };
+
+INT32 LoadGamepadDatabase();		// defined in gami.cpp
 
 INT32 InputInit();
 INT32 InputExit();
