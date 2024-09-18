@@ -111,9 +111,9 @@ enum EInputType {
 	ITYPE_BUTTON,				// on/off
 	ITYPE_DPAD,
 
-	// NOTE: We will have to revisit this as the indexes may not be full compatible with FBNEO.
-	ITYPE_FULL_ANALOG,    // The full +/- minus range.  Something like a stick.
-	ITYPE_HALF_ANALOG   // Half axis range, + or -.  Something like a trigger.
+	// NOTE: These inputs technically make sense, but they should be expanded so that they are more compatible with FBNEO.
+	ITYPE_FULL_ANALOG,		// The full +/- minus range.  Something like a stick. (NOTE: We might need to infer / expand in indexes to make sure that this works....)
+	ITYPE_HALF_ANALOG		// Half axis range, + or -.  Something like a trigger.
 };
 
 //
@@ -134,20 +134,23 @@ enum EGamepadInput {
 	GPINPUT_UNSUPPORTED = 0x00,
 
 	// Analog stick directions.
-	// NOTE: This was my first approach where each analog direction (+/-) has its own designation.  This was to make it compatible with the single direction triggers...
-	// Clearly some extra mapping needs to take place....
-	//GPINPUT_LSTICK_UP,
-	//GPINPUT_LSTICK_DOWN,
-	//GPINPUT_LSTICK_LEFT,
-	//GPINPUT_LSTICK_RIGHT,
-	//GPINPUT_RSTICK_UP,
-	//GPINPUT_RSTICK_DOWN,
-	//GPINPUT_RSTICK_LEFT,
-	//GPINPUT_RSTICK_RIGHT,
+	// NOTE: We do a bit of extra translation for these when we parse out the SDL database.
+	GPINPUT_LSTICK_UP,
+	GPINPUT_LSTICK_DOWN,
+	GPINPUT_LSTICK_LEFT,
+	GPINPUT_LSTICK_RIGHT,
+
+	GPINPUT_RSTICK_UP,
+	GPINPUT_RSTICK_DOWN,
+	GPINPUT_RSTICK_LEFT,
+	GPINPUT_RSTICK_RIGHT,
+
+
+	// NOTE: These are kind of special...  they describe two values (+/-) for a single axis.
 
 	GPINPUT_LSTICK_X,         // x-axis (+/-)
 	GPINPUT_LSTICK_Y,         // y-axis (+/-)
-
+	
 	// Analog stick directions.
 	GPINPUT_RSTICK_X,         // x-axis (+/-)
 	GPINPUT_RSTICK_Y,         // y-axis (+/-)

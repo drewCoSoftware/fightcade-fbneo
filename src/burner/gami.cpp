@@ -34,7 +34,11 @@ static bool bClearOpposites = false;
 
 static CGamepadDatabase GamepadDatabase;
 
+// ------------------------------------------------------------------------------------------------------------------------------
 INT32 LoadGamepadDatabase() {
+	// NOTE: The origninal gamepad database file came from here:
+	// https://github.com/mdqinc/SDL_GameControllerDB/tree/master
+	// It would be prudent to update it once in a while, I think.
 	if (!GamepadDatabase.IsInitialized()) {
 		GamepadDatabase.Init(L"config\\gamecontrollerdb.txt", L"Windows");
 	}
@@ -1911,16 +1915,17 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 	playerInputs.inputs[1] = GPINPUT_START;
 
 	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs.)
-	playerInputs.inputs[2] = GPINPUT_DPAD_UP;		// Up		-- -		-- h0.1
-	playerInputs.inputs[3] = GPINPUT_DPAD_DOWN;		// Down					-- h0.4
-	playerInputs.inputs[4] = GPINPUT_DPAD_LEFT;		// Left					-- h0.2
-	playerInputs.inputs[5] = GPINPUT_DPAD_RIGHT;	// Right				-- h0.8
+	// NOTE: the gamepad database has a FULL_ANALOG type that should actually be 'inflated' to multiple inputs....
+	//playerInputs.inputs[2] = GPINPUT_DPAD_UP;			// Up		-- -		-- h0.1
+	//playerInputs.inputs[3] = GPINPUT_DPAD_DOWN;		// Down					-- h0.4
+	//playerInputs.inputs[4] = GPINPUT_DPAD_LEFT;		// Left					-- h0.2
+	//playerInputs.inputs[5] = GPINPUT_DPAD_RIGHT;		// Right				-- h0.8
 
-	////// ANALOG STICK (0x0)
-	////playerInputs.inputs[2] = GamepadInputEx(0x00 | 0x02);		// Up		
-	////playerInputs.inputs[3] = GamepadInputEx(0x00 | 0x03);		// Down
-	////playerInputs.inputs[4] = GamepadInputEx(0x00 | 0x00);		// Left
-	////playerInputs.inputs[5] = GamepadInputEx(0x00 | 0x01);		// Right
+	// ANALOG STICK (0x0)
+	playerInputs.inputs[2] = GPINPUT_LSTICK_UP;			// Up			
+	playerInputs.inputs[3] = GPINPUT_LSTICK_DOWN;		// Down		
+	playerInputs.inputs[4] = GPINPUT_LSTICK_LEFT;		// Left		
+	playerInputs.inputs[5] = GPINPUT_LSTICK_RIGHT;		// Right		
 
 	playerInputs.inputs[6] = GPINPUT_X; 
 	playerInputs.inputs[7] = GPINPUT_Y; 
@@ -2043,10 +2048,6 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 		if (ci.type == ITYPE_UNSET) { continue; }
 
 		UINT16 code = ci.GetBurnerCode();
-
-		// NOTE: We probably want to actually set it to 'not used'
-		if (code == 0) { continue; }
-
 		code = code | (playerIndex << 8);
 
 		// Ensure this is interpreted as joystick code....

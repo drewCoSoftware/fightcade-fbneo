@@ -39,8 +39,6 @@ struct CGamepadButtonMapping {
 	// Get the mapping for the corresponding input.
 	// Returns null if there is no matching entry.
 	const CGamepadMappingEntry* GetMappingFor(const EGamepadInput& i);
-
-	wchar_t Platform[MAX_NAME];
 };
 
 
