@@ -894,6 +894,7 @@ INT32 GameInpInit()
 
 	// cache input directions for clearing opposites
 	// TODO: Input system needs to be reworked so that it can be aware of directional inputs in a sane way.
+	// NOTE: This is a great place to make note of the directional inputs for a game so that we can look into mapping stick / dpad inputs to directions.
 	memset(InpDirections[0], 0, 4 * sizeof(INT32));
 	memset(InpDirections[1], 0, 4 * sizeof(INT32));
 	struct BurnInputInfo bii;
@@ -1892,69 +1893,71 @@ INT32 ConfigGameLoadHardwareDefaults()
 	return 0;
 }
 
+
+// --------------------------------------------------------------------------------
+INT32 GetDefaultPlayerMappingsForGame(GameInputSet& playerInputs) {
+
+	// These are describing the default inputs for the game, NOT the gamepad!
+	// NOTE: This is for sfiii3nr1 ONLY!
+	ZeroMemory(&playerInputs, sizeof(GameInputSet));
+
+	// NOTE: The inputs in this case map 1:1 to the indexes for the player inputs
+	// in the driver....
+	// See the defintion of 'cps3InputList' in 'd_cps3.cpp' for an example.
+
+	// playerInputs.inputCount = 16;
+	playerInputs.Inputs[0] = { GPINPUT_BACK, 0 };
+	playerInputs.Inputs[1] = { GPINPUT_START, 1 };
+
+	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs.)
+	playerInputs.Inputs[2] = { GPINPUT_DPAD_UP, 2 };			// Up			
+	playerInputs.Inputs[3] = { GPINPUT_DPAD_DOWN, 3 };			// Down		
+	playerInputs.Inputs[4] = { GPINPUT_DPAD_LEFT, 4 };			// Left		
+	playerInputs.Inputs[5] = { GPINPUT_DPAD_RIGHT, 5 };			// Right		
+
+	// ANALOG STICK (0x0)
+	playerInputs.Inputs[6]  = {GPINPUT_LSTICK_UP, 2};			// Up			
+	playerInputs.Inputs[7]  = {GPINPUT_LSTICK_DOWN, 3};			// Down		
+	playerInputs.Inputs[8]  = {GPINPUT_LSTICK_LEFT, 4};			// Left		
+	playerInputs.Inputs[9]  = {GPINPUT_LSTICK_RIGHT, 5};		// Right		
+						      
+	playerInputs.Inputs[10]  = {GPINPUT_X, 6};
+	playerInputs.Inputs[11]  = {GPINPUT_Y, 7};
+	playerInputs.Inputs[12]  = {GPINPUT_RIGHT_BUMPER, 8};
+	playerInputs.Inputs[13]  = {GPINPUT_A, 9};
+	playerInputs.Inputs[14] = {GPINPUT_B, 10};
+	playerInputs.Inputs[15] = {GPINPUT_RIGHT_TRIGGER, 11};
+
+	playerInputs.InputCount = 16;
+
+	return 0;
+}
+
 // --------------------------------------------------------------------------------
 // Given a producxt guid, this will lookup alternate mappings tables.
 INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 
-
-	// NOTE: We will want to read in the mappings from a file (which will be buried in a class somewhere)
-	// for now, we will just hard-code some defaults.
-	// NOTE: I started working on this with an XBONE controller, so I am just going to say
-	// that all of the indexes presented here are the ones that we want to use.
-
-	// These are really describing the default inputs for the game, not the
-	// defualt indexes for things like RB,RT,X,A,Y
-
-	// NOTE: This is for sfiii3nr1 ONLY!
+	// NOTE: The mappings that we create a game dependent.  A check
+	// for this might need to take place at some point.
 	GameInputSet playerInputs;
-	ZeroMemory(&playerInputs, sizeof(GameInputSet));
+	GetDefaultPlayerMappingsForGame(playerInputs);
 
-	// Set reasonable defaults for the inputs, in terms of a gamepad:
-	playerInputs.inputCount = 12;
-	playerInputs.inputs[0] = GPINPUT_BACK; 
-	playerInputs.inputs[1] = GPINPUT_START;
-
-	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs.)
-	// NOTE: the gamepad database has a FULL_ANALOG type that should actually be 'inflated' to multiple inputs....
-	//playerInputs.inputs[2] = GPINPUT_DPAD_UP;			// Up		-- -		-- h0.1
-	//playerInputs.inputs[3] = GPINPUT_DPAD_DOWN;		// Down					-- h0.4
-	//playerInputs.inputs[4] = GPINPUT_DPAD_LEFT;		// Left					-- h0.2
-	//playerInputs.inputs[5] = GPINPUT_DPAD_RIGHT;		// Right				-- h0.8
-
-	// ANALOG STICK (0x0)
-	playerInputs.inputs[2] = GPINPUT_LSTICK_UP;			// Up			
-	playerInputs.inputs[3] = GPINPUT_LSTICK_DOWN;		// Down		
-	playerInputs.inputs[4] = GPINPUT_LSTICK_LEFT;		// Left		
-	playerInputs.inputs[5] = GPINPUT_LSTICK_RIGHT;		// Right		
-
-	playerInputs.inputs[6] = GPINPUT_X; 
-	playerInputs.inputs[7] = GPINPUT_Y; 
-	playerInputs.inputs[8] = GPINPUT_RIGHT_BUMPER;
-	playerInputs.inputs[9] = GPINPUT_A;  
-	playerInputs.inputs[10] = GPINPUT_B; 
-	playerInputs.inputs[11] = GPINPUT_RIGHT_TRIGGER;
-
-
-	// Let's get those indexes shuffled as needed....
-	// CGamepadMappingsFile padMaps;
-
+	// Get the device specific mappings.
 	CGamepadButtonMapping mapping;
 	if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
 	{
 		GamepadDatabase.GetDefaultMapping(mapping);
 	}
 
-	// NOTE: The mappings that we create a game dependent.  A check
-	// for this might need to take place at some point.
-	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
-
 
 	// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
-	gpp.inputCount = playerInputs.inputCount;
+	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
+	gpp.inputCount = playerInputs.InputCount;
 	for (size_t i = 0; i < gpp.inputCount; i++)
 	{
-		EGamepadInput pi = playerInputs.inputs[i];
-		const CGamepadMappingEntry* e = mapping.GetMappingFor(pi);
+		GamepadInputDesc inputDesc = playerInputs.Inputs[i];
+
+		const CGamepadMappingEntry* e = mapping.GetMappingFor(inputDesc.Input);
 		if (e) {
 			gpp.inputs[i] = { e->Type, e->Index };
 		}
@@ -1979,7 +1982,7 @@ INT32 SetDefaultGamepadInputs() {
 	// TODO: Some way to list the games that support this feature.  Probably
 	// something to add to the drivers, or metadriver system.
 	char* drvName = 0;
-	if (nBurnDrvActive != NOT_ACTIVE){
+	if (nBurnDrvActive != NOT_ACTIVE) {
 		drvName = BurnDrvGetTextA(DRV_NAME);
 	}
 	if (drvName == nullptr || strcmp(drvName, "sfiii3nr1"))
@@ -2036,6 +2039,14 @@ INT32 SetDefaultGamepadInputs() {
 
 // --------------------------------------------------------------------------------
 INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
+
+	// OK, this is the heart of the multi-direction update.
+	// FBNEO drivers don't let us multi-map inputs, so it is up to us to figure
+	// out how we are going to do this....
+	// The big issue, is that they are recycling the game inputs, and use them as the PC inputs,
+	// in the same structure / memory area.  This is what needs to be fixed.
+	// PC inputs can be more exotic, and then get mapped onto the games that we are emulating...
+	throw (std::exception("figure out how we are going to do multi-inputs for directions...."));
 
 	if (!GameInp) { return 0; }
 

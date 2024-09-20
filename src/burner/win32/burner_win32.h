@@ -149,7 +149,7 @@ void MonitorAutoCheck();
 
 void AppCleanup();
 int AppMessage(MSG* pMsg);
-bool AppProcessKeyboardInput();
+bool IsEditActive();								// NOTE: The word 'edit' may not be used correctly.
 
 // localise.cpp
 extern bool bLocalisationActive;

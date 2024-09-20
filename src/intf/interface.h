@@ -49,7 +49,7 @@ struct GamepadInput {
 // NOTE: I fully intend to do a full rewrite of the input system as the current version
 // is super janky IMO.
 struct GamepadInputEx {
-	EInputType type;			// Type of input.  Switch, analog, etc.
+	EInputType type;			// Type of input.  Button, stick, etc.
 	UINT16 index;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 
 	// -------------------------------------------------------------
@@ -95,23 +95,16 @@ struct GamepadInputProfile {
 // Describes a set of inputs (player, system, etc.) for a game.
 // For all reasonable purposes, the set for p1/p2/px should be the same.
 struct GameInputSet {
-	EGamepadInput inputs[MAX_INPUTS];
-	UINT16 inputCount;
+	GamepadInputDesc Inputs[MAX_INPUTS];
+	UINT16 InputCount;
+	//wchar_t* Description;		// 'player', 'system', etc. NOTE: This can be used later when we get deeper into the input system... 
 };
 
-
+// NOTE: This is different than 'GameInputSet' as the inputs have specific types + indexes that are later
+// used by the input system to poll devices and so on.
 struct GamepadInputProfileEx {
 	GamepadInputEx inputs[MAX_INPUTS];
 	UINT16 inputCount;
-
-	bool useAutoDirections;				// PLACEHOLDER: Auto map the directional inputs?
-
-	//// ------------------------------------------------------------------------------------------
-	//// Remap an existing input.  This is used as the 'standardization' step for gamepads.
-	//void RemapInput(size_t index, EInputType type, size_t inputIndex) {
-	//	assert(index < MAX_INPUTS);
-	//	inputs[index] = GamepadInputEx(type, inputIndex);
-	//}
 };
 
 // There can be many entries per file, each of which would map to a game, and any number of input profiles

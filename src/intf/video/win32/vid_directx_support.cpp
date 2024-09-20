@@ -651,7 +651,7 @@ static int nZoom;										// & 1: zoom X, & 2: zoom Y
 static int nShortMsgFlags;
 static int nStatusFlags;
 
-bool bEditActive = false;
+bool bEditActive = false;								// Indicates that some kind of (edit?) mode is active.
 bool bEditTextChanged = false;
 TCHAR EditText[MAX_CHAT_SIZE + 1] = _T("");
 

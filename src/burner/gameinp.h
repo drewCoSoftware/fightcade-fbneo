@@ -128,6 +128,15 @@ enum EInputType {
 //	//ITYPE_TRIGGER				// triggers, like LT/RT on gamepad
 //};
 
+enum ECardinalDir {
+	DIR_NONE,
+	DIR_UP,
+	DIR_DOWN,
+	DIR_LEFT,
+	DIR_RIGHT
+};
+
+
 // =============================================================================================
 // Standardized names for gamepad inputs.
 enum EGamepadInput {
@@ -190,43 +199,10 @@ enum EGamepadInput {
 	// TODO: Add more as needed.
 };
 
-//
-//// =============================================================================================
-//// Standardized names for gamepad inputs.
-//enum EGamepadInput {
-//	GPINPUT_UNKNOWN = 0x00,
-//
-//	GPINPUT_LSTICK_UP,
-//	GPINPUT_LSTICK_DOWN,
-//	GPINPUT_LSTICK_LEFT,
-//	GPINPUT_LSTICK_RIGHT,
-//
-//	GPINPUT_RSTICK_UP,
-//	GPINPUT_RSTICK_DOWN,
-//	GPINPUT_RSTICK_LEFT,
-//	GPINPUT_RSTICK_RIGHT,
-//
-//	GPINPUT_DPAD_UP,
-//	GPINPUT_DPAD_DOWN,
-//	GPINPUT_DPAD_LEFT,
-//	GPINPUT_DPAD_RIGHT,
-//
-//	GPINPUT_BACK,				// back / select button.
-//	GPINPUT_START,
-//
-//	GPINPUT_X,				// PS - square		: SWITCH - Y
-//	GPINPUT_Y,				// PS - triangle	: SWITCH - X
-//	GPINPUT_A,				// PS - cross / x	: SWITCH - B
-//	GPINPUT_B,				// PS - circle		: SWITCH - A
-//
-//	GPINPUT_LEFT_TRIGGER,
-//	GPINPUT_LEFT_BUMPER,
-//
-//	GPINPUT_RIGHT_TRIGGER,
-//	GPINPUT_RIGHT_BUMPER,
-//
-//	// TODO: Add more as needed.
-//};
-
+struct GamepadInputDesc {
+	EGamepadInput Input;			// The type of input.
+	INT32 GameInputIndex;			// The corresponding input index (defined in the driver).  NOTE: GameInputIndex can be defined more than once to allow for analog stick + dpad inputs for directions.
+	//	ECardinalDir Dir;				// Does this input represent a cardinal direction.  NOTE: This is kind of a HACK as the driver for the game should be responsible for defining this stuff, IMO.
+};
 
 #endif

@@ -907,13 +907,9 @@ int AppMessage(MSG* pMsg)
 	return 1; // Didn't process this message
 }
 
-bool AppProcessKeyboardInput()
+bool IsEditActive()
 {
-	if (bEditActive) {
-		return false;
-	}
-
-	return true;
+	return bEditActive;
 }
 
 int ProcessCmdLine()
