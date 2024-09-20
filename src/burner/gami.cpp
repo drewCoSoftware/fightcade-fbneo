@@ -6,6 +6,11 @@
 INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
 TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("") };
 
+// New mapping of PC inputs to game inputs.
+// Inputs are broken into logical sets, i.e. 'player', 'system', etc.
+CGameInputSet GameInputSet;
+
+
 // Mapping of PC inputs to game inputs
 struct GameInp* GameInp = NULL;
 UINT32 nGameInpCount = 0;							// The number of buttons/analog/other inputs.
@@ -126,7 +131,7 @@ void GameInpCheckLeftAlt()
 			break;
 		}
 
-		switch (pgi->nInput) {
+		switch (pgi->pcInput) {
 		case GIT_SWITCH:
 			if (pgi->Input.Switch.nCode == FBK_LALT) {
 				bLeftAltkeyMapped = true;
@@ -160,7 +165,7 @@ void GameInpCheckMouse()
 			break;
 		}
 
-		switch (pgi->nInput) {
+		switch (pgi->pcInput) {
 		case GIT_SWITCH:
 			if ((pgi->Input.Switch.nCode & 0xFF00) == 0x8000) {
 				bMouseMapped = true;
@@ -226,15 +231,15 @@ INT32 GameInpBlank(INT32 bDipSwitch)
 		pgi->Input.pVal = bii.pVal;										// store input pointer to value
 
 		if (bii.nType & BIT_GROUP_CONSTANT) {							// Further initialisation for constants/DIPs
-			pgi->nInput = GIT_CONSTANT;
+			pgi->pcInput = GIT_CONSTANT;
 			pgi->Input.Constant.nConst = *bii.pVal;
 		}
 	}
 
 	for (i = 0; i < nMacroCount; i++, pgi++) {
 		pgi->Macro.nMode = 0;
-		if (pgi->nInput == GIT_MACRO_CUSTOM) {
-			pgi->nInput = 0;
+		if (pgi->pcInput == GIT_MACRO_CUSTOM) {
+			pgi->pcInput = 0;
 		}
 	}
 
@@ -374,7 +379,7 @@ static void GameInpInitMacros()
 	pgi = GameInp + nGameInpCount;
 
 	{ // Mappable system macros -dink
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -384,7 +389,7 @@ static void GameInpInitMacros()
 		nMacroCount++;
 		pgi++;
 
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -394,7 +399,7 @@ static void GameInpInitMacros()
 		nMacroCount++;
 		pgi++;
 
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -404,7 +409,7 @@ static void GameInpInitMacros()
 		nMacroCount++;
 		pgi++;
 
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -414,7 +419,7 @@ static void GameInpInitMacros()
 		nMacroCount++;
 		pgi++;
 
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -424,7 +429,7 @@ static void GameInpInitMacros()
 		nMacroCount++;
 		pgi++;
 
-		pgi->nInput = GIT_MACRO_AUTO;
+		pgi->pcInput = GIT_MACRO_AUTO;
 		pgi->nType = BIT_DIGITAL;
 		pgi->Macro.nMode = 0;
 		pgi->Macro.nSysMacro = 1;
@@ -437,7 +442,7 @@ static void GameInpInitMacros()
 		for (UINT32 hotkey_num = 0; hotkey_num < lua_hotkeys.size(); hotkey_num++) {
 			char hotkey_name[20];
 			sprintf(hotkey_name, "Lua Hotkey %d", (hotkey_num + 1));
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			pgi->Macro.nSysMacro = 1;
@@ -453,7 +458,7 @@ static void GameInpInitMacros()
 	{ // Autofire!!!
 		for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
 			for (INT32 i = 0; i < nFireButtons; i++) {
-				pgi->nInput = GIT_MACRO_AUTO;
+				pgi->pcInput = GIT_MACRO_AUTO;
 				pgi->nType = BIT_DIGITAL;
 				pgi->Macro.nMode = 0;
 				pgi->Macro.nSysMacro = 15; // 15 = Auto-Fire mode
@@ -484,7 +489,7 @@ static void GameInpInitMacros()
 
 	for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
 		if (nPunchx3[nPlayer] == 7) {		// Create a 3x punch macro
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 
@@ -500,7 +505,7 @@ static void GameInpInitMacros()
 		}
 
 		if (nKickx3[nPlayer] == 7) {		// Create a 3x kick macro
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 
@@ -516,7 +521,7 @@ static void GameInpInitMacros()
 		}
 
 		if (nAttackx3[nPlayer] == 7) {		// Create a 3x attack macro
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 
@@ -532,7 +537,7 @@ static void GameInpInitMacros()
 		}
 
 		if (nFireButtons == 4 && HW_NEOGEO) {
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons AB", nPlayer + 1);
@@ -545,7 +550,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons AC", nPlayer + 1);
@@ -558,7 +563,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons AD", nPlayer + 1);
@@ -571,7 +576,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons BC", nPlayer + 1);
@@ -584,7 +589,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons BD", nPlayer + 1);
@@ -597,7 +602,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons CD", nPlayer + 1);
@@ -610,7 +615,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons ABC", nPlayer + 1);
@@ -626,7 +631,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons ABD", nPlayer + 1);
@@ -642,7 +647,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons ACD", nPlayer + 1);
@@ -658,7 +663,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons BCD", nPlayer + 1);
@@ -674,7 +679,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons ABCD", nPlayer + 1);
@@ -695,7 +700,7 @@ static void GameInpInitMacros()
 		}
 
 		if (nFireButtons == 4 && (BurnDrvGetHardwareCode() & HARDWARE_PUBLIC_MASK) == HARDWARE_IGS_PGM) {
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 12", nPlayer + 1);
@@ -708,7 +713,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 13", nPlayer + 1);
@@ -721,7 +726,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 14", nPlayer + 1);
@@ -734,7 +739,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 23", nPlayer + 1);
@@ -747,7 +752,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 24", nPlayer + 1);
@@ -760,7 +765,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 34", nPlayer + 1);
@@ -773,7 +778,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 123", nPlayer + 1);
@@ -789,7 +794,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 124", nPlayer + 1);
@@ -805,7 +810,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 134", nPlayer + 1);
@@ -821,7 +826,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 234", nPlayer + 1);
@@ -837,7 +842,7 @@ static void GameInpInitMacros()
 			nMacroCount++;
 			pgi++;
 
-			pgi->nInput = GIT_MACRO_AUTO;
+			pgi->pcInput = GIT_MACRO_AUTO;
 			pgi->nType = BIT_DIGITAL;
 			pgi->Macro.nMode = 0;
 			sprintf(pgi->Macro.szName, "P%i Buttons 1234", nPlayer + 1);
@@ -1042,13 +1047,13 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 	SKIP_WS(s);											// skip whitespace
 	szRet = LabelCheck(s, _T("undefined"));
 	if (szRet) {
-		pgi->nInput = 0;
+		pgi->pcInput = 0;
 		return 0;
 	}
 
 	szRet = LabelCheck(s, _T("constant"));
 	if (szRet) {
-		pgi->nInput = GIT_CONSTANT;
+		pgi->pcInput = GIT_CONSTANT;
 		s = szRet;
 		pgi->Input.Constant.nConst = (UINT8)_tcstol(s, &szRet, 0);
 		*(pgi->Input.pVal) = pgi->Input.Constant.nConst;
@@ -1057,7 +1062,7 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 
 	szRet = LabelCheck(s, _T("switch"));
 	if (szRet) {
-		pgi->nInput = GIT_SWITCH;
+		pgi->pcInput = GIT_SWITCH;
 		s = szRet;
 		pgi->Input.Switch.nCode = (UINT16)_tcstol(s, &szRet, 0);
 		return 0;
@@ -1066,23 +1071,23 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 	// Analog using mouse axis:
 	szRet = LabelCheck(s, _T("mouseaxis"));
 	if (szRet) {
-		pgi->nInput = GIT_MOUSEAXIS;
+		pgi->pcInput = GIT_MOUSEAXIS;
 		return StringToMouseAxis(pgi, szRet);
 	}
 	// Analog using joystick axis:
 	szRet = LabelCheck(s, _T("joyaxis-neg"));
 	if (szRet) {
-		pgi->nInput = GIT_JOYAXIS_NEG;
+		pgi->pcInput = GIT_JOYAXIS_NEG;
 		return StringToJoyAxis(pgi, szRet);
 	}
 	szRet = LabelCheck(s, _T("joyaxis-pos"));
 	if (szRet) {
-		pgi->nInput = GIT_JOYAXIS_POS;
+		pgi->pcInput = GIT_JOYAXIS_POS;
 		return StringToJoyAxis(pgi, szRet);
 	}
 	szRet = LabelCheck(s, _T("joyaxis"));
 	if (szRet) {
-		pgi->nInput = GIT_JOYAXIS_FULL;
+		pgi->pcInput = GIT_JOYAXIS_FULL;
 		return StringToJoyAxis(pgi, szRet);
 	}
 
@@ -1090,7 +1095,7 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 	szRet = LabelCheck(s, _T("slider"));
 	if (szRet) {
 		s = szRet;
-		pgi->nInput = GIT_KEYSLIDER;
+		pgi->pcInput = GIT_KEYSLIDER;
 		pgi->Input.Slider.SliderAxis.nSlider[0] = 0;	// defaults
 		pgi->Input.Slider.SliderAxis.nSlider[1] = 0;	//
 
@@ -1116,7 +1121,7 @@ static INT32 StringToInp(struct GameInp* pgi, TCHAR* s)
 	szRet = LabelCheck(s, _T("joyslider"));
 	if (szRet) {
 		s = szRet;
-		pgi->nInput = GIT_JOYSLIDER;
+		pgi->pcInput = GIT_JOYSLIDER;
 		pgi->Input.Slider.JoyAxis.nJoy = 0;				// defaults
 		pgi->Input.Slider.JoyAxis.nAxis = 0;			//
 
@@ -1148,38 +1153,38 @@ static TCHAR* InpToString(struct GameInp* pgi)
 {
 	static TCHAR szString[80];
 
-	if (pgi->nInput == 0) {
+	if (pgi->pcInput == 0) {
 		return _T("undefined");
 	}
-	if (pgi->nInput == GIT_CONSTANT) {
+	if (pgi->pcInput == GIT_CONSTANT) {
 		_stprintf(szString, _T("constant 0x%.2X"), pgi->Input.Constant.nConst);
 		return szString;
 	}
-	if (pgi->nInput == GIT_SWITCH) {
+	if (pgi->pcInput == GIT_SWITCH) {
 		_stprintf(szString, _T("switch 0x%.2X"), pgi->Input.Switch.nCode);
 		return szString;
 	}
-	if (pgi->nInput == GIT_KEYSLIDER) {
+	if (pgi->pcInput == GIT_KEYSLIDER) {
 		_stprintf(szString, _T("slider 0x%.2x 0x%.2x speed 0x%x center %d"), pgi->Input.Slider.SliderAxis.nSlider[0], pgi->Input.Slider.SliderAxis.nSlider[1], pgi->Input.Slider.nSliderSpeed, pgi->Input.Slider.nSliderCenter);
 		return szString;
 	}
-	if (pgi->nInput == GIT_JOYSLIDER) {
+	if (pgi->pcInput == GIT_JOYSLIDER) {
 		_stprintf(szString, _T("joyslider %d %d speed 0x%x center %d"), pgi->Input.Slider.JoyAxis.nJoy, pgi->Input.Slider.JoyAxis.nAxis, pgi->Input.Slider.nSliderSpeed, pgi->Input.Slider.nSliderCenter);
 		return szString;
 	}
-	if (pgi->nInput == GIT_MOUSEAXIS) {
+	if (pgi->pcInput == GIT_MOUSEAXIS) {
 		_stprintf(szString, _T("mouseaxis %d"), pgi->Input.MouseAxis.nAxis);
 		return szString;
 	}
-	if (pgi->nInput == GIT_JOYAXIS_FULL) {
+	if (pgi->pcInput == GIT_JOYAXIS_FULL) {
 		_stprintf(szString, _T("joyaxis %d %d"), pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
 		return szString;
 	}
-	if (pgi->nInput == GIT_JOYAXIS_NEG) {
+	if (pgi->pcInput == GIT_JOYAXIS_NEG) {
 		_stprintf(szString, _T("joyaxis-neg %d %d"), pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
 		return szString;
 	}
-	if (pgi->nInput == GIT_JOYAXIS_POS) {
+	if (pgi->pcInput == GIT_JOYAXIS_POS) {
 		_stprintf(szString, _T("joyaxis-pos %d %d"), pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
 		return szString;
 	}
@@ -1191,14 +1196,14 @@ static TCHAR* InpMacroToString(struct GameInp* pgi)
 {
 	static TCHAR szString[256];
 
-	if (pgi->nInput == GIT_MACRO_AUTO) {
+	if (pgi->pcInput == GIT_MACRO_AUTO) {
 		if (pgi->Macro.nMode) {
 			_stprintf(szString, _T("switch 0x%.2X"), pgi->Macro.Switch.nCode);
 			return szString;
 		}
 	}
 
-	if (pgi->nInput == GIT_MACRO_CUSTOM) {
+	if (pgi->pcInput == GIT_MACRO_CUSTOM) {
 		struct BurnInputInfo bii;
 
 		if (pgi->Macro.nMode) {
@@ -1466,10 +1471,10 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 {
 	static TCHAR szInputName[64] = _T("");
 
-	if (pgi->nInput == 0) {
+	if (pgi->pcInput == 0) {
 		return _T("");
 	}
-	if (pgi->nInput == GIT_CONSTANT) {
+	if (pgi->pcInput == GIT_CONSTANT) {
 		if (pgi->nType & BIT_GROUP_CONSTANT) {
 			for (INT32 i = 0; i < 8; i++) {
 				szInputName[7 - i] = pgi->Input.Constant.nConst & (1 << i) ? _T('1') : _T('0');
@@ -1483,10 +1488,10 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 			return _T("-");
 		}
 	}
-	if (pgi->nInput == GIT_SWITCH) {
+	if (pgi->pcInput == GIT_SWITCH) {
 		return InputCodeDesc(pgi->Input.Switch.nCode, padInfos);
 	}
-	if (pgi->nInput == GIT_MOUSEAXIS) {
+	if (pgi->pcInput == GIT_MOUSEAXIS) {
 		TCHAR nAxis = _T('?');
 		switch (pgi->Input.MouseAxis.nAxis) {
 		case 0:
@@ -1503,11 +1508,11 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 		return szInputName;
 	}
 
-	if (pgi->nInput & GIT_GROUP_JOYSTICK) {
+	if (pgi->pcInput & GIT_GROUP_JOYSTICK) {
 		TCHAR szAxis[8][3] = { _T("X"), _T("Y"), _T("Z"), _T("rX"), _T("rY"), _T("rZ"), _T("s0"), _T("s1") };
 		TCHAR szRange[4][16] = { _T("unknown"), _T("full"), _T("negative"), _T("positive") };
 		INT32 nRange = 0;
-		switch (pgi->nInput) {
+		switch (pgi->pcInput) {
 		case GIT_JOYAXIS_FULL:
 			nRange = 1;
 			break;
@@ -1532,7 +1537,7 @@ TCHAR* InpToDesc(struct GameInp* pgi, GamepadFileEntry** padInfos)
 
 TCHAR* InpMacroToDesc(struct GameInp* pgi)
 {
-	if (pgi->nInput & GIT_GROUP_MACRO) {
+	if (pgi->pcInput & GIT_GROUP_MACRO) {
 		if (pgi->Macro.nMode) {
 			return InputCodeDesc(pgi->Macro.Switch.nCode, NULL);
 		}
@@ -1592,7 +1597,7 @@ static UINT32 MacroNameToNum(TCHAR* szName)
 {
 	struct GameInp* pgi = GameInp + nGameInpCount;
 	for (UINT32 i = 0; i < nMacroCount; i++, pgi++) {
-		if (pgi->nInput & GIT_GROUP_MACRO) {
+		if (pgi->pcInput & GIT_GROUP_MACRO) {
 			if (_tcsicmp(szName, ANSIToTCHAR(pgi->Macro.szName, NULL, 0)) == 0) {
 				return i;
 			}
@@ -1667,7 +1672,7 @@ static INT32 AddCustomMacro(TCHAR* szValue, bool bOverWrite)
 	struct BurnInputInfo bii;
 
 	for (UINT32 j = nGameInpCount; j < nGameInpCount + nMacroCount; j++) {
-		if (GameInp[j].nInput == GIT_MACRO_CUSTOM) {
+		if (GameInp[j].pcInput == GIT_MACRO_CUSTOM) {
 			if (LabelCheck(szQuote, ANSIToTCHAR(GameInp[j].Macro.szName, NULL, 0))) {
 				nInput = j;
 				break;
@@ -1738,7 +1743,7 @@ static INT32 AddCustomMacro(TCHAR* szValue, bool bOverWrite)
 
 		if (nFound) {
 			if (GameInp[nInput].Macro.pVal[nFound - 1]) {
-				GameInp[nInput].nInput = GIT_MACRO_CUSTOM;
+				GameInp[nInput].pcInput = GIT_MACRO_CUSTOM;
 				GameInp[nInput].Macro.nMode = nMode;
 				if (bCreateNew) {
 					nMacroCount++;
@@ -1813,7 +1818,7 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite)
 					}
 				}
 
-				if (GameInp[i].nInput == 0 || bOverWrite) {				// Undefined - assign mapping
+				if (GameInp[i].pcInput == 0 || bOverWrite) {				// Undefined - assign mapping
 					StringToInp(GameInp + i, szEnd);
 				}
 			}
@@ -1895,11 +1900,11 @@ INT32 ConfigGameLoadHardwareDefaults()
 
 
 // --------------------------------------------------------------------------------
-INT32 GetDefaultPlayerMappingsForGame(GameInputSet& playerInputs) {
+INT32 GetDefaultPlayerMappingsForGame(GameInputGroup& playerInputs) {
 
 	// These are describing the default inputs for the game, NOT the gamepad!
 	// NOTE: This is for sfiii3nr1 ONLY!
-	ZeroMemory(&playerInputs, sizeof(GameInputSet));
+	ZeroMemory(&playerInputs, sizeof(GameInputGroup));
 
 	// NOTE: The inputs in this case map 1:1 to the indexes for the player inputs
 	// in the driver....
@@ -1939,7 +1944,7 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 
 	// NOTE: The mappings that we create a game dependent.  A check
 	// for this might need to take place at some point.
-	GameInputSet playerInputs;
+	GameInputGroup playerInputs;
 	GetDefaultPlayerMappingsForGame(playerInputs);
 
 	// Get the device specific mappings.
@@ -2065,7 +2070,7 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 		code |= JOYSTICK_LOWER;
 
 		auto useInp = (pGameInput + i);
-		UINT8 nInput = useInp->nInput;
+		UINT8 nInput = useInp->pcInput;
 
 		if (nInput == GIT_SWITCH) {
 			useInp->Input.Switch.nCode = code;
@@ -2100,7 +2105,7 @@ INT32 GameInpDefault()
 
 	// Fill all inputs still undefined
 	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
-		if (pgi->nInput) {											// Already defined - leave it alone
+		if (pgi->pcInput) {											// Already defined - leave it alone
 			continue;
 		}
 
@@ -2116,7 +2121,7 @@ INT32 GameInpDefault()
 
 		// Dip switches - set to constant
 		if (bii.nType & BIT_GROUP_CONSTANT) {
-			pgi->nInput = GIT_CONSTANT;
+			pgi->pcInput = GIT_CONSTANT;
 			continue;
 		}
 
@@ -2125,7 +2130,7 @@ INT32 GameInpDefault()
 
 	// Fill in macros still undefined
 	for (i = 0; i < nMacroCount; i++, pgi++) {
-		if (pgi->nInput != GIT_MACRO_AUTO || pgi->Macro.nMode) {	// Already defined - leave it alone
+		if (pgi->pcInput != GIT_MACRO_AUTO || pgi->Macro.nMode) {	// Already defined - leave it alone
 			continue;
 		}
 
@@ -2163,8 +2168,8 @@ INT32 GameInpWrite(FILE* h)
 	for (UINT32 i = 0; i < nMacroCount; i++, pgi++) {
 		INT32 nPad = 0;
 
-		if (pgi->nInput & GIT_GROUP_MACRO) {
-			switch (pgi->nInput) {
+		if (pgi->pcInput & GIT_GROUP_MACRO) {
+			switch (pgi->pcInput) {
 			case GIT_MACRO_AUTO:									// Auto-assigned macros
 				_ftprintf(h, _T("macro  \"%hs\" "), pgi->Macro.szName);
 				break;
@@ -2207,7 +2212,7 @@ INT32 GameInpRead(TCHAR* szVal, bool bOverWrite)
 		return 1;
 	}
 
-	if (bOverWrite || GameInp[i].nInput == 0) {
+	if (bOverWrite || GameInp[i].pcInput == 0) {
 		// Parse the input description into the GameInp structure
 		StringToInp(GameInp + i, szEnd);
 	}

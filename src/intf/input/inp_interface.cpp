@@ -41,7 +41,13 @@ static struct InputInOut* pInputInOut[] =
 };
 
 #define INPUT_LEN (sizeof(pInputInOut) / sizeof(pInputInOut[0]))
+#define INPUT_MERGE(x) (x != 0 ? x : pgi->Input.nVal * nCurrentFrameMerge)
 
+static InterfaceInfo InpInfo = { NULL, NULL, NULL };
+static INT32 nCurrentFrameMerge = 0;
+static INT32 nCurrentFrameInput = 0;
+
+// --------------------------------------------------------------------------------------------------------------
 std::vector<const InputInOut*> InputGetInterfaces()
 {
 	std::vector<const InputInOut*> list;
@@ -50,7 +56,6 @@ std::vector<const InputInOut*> InputGetInterfaces()
 	return list;
 }
 
-static InterfaceInfo InpInfo = { NULL, NULL, NULL };
 
 inline INT32 CinpState(const INT32 nCode)
 {
@@ -79,7 +84,7 @@ inline INT32 CinpMouseAxis(const INT32 i, const INT32 nAxis)
 
 // ----------------------------------------------------------------------------------------------------------
 // Do one frames worth of input sliders.
-// Sliders are things you might find on a flight stick to set trim, throttle, etc.
+// 'Sliders' are a way to emulate analog inputs (like a roller ball) with digital (i.e. keyboard) inputs.
 static INT32 ProcessSliders()
 {
 	struct GameInp* pgi;
@@ -89,11 +94,11 @@ static INT32 ProcessSliders()
 		INT32 nAdd = 0;
 		INT32 bGotKey = 0;
 
-		if ((pgi->nInput & GIT_GROUP_SLIDER) == 0) {				// not a slider
+		if ((pgi->pcInput & GIT_GROUP_SLIDER) == 0) {				// not a slider
 			continue;
 		}
 
-		if (pgi->nInput == GIT_KEYSLIDER) {
+		if (pgi->pcInput == GIT_KEYSLIDER) {
 			// Get states of the two keys
 			if (CinpState(pgi->Input.Slider.SliderAxis.nSlider[0])) {
 				bGotKey = 1;
@@ -105,11 +110,11 @@ static INT32 ProcessSliders()
 			}
 		}
 
-		if (pgi->nInput == GIT_JOYSLIDER) {
+		if (pgi->pcInput == GIT_JOYSLIDER) {
 			// Get state of the axis
 			nAdd = CinpJoyAxis(pgi->Input.Slider.JoyAxis.nJoy, pgi->Input.Slider.JoyAxis.nAxis);
 
-			if (nAdd != 0) bGotKey = 1;
+			if (nAdd != 0) { bGotKey = 1; }
 
 			nAdd /= 0x80;
 			// May 30, 2019 -dink
@@ -288,15 +293,13 @@ INT32 InputSetCooperativeLevel(const bool bExclusive, const bool bForeground)
 static bool bLastAF[1000];
 INT32 nAutoFireRate = 12;
 
+// --------------------------------------------------------------------------------------------------------------
 static inline INT32 AutofirePick() {
 	return ((nCurrentFrame % nAutoFireRate) > nAutoFireRate - 4);
 }
 
-static INT32 nCurrentFrameMerge = 0;
-static INT32 nCurrentFrameInput = 0;
 
-#define INPUT_MERGE(x) (x != 0 ? x : pgi->Input.nVal * nCurrentFrameMerge)
-
+// --------------------------------------------------------------------------------------------------------------
 // This will process all PC-side inputs and optionally update the emulated game side.
 INT32 InputMake(bool bCopy)
 {
@@ -310,8 +313,24 @@ INT32 InputMake(bool bCopy)
 		return 1;
 	}
 
-	pInputInOut[nInputSelect]->NewFrame();			// Poll joysticks etc
+	// This is where any kind of multi-input type system will go....
+	// Really what we want to do is either:
+	// --> 1. Create a full input state and then map it onto GameInp[x].nInput
+	// --> 2. Somehow use the indexes from GameInp[x] to ask the input state what to do......
 
+	// --> I think that option 1 makes more sense...  We will take our input sets, get the device states, do the computation,
+	// and then set the appropriate input codes on GameInp[x].nInput
+
+
+
+	// So.. and input map, like the one defined in d_cps3.cpp needs to be broken up / redefined into input sets...
+	// P1 / P2 / Px
+	// System --> Reset - Diagnostic - Service - Region - FAKE DIP
+	// --> p.s.  I think that the 'fake dip' and 'not used' inputs are just there so that there are always the
+	// same number of inputs for the CP3 memory map...
+
+
+	pInputInOut[nInputSelect]->NewFrame();			// Clear existing input states.
 	bEnableKeyboardInputs = !IsEditActive();
 
 	ProcessSliders();
@@ -324,7 +343,7 @@ INT32 InputMake(bool bCopy)
 		// Since this goes through all inputs and does a merge on the state, I am pretty sure that multi-mapped buttons are already supported.....
 		// The only thing that will have to be modified is the analog / binary stuff as analog is handled first, then binary.
 		// We can overcome this by calling the if(bCopy)... code at the end of the GIT_SWITCH block.
-		switch (pgi->nInput) {
+		switch (pgi->pcInput) {
 		case 0:									// Undefined
 			pgi->Input.nVal = 0;
 			break;

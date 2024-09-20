@@ -92,15 +92,32 @@ struct GamepadInputProfile {
 #define MAX_NAME 32
 #define MAX_INPUTS 16
 
-// Describes a set of inputs (player, system, etc.) for a game.
+// Describes a logical group of inputs (player, system, etc.) for a game.
 // For all reasonable purposes, the set for p1/p2/px should be the same.
-struct GameInputSet {
+struct GameInputGroup {
 	GamepadInputDesc Inputs[MAX_INPUTS];
 	UINT16 InputCount;
-	//wchar_t* Description;		// 'player', 'system', etc. NOTE: This can be used later when we get deeper into the input system... 
+
+	//// The starting index that this group corresponds to in the BurnInputInfo definition for the game.
+	//// For example, if your game uses 'cps3InputList' (d_cps3.cpp:32) and 
+	//UINT16 BurnInputStartIndex;
 };
 
-// NOTE: This is different than 'GameInputSet' as the inputs have specific types + indexes that are later
+#define MAX_GROUPS 4
+#define MAX_PLAYERS 4
+
+struct CGameInputSet {
+	// Input group count + defs.
+	UINT32 GroupCount;
+	GameInputGroup InputGroups[MAX_GROUPS];
+
+	// Max number of players for this game.
+	UINT32 MaxPlayerCount;
+
+	// UINT32 PlayerInputOffsets[MAX_PLAYERS]
+};
+
+// NOTE: This is different than 'GameInputGroup' as the inputs have specific types + indexes that are later
 // used by the input system to poll devices and so on.
 struct GamepadInputProfileEx {
 	GamepadInputEx inputs[MAX_INPUTS];

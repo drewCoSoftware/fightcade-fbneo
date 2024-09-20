@@ -3,7 +3,7 @@
 
 static char szPlay[4][4]={"p1 ", "p2 ", "p3 ", "p4 "};
 
-#define KEY(x) { pgi->nInput = GIT_SWITCH; pgi->Input.Switch.nCode = (UINT16)(x); }
+#define KEY(x) { pgi->pcInput = GIT_SWITCH; pgi->Input.Switch.nCode = (UINT16)(x); }
 #define MACRO(x) { pgi->Macro.nMode = 1; pgi->Macro.Switch.nCode = (UINT16)(x); }
 
 // Configure the misc game controls
@@ -511,13 +511,13 @@ INT32 GamcMisc(struct GameInp* pgi, char* szi, INT32 nPlayer)
 	if (strncmp(szi, "mouse", 5) == 0) {
 
 		if (strcmp(szi, "mouse x-axis") == 0) {
-			pgi->nInput = GIT_MOUSEAXIS;
+			pgi->pcInput = GIT_MOUSEAXIS;
 			pgi->Input.MouseAxis.nAxis = 0;
 			return 0;
 
 		}
 		if (strcmp(szi, "mouse y-axis") == 0) {
-			pgi->nInput = GIT_MOUSEAXIS;
+			pgi->pcInput = GIT_MOUSEAXIS;
 			pgi->Input.MouseAxis.nAxis = 1;
 			return 0;
 		}
@@ -537,7 +537,7 @@ INT32 GamcMisc(struct GameInp* pgi, char* szi, INT32 nPlayer)
 
 static void SetSliderKey(struct GameInp* pgi, INT32 k0, INT32 k1, INT32 nSlide)
 {
-	pgi->nInput = GIT_KEYSLIDER;
+	pgi->pcInput = GIT_KEYSLIDER;
 	pgi->Input.Slider.SliderAxis.nSlider[0] = (UINT8)k0;
 	pgi->Input.Slider.SliderAxis.nSlider[1] = (UINT8)k1;
 
@@ -629,7 +629,7 @@ INT32 GamcAnalogJoy(struct GameInp* pgi, char* szi, INT32 nPlayer, INT32 nJoy, I
 
 	switch (nSlide) {
 		case 2:								// Sliding
-			pgi->nInput = GIT_JOYSLIDER;
+			pgi->pcInput = GIT_JOYSLIDER;
 			pgi->Input.Slider.nSliderValue = 0x8000;		// Put slider in the middle
 			pgi->Input.Slider.nSliderSpeed = 0x0700;
 			pgi->Input.Slider.nSliderCenter = 0;
@@ -637,7 +637,7 @@ INT32 GamcAnalogJoy(struct GameInp* pgi, char* szi, INT32 nPlayer, INT32 nJoy, I
 			pgi->Input.Slider.JoyAxis.nJoy = (UINT8)nJoy;
 			break;
 		case 1:								// Sliding (centering)
-			pgi->nInput = GIT_JOYSLIDER;
+			pgi->pcInput = GIT_JOYSLIDER;
 			pgi->Input.Slider.nSliderValue = 0x8000;		// Put slider in the middle
 			pgi->Input.Slider.nSliderSpeed = 0x0800;
 			pgi->Input.Slider.nSliderCenter = 10;
@@ -645,17 +645,17 @@ INT32 GamcAnalogJoy(struct GameInp* pgi, char* szi, INT32 nPlayer, INT32 nJoy, I
 			pgi->Input.Slider.JoyAxis.nJoy = (UINT8)nJoy;
 			break;
 		case 3:								// Absolute, axis-neg
-			pgi->nInput = GIT_JOYAXIS_NEG;
+			pgi->pcInput = GIT_JOYAXIS_NEG;
 			pgi->Input.JoyAxis.nAxis = nAxis;
 			pgi->Input.JoyAxis.nJoy = (UINT8)nJoy;
 			break;
 		case 4:								// Absolute, axis-pos
-			pgi->nInput = GIT_JOYAXIS_POS;
+			pgi->pcInput = GIT_JOYAXIS_POS;
 			pgi->Input.JoyAxis.nAxis = nAxis;
 			pgi->Input.JoyAxis.nJoy = (UINT8)nJoy;
 			break;
 		default:							// Absolute, entire axis
-			pgi->nInput = GIT_JOYAXIS_FULL;
+			pgi->pcInput = GIT_JOYAXIS_FULL;
 			pgi->Input.JoyAxis.nAxis = nAxis;
 			pgi->Input.JoyAxis.nJoy = (UINT8)nJoy;
 	}
@@ -697,7 +697,7 @@ INT32 GamcPlayer(struct GameInp* pgi, char* szi, INT32 nPlayer, INT32 nDevice)
 			return 1;
 		}
 
-		pgi->nInput = GIT_CONSTANT;			// Constant zero
+		pgi->pcInput = GIT_CONSTANT;			// Constant zero
 		pgi->Input.Constant.nConst = 0;		//
 
 		return 0;

@@ -101,7 +101,7 @@ static int SetInput(int nCode)
 	{
 		unsigned int slider = SendDlgItemMessage(hInpsDlg, IDC_INPS_DIGSLIDER, TBM_GETPOS, 0, 0);
 
-		pgi->nInput = GIT_KEYSLIDER;
+		pgi->pcInput = GIT_KEYSLIDER;
 		pgi->Input.Slider.nSliderSpeed = slider;
 
 		// x1000 - xe000 = 2, e001 - x2000 = 0  <------------ DO
@@ -129,7 +129,7 @@ static int SetInput(int nCode)
 		return 1;
 	}
 
-	if ((pgi->nInput & GIT_GROUP_MACRO) == 0) {
+	if ((pgi->pcInput & GIT_GROUP_MACRO) == 0) {
 
 		if (bii.nType & BIT_GROUP_CONSTANT) {							// Don't change dip switches!
 			DestroyWindow(hInpsDlg);
@@ -140,41 +140,41 @@ static int SetInput(int nCode)
 			if (strcmp(bii.szInfo + 4, "-axis-neg") == 0 || strcmp(bii.szInfo + 4, "-axis-pos") == 0) {
 				if ((nCode & 0xF000) == 0x4000) {
 					if (nCode & 1) {
-						pgi->nInput = GIT_JOYAXIS_POS;
+						pgi->pcInput = GIT_JOYAXIS_POS;
 					} else {
-						pgi->nInput = GIT_JOYAXIS_NEG;
+						pgi->pcInput = GIT_JOYAXIS_NEG;
 					}
 					pgi->Input.JoyAxis.nJoy = (nCode & 0x0F00) >> 8;
 					pgi->Input.JoyAxis.nAxis = (nCode & 0x0F) >> 1;
 				}
 			} else {													// Map entire axis
 				if ((nCode & 0xF000) == 0x4000) {
-					pgi->nInput = GIT_JOYAXIS_FULL;
+					pgi->pcInput = GIT_JOYAXIS_FULL;
 					pgi->Input.JoyAxis.nJoy = (nCode & 0x0F00) >> 8;
 					pgi->Input.JoyAxis.nAxis = (nCode & 0x0F) >> 1;
 				} else {
-					pgi->nInput = GIT_MOUSEAXIS;
+					pgi->pcInput = GIT_MOUSEAXIS;
 					pgi->Input.MouseAxis.nMouse = (nCode & 0x0F00) >> 8;
 					pgi->Input.MouseAxis.nAxis = (nCode & 0x0F) >> 1;
 				}
 			}
 
 			if (nCode == 0) {                                           // Clear Input button pressed (for Analogue/Mouse)
-				pgi->nInput = 0;
+				pgi->pcInput = 0;
 				pgi->Input.JoyAxis.nJoy = 0;
 				pgi->Input.JoyAxis.nAxis = 0;
 				pgi->Input.MouseAxis.nMouse = 0;
 				pgi->Input.MouseAxis.nAxis = 0;
 
 				if (bClearLock) { // If ClearLock is checked, morph the analogue/mouse input to a switch (switch w/nCode of 0 == ClearLock)
-					pgi->nInput = GIT_SWITCH;
+					pgi->pcInput = GIT_SWITCH;
 					pgi->Input.Switch.nCode = (unsigned short)nCode;
 				}
 			}
 
 		} else {
-			pgi->nInput = GIT_SWITCH;
-			if (nCode == 0 && !bClearLock) pgi->nInput = 0;				// Clear Input button pressed (for buttons)
+			pgi->pcInput = GIT_SWITCH;
+			if (nCode == 0 && !bClearLock) pgi->pcInput = 0;				// Clear Input button pressed (for buttons)
 			pgi->Input.Switch.nCode = (unsigned short)nCode;
 		}
 	} else {
@@ -210,11 +210,11 @@ static int InpsPushUpdate()
 	if (nPushState) {
 		switch (OldInp.nType) {
 			case BIT_DIGITAL:								// Set digital inputs to 1
-				pgi->nInput = GIT_CONSTANT;
+				pgi->pcInput = GIT_CONSTANT;
 				pgi->Input.Constant.nConst = 1;
 				break;
 			case BIT_DIPSWITCH:								// Set dipswitch block to 0xFF
-				pgi->nInput = GIT_CONSTANT;
+				pgi->pcInput = GIT_CONSTANT;
 				pgi->Input.Constant.nConst = 0xFF;
 				break;
 		}

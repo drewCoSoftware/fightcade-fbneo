@@ -424,7 +424,7 @@ void GameDetector::Update()
 	for (unsigned int i = 0; i < nGameInpCount; i++) {
 		BurnDrvGetInputInfo(&bii, i);
 		struct GameInp *pgi = &GameInp[i];
-		if (pgi->nInput == GIT_SWITCH && pgi->Input.pVal && !strcmp(bii.szInfo, "reset")) {
+		if (pgi->pcInput == GIT_SWITCH && pgi->Input.pVal && !strcmp(bii.szInfo, "reset")) {
 			if (*pgi->Input.pVal) {
 				state = ST_WAIT_START;
 			}
@@ -1805,7 +1805,7 @@ void DetectTurbo()
 	for (unsigned int i = 0; i < nGameInpCount; i++) {
 		BurnDrvGetInputInfo(&bii, i);
 		struct GameInp *pgi = &GameInp[i];
-		if (pgi->nInput == GIT_SWITCH && pgi->Input.pVal) {
+		if (pgi->pcInput == GIT_SWITCH && pgi->Input.pVal) {
 			int value = *pgi->Input.pVal;
 
 			// P1 inputs
@@ -2020,7 +2020,7 @@ void VidDisplayInputs(int slot, int state)
 		for (unsigned int i = 0; i < nGameInpCount; i++) {
 			BurnDrvGetInputInfo(&bii, i);
 			struct GameInp *pgi = &GameInp[i];
-			if (pgi->nInput == GIT_SWITCH && pgi->Input.pVal) {
+			if (pgi->pcInput == GIT_SWITCH && pgi->Input.pVal) {
 				int value = *pgi->Input.pVal;
 
 				// P1 inputs

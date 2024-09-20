@@ -51,9 +51,10 @@ struct giInput {
 	};
 };
 
+// @@AAR: I don't think this is actually used anywhere....
 struct giForce {
 	UINT8 nInput;				// The input to apply force feedback effects to
-	UINT8 nEffect;				// The effect to use
+	UINT8 nEffect;				// The effect to use		// @@AAR: Not used, as far as I can tell.....
 };
 
 struct giMacro {
@@ -94,8 +95,8 @@ struct giMacro {
 
 
 struct GameInp {
-	UINT8 nInput;				// PC side: see above
-	UINT8 nType;				// game side: see burn.h
+	UINT8 pcInput;				// PC side: see above
+	UINT8 nType;				// game side: see burn.h (BIT_* defs) (BurnInputInfo)
 
 	union {
 		struct giInput Input;
