@@ -11,6 +11,12 @@
 
 #define MAX_ALIAS_CHARS 32
 
+
+#define MAX_GAMEPADS	(8)
+#define MAX_INPUT_PROFILES	(32)
+#define MAX_GAMEPAD_INFOS	(32)
+
+
 // Interface info (used for all modules)
 struct InterfaceInfo {
 	const TCHAR* pszModuleName;
@@ -92,29 +98,58 @@ struct GamepadInputProfile {
 #define MAX_NAME 32
 #define MAX_INPUTS 16
 
+enum EInputGroupType {
+	IGROUP_UNKNOWN = 0,
+	IGROUP_PLAYER,
+	IGROUP_SYSTEM
+};
+
 // Describes a logical group of inputs (player, system, etc.) for a game.
 // For all reasonable purposes, the set for p1/p2/px should be the same.
 struct GameInputGroup {
+	EInputGroupType GroupType;
 	GamepadInputDesc Inputs[MAX_INPUTS];
 	UINT16 InputCount;
 
 	//// The starting index that this group corresponds to in the BurnInputInfo definition for the game.
-	//// For example, if your game uses 'cps3InputList' (d_cps3.cpp:32) and 
-	//UINT16 BurnInputStartIndex;
+	//// For example, if your game uses 'cps3InputList' (d_cps3.cpp:32) and this group is for
+	// player 2, then the start index will == 12.
+	UINT16 BurnInputStartIndex;
+
+	// What is this group (optional)?
+	wchar_t* Description;
+
 };
 
-#define MAX_GROUPS 4
-#define MAX_PLAYERS 4
+static const UINT32 MAX_GROUPS  = 4;
 
+// Describes a set of input groups for an entire game.
 struct CGameInputSet {
 	// Input group count + defs.
 	UINT32 GroupCount;
 	GameInputGroup InputGroups[MAX_GROUPS];
-
-	// Max number of players for this game.
 	UINT32 MaxPlayerCount;
 
-	// UINT32 PlayerInputOffsets[MAX_PLAYERS]
+	// Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
+	inline GameInputGroup* GetPlayerGroup(size_t player) {
+		GameInputGroup* res = nullptr;
+		if (player <= MaxPlayerCount)
+		{
+			size_t playerIndex;
+			for (size_t i = 0; i < GroupCount; i++)
+			{
+				if (InputGroups[i].GroupType == IGROUP_PLAYER)
+				{
+					++playerIndex;
+					if (playerIndex == player) {
+						return &InputGroups[i];
+					}
+				}
+			}
+		}
+
+		return res;
+	}
 };
 
 // NOTE: This is different than 'GameInputGroup' as the inputs have specific types + indexes that are later
@@ -124,6 +159,7 @@ struct GamepadInputProfileEx {
 	UINT16 inputCount;
 };
 
+// REFACTOR: This name might be a bit misleading....
 // There can be many entries per file, each of which would map to a game, and any number of input profiles
 // from there.
 struct GamepadFileEntry {
@@ -480,7 +516,7 @@ void VidSKillOSDMsg();
 #include "vid_overlay.h"
 
 
-
+// OBSOLETE:  This is going to be removed....
 // These map onto the 'BurnInputInfo' lists that are used to populate the input dialog.
 // For example, see cps3InputList[] in d_cps3.cpp:32
 struct playerInputs {

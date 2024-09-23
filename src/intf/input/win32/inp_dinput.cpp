@@ -12,13 +12,9 @@
 
 #pragma comment(lib, "dinput8")
 
-// TODO: These need to be more accessible!
-#define MAX_KEYBOARD		(1)
-#define MAX_GAMEPAD			(8)
-#define MAX_INPUT_PROFILE	(32)
-#define MAX_GAMEPAD_INFOS	(32)
+#define MAX_KEYBOARDS	(1)
 #define MAX_JOYAXIS			(8)
-#define MAX_MOUSE			(4)
+#define MAX_MICE			(4)
 #define MAX_MOUSEAXIS		(3)
 
 static BOOL CALLBACK gamepadEnumAxesCallback(LPCDIDEVICEOBJECTINSTANCE, LPVOID);
@@ -30,7 +26,7 @@ struct keyboardData {
 	IDirectInputDevice8W* lpdid;
 	unsigned char state[256];
 	unsigned char readStatus;
-} keyboardProperties[MAX_KEYBOARD];
+} keyboardProperties[MAX_KEYBOARDS];
 
 struct gamepadData {
 	IDirectInputDevice8W* lpdid;
@@ -43,7 +39,7 @@ struct gamepadData {
 	DWORD dwPOVs;
 	DWORD dwButtons;
 	unsigned char readStatus;
-} gamepadProperties[MAX_GAMEPAD];
+} gamepadProperties[MAX_GAMEPADS];
 
 
 struct GamepadFileData {
@@ -53,7 +49,7 @@ struct GamepadFileData {
 } gamepadFile;
 
 struct InputProfileFileData {
-	InputProfileEntry entries[MAX_INPUT_PROFILE];
+	InputProfileEntry entries[MAX_INPUT_PROFILES];
 	UINT16 entryCount;
 
 } inputProfiles;
@@ -80,7 +76,7 @@ struct mouseData {
 	DWORD dwAxes;
 	DWORD dwButtons;
 	unsigned char readStatus;
-} mouseProperties[MAX_MOUSE];
+} mouseProperties[MAX_MICE];
 
 int keyboardCount;		// Number of keyboards connected to this machine
 int gamepadCount;		// Number of gamepads connected to this machine
@@ -158,7 +154,7 @@ bool mouseEnumDevice(LPCDIDEVICEINSTANCE instance)
 		return DIENUM_CONTINUE;
 	}
 
-	if (mouseCount >= MAX_MOUSE) {
+	if (mouseCount >= MAX_MICE) {
 		return DIENUM_STOP;
 	}
 
@@ -180,7 +176,7 @@ bool gamepadEnumDevice(LPCDIDEVICEINSTANCE instance)
 		return DIENUM_CONTINUE;
 	}
 
-	if (gamepadCount >= MAX_GAMEPAD) {
+	if (gamepadCount >= MAX_GAMEPADS) {
 		return DIENUM_STOP;
 	}
 
@@ -284,19 +280,19 @@ int setCooperativeLevel(bool exclusive, bool foreGround)
 int exit()
 {
 	// Release the keyboard interface
-	for (int i = 0; i < MAX_KEYBOARD; i++) {
+	for (int i = 0; i < MAX_KEYBOARDS; i++) {
 		RELEASE(keyboardProperties[i].lpdid)
 	}
 	keyboardCount = 0;
 
 	// Release the gamepad interfaces
-	for (int i = 0; i < MAX_GAMEPAD; i++) {
+	for (int i = 0; i < MAX_GAMEPADS; i++) {
 		RELEASE(gamepadProperties[i].lpdid)
 	}
 	gamepadCount = 0;
 
 	// Release the mouse interface
-	for (int i = 0; i < MAX_MOUSE; i++) {
+	for (int i = 0; i < MAX_MICE; i++) {
 		RELEASE(mouseProperties[i].lpdid)
 	}
 	mouseCount = 0;
@@ -783,7 +779,7 @@ INT32 loadGamepadMappings() {
 INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, UINT32* nProfileCount)
 {
 	// This is where we will load our mapping information.
-	for (size_t i = 0; i < MAX_INPUT_PROFILE; i++)
+	for (size_t i = 0; i < MAX_INPUT_PROFILES; i++)
 	{
 		ppProfileInfos[i] = NULL;
 	}
@@ -802,7 +798,7 @@ INT32 getInputProfiles(InputProfileEntry** ppProfileInfos, UINT32* nProfileCount
 INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, UINT32* nPadCount)
 {
 	// This is where we will load our mapping information.
-	for (size_t i = 0; i < MAX_GAMEPAD; i++)
+	for (size_t i = 0; i < MAX_GAMEPADS; i++)
 	{
 		ppPadInfos[i] = NULL;
 	}

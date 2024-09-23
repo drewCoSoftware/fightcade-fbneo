@@ -143,6 +143,9 @@ enum ECardinalDir {
 enum EGamepadInput {
 	GPINPUT_UNSUPPORTED = 0x00,
 
+	// This value is meant to be used as a mask.
+	GPINPUT_GAMEPAD = 0x1000,
+
 	// Analog stick directions.
 	// NOTE: We do a bit of extra translation for these when we parse out the SDL database.
 	GPINPUT_LSTICK_UP,
@@ -196,8 +199,16 @@ enum EGamepadInput {
 	GPINPUT_GUIDE,          // This is the main x-box button, etc.
 	GPINPUT_MISC_BUTTON,   // Just some random, extra button....
 
+	// This value is meant to be masked with the FBK_* defs in inp_keys.h
+	GPINPUT_KEYB = 0x2000,
+	//GPINPUT_KEYB_F1,
+	//GPINPUT_KEYB_F2,
+	//GPINPUT_KEYB_F3,
+	//GPINPUT_KEYB_F4,
+	//GPINPUT_KEYB_F4,
 
-	// TODO: Add more as needed.
+	// GPINPUT_KEYBOARD,		// A keyboard key.
+
 };
 
 struct GamepadInputDesc {
