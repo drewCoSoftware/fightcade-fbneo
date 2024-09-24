@@ -2059,7 +2059,6 @@ INT32 SetDefaultGamepadInputs() {
 
 
 		// NOTE: This is where we can check the system guid, or whatever... to choose a user-specific mapping.
-
 		SetDefaultPadInputs(i, gpp);
 
 		++padsSet;
@@ -2081,7 +2080,7 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 	// OK, this is the heart of the multi-direction update.
 	// FBNEO drivers don't let us multi-map inputs, so it is up to us to figure
 	// out how we are going to do this....
-	// The big issue, is that they are recycling the game inputs, and use them as the PC inputs,
+	// The big issue, is that they are double-dipping the game inputs, and use them as the PC inputs,
 	// in the same structure / memory area.  This is what needs to be fixed.
 	// PC inputs can be more exotic, and then get mapped onto the games that we are emulating...
 	throw (std::exception("figure out how we are going to do multi-inputs for directions...."));
