@@ -57,6 +57,8 @@ struct giForce {
 	UINT8 nEffect;				// The effect to use		// @@AAR: Not used, as far as I can tell.....
 };
 
+// OBSOLETE:  Macro system is janky, so we will find a way to repeal and replace it.
+// With defineable CGameInputSet code we can certainly come up with a better system.
 struct giMacro {
 	UINT8 nMode;				// 0 = Unused, 1 = used
 
@@ -70,6 +72,7 @@ struct giMacro {
 	UINT8 nSysMacro;			// mappable system macro (1) or Auto-Fire (15)
 };
 
+#define GIT_UNDEFINED		(0x00)
 #define GIT_CONSTANT		(0x01)
 #define GIT_SWITCH			(0x02)
 
@@ -93,8 +96,16 @@ struct giMacro {
 
 
 
+// Maybe we just fix this here.....
+// So attach an index that matches up to the BurnInputInfos.....
+// --> Not really possible b/c of the way that the drivers are defined, and then all of the dumbshit C++ macros that they use
+// --> to 'organize' everything....
+
+// So... if we have a fixed number of game inputs (probably unavoidable at this point, but also makes sense) then we need to
+// have more than one pcInput available per game (nType) input.
 
 struct GameInp {
+	//  UINT8 pcInputCount = 1;		// How many PC inputs did we mapp....
 	UINT8 pcInput;				// PC side: see above
 	UINT8 nType;				// game side: see burn.h (BIT_* defs) (BurnInputInfo)
 

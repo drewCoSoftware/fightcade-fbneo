@@ -108,7 +108,7 @@ INT32 ConfigGameSave(bool bSave)
 	FILE* h;
 
 	if (!bSave) {
-		GameInpBlank(0);
+		ResetGameInputs(false);
 		ConfigGameLoad(false);
 	}
 

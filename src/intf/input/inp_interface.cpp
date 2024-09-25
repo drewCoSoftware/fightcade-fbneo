@@ -333,6 +333,15 @@ INT32 InputMake(bool bCopy)
 	pInputInOut[nInputSelect]->NewFrame();			// Clear existing input states.
 	bEnableKeyboardInputs = !IsEditActive();
 
+	// NOTE: If this flag is set, we are basically agreeing to hijack / override the current GameInp way of doing things...
+	// That breaks compatibility in a really bad way tho.....
+	if (UseGameInputSetForPCInputs) {
+		// Run through all of the GameInput sets, and merge / copy the values over to the GameInp.pcInput stuf.....
+		int x = 10;
+	}
+
+
+
 	ProcessSliders();
 
 	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
@@ -340,11 +349,8 @@ INT32 InputMake(bool bCopy)
 			continue;
 		}
 
-		// Since this goes through all inputs and does a merge on the state, I am pretty sure that multi-mapped buttons are already supported.....
-		// The only thing that will have to be modified is the analog / binary stuff as analog is handled first, then binary.
-		// We can overcome this by calling the if(bCopy)... code at the end of the GIT_SWITCH block.
 		switch (pgi->pcInput) {
-		case 0:									// Undefined
+		case GIT_UNDEFINED:						// Undefined
 			pgi->Input.nVal = 0;
 			break;
 

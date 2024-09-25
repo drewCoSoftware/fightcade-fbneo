@@ -11,6 +11,12 @@ TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("")
 // Inputs are broken into logical sets, i.e. 'player', 'system', etc.
 CGameInputSet GameInputSet;
 
+// Flag to let us know that we should read from here to get the game inputs vs.
+// using the ones that are defined in GameInp.....
+// When this is set to true, we will process GameInputSet FIRST, and then copy those
+// values over to GameInp.pcInput.  This is how (at least for now) we will achieve proper
+// double mapping for directional inputs.
+bool UseGameInputSetForPCInputs = false;
 
 // Mapping of PC inputs to game inputs
 struct GameInp* GameInp = NULL;
@@ -207,7 +213,7 @@ void GameInpCheckMouse()
 
 // ---------------------------------------------------------------------------
 
-INT32 GameInpBlank(INT32 bDipSwitch)
+INT32 ResetGameInputs(bool resetDipSwitches)
 {
 	UINT32 i = 0;
 	struct GameInp* pgi = NULL;
@@ -222,7 +228,7 @@ INT32 GameInpBlank(INT32 bDipSwitch)
 		struct BurnInputInfo bii;
 		memset(&bii, 0, sizeof(bii));
 		BurnDrvGetInputInfo(&bii, i);
-		if (bDipSwitch == 0 && (bii.nType & BIT_GROUP_CONSTANT)) {		// Don't blank the dip switches
+		if (!resetDipSwitches && (bii.nType & BIT_GROUP_CONSTANT)) {		// Don't blank the dip switches
 			continue;
 		}
 
@@ -882,6 +888,12 @@ INT32 GameInpInit()
 	nMacroCount = 0;
 	nMaxMacro = nMaxPlayers * 52;
 
+	// This loop literally just counts up to the size of the input list.
+	// Yep, don't bother to just define the size, loop over it till you overflow :``D
+	// Anyway.... the driver defines the total number of unique inputs....
+
+	// If there is any way for us to expand those mappings it has to happen in a way
+	// that allows us to extend the size of 'GameInp' when we introduce our mapping sets/groups....
 	for (UINT32 i = 0; i < 0x1000; i++) {
 		nRet = BurnDrvGetInputInfo(NULL, i);
 		if (nRet) {														// end of input list
@@ -897,6 +909,18 @@ INT32 GameInpInit()
 		return 1;
 	}
 	memset(GameInp, 0, nSize);
+
+
+	// This is where we will / can define a default CGameInputSet instance!
+	// So the idea is that we will always use a CGameInputSet to map onto GameImp for now.
+	// Other code that we have... (and eventually a user UI) can change this default, BUT
+	// creating it in the first place kind of gives us the best of both worlds...  we can
+	// always assume that there is a CGameInputSet instance that is actually controlling the action...
+	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
+	//      way to keep all of that consistent during the transition will be a big challenge....
+	//-- --> Maybe add a button or something on the dialog as a HACK?
+	throw std::exception("Create a default CGameInputSet instance from the GameInpArray");
+
 
 	// cache input directions for clearing opposites
 	// TODO: Input system needs to be reworked so that it can be aware of directional inputs in a sane way.
@@ -916,7 +940,7 @@ INT32 GameInpInit()
 									if (!_stricmp(bii.szName, "p2 right")) InpDirections[1][RIGHT] = i;
 	}
 
-	GameInpBlank(1);
+	ResetGameInputs(true);
 
 	InpDIPSWResetDIPs();
 
@@ -926,6 +950,7 @@ INT32 GameInpInit()
 
 	// NOTE: This data should be contained in the driver data....
 	// check if game needs clear opposites (SOCD)
+	// --> Better yet, just assume that EVERY game needs to clear opposites.
 	const char* clearOppositesGameList[] = {
 		"umk3", "umk3p", "umk3uc", "umk3uk", "umk3te",
 		"mk2", "mk2p", "mk2ute",
@@ -1985,6 +2010,7 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
 // should be a device associated with each player....  A 'mixed-mode' device could even
 // exist that could be mouse + keyboard + etc.
 INT32 SetDefaultGamepadInputs() {
+	UseGameInputSetForPCInputs = false;
 
 	// NOTE: Check for specific game that supports this notion.
 	// TODO: Some way to list the games that support this feature.  Probably
@@ -2032,7 +2058,7 @@ INT32 SetDefaultGamepadInputs() {
 
 	// Assign the datas...
 	GameInputSet = iSet;
-
+	UseGameInputSetForPCInputs = true;
 
 	// We grab all of the currently plugged gamepads, and use those, up to max
 	// players for the game to get the inputs mapped.
@@ -2059,7 +2085,7 @@ INT32 SetDefaultGamepadInputs() {
 
 
 		// NOTE: This is where we can check the system guid, or whatever... to choose a user-specific mapping.
-		SetDefaultPadInputs(i, gpp);
+		// CopyPadInputsToGameInputs(i, gpp);
 
 		++padsSet;
 	}
@@ -2075,7 +2101,7 @@ INT32 SetDefaultGamepadInputs() {
 }
 
 // --------------------------------------------------------------------------------
-INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
+INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 
 	// OK, this is the heart of the multi-direction update.
 	// FBNEO drivers don't let us multi-map inputs, so it is up to us to figure
@@ -2083,9 +2109,16 @@ INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 	// The big issue, is that they are double-dipping the game inputs, and use them as the PC inputs,
 	// in the same structure / memory area.  This is what needs to be fixed.
 	// PC inputs can be more exotic, and then get mapped onto the games that we are emulating...
-	throw (std::exception("figure out how we are going to do multi-inputs for directions...."));
+	//throw (std::exception("figure out how we are going to do multi-inputs for directions...."));
 
 	if (!GameInp) { return 0; }
+
+
+	if (UseGameInputSetForPCInputs) {
+		// Run through all of the GameInput sets, and merge / copy the values over to the GameInp.pcInput stuf.....
+		int x = 10;
+	}
+
 
 	auto offset = playerIndex * gpp.inputCount;
 

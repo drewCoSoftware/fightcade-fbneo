@@ -86,6 +86,9 @@ INT32 PNGLoadBuffer(IMAGE* img, unsigned char* buffer, int bufferLength, INT32 n
 INT32 PNGGetInfo(IMAGE* img, FILE *fp);
 INT32 PNGGetInfoBuffer(IMAGE* img, unsigned char* buffer, int bufferLength);
 
+extern bool UseGameInputSetForPCInputs;
+extern CGameInputSet GameInputSet;
+
 // gami.cpp
 extern struct GameInp* GameInp;
 extern UINT32 nGameInpCount;
@@ -108,13 +111,13 @@ TCHAR* InpMacroToDesc(struct GameInp* pgi);
 void GameInpCheckLeftAlt();
 void GameInpCheckMouse();
 #endif
-INT32 GameInpBlank(INT32 bDipSwitch);
+INT32 ResetGameInputs(bool resetDipSwitches);
 INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
 
 INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp);
 INT32 SetDefaultGamepadInputs();
-INT32 SetDefaultPadInputs(int playerIndex, GamepadInputProfileEx& gpp);
+INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp);
 
 INT32 GameInpDefault();
 INT32 GameInpWrite(FILE* h);
