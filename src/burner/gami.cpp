@@ -3,6 +3,10 @@
 #include "CGamepadDatabase.h"
 
 // Player Default Controls
+// These defaults are created / saved when the emulator is closed or something... they don't come pre-installed.
+// soo.... this is the mechanism that is used to 'remember' the last set of inputs for a given driver / platform....
+// I'm guessing that we can also come up with a better system, esp. since it saves joy indexes and stuff like that.....
+// --> Yes, we can have a better system, after looking at the cona.cpp code, we certainly can...
 INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
 TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("") };
 
@@ -880,6 +884,7 @@ static void GameInpInitMacros()
 	}
 }
 
+// --------------------------------------------------------------------------------------------------------
 INT32 GameInpInit()
 {
 	INT32 nRet = 0;
@@ -911,15 +916,33 @@ INT32 GameInpInit()
 	memset(GameInp, 0, nSize);
 
 
-	// This is where we will / can define a default CGameInputSet instance!
-	// So the idea is that we will always use a CGameInputSet to map onto GameImp for now.
-	// Other code that we have... (and eventually a user UI) can change this default, BUT
-	// creating it in the first place kind of gives us the best of both worlds...  we can
-	// always assume that there is a CGameInputSet instance that is actually controlling the action...
-	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
-	//      way to keep all of that consistent during the transition will be a big challenge....
-	//-- --> Maybe add a button or something on the dialog as a HACK?
-	throw std::exception("Create a default CGameInputSet instance from the GameInpArray");
+//	// This is where we will / can define a default CGameInputSet instance!
+//	// So the idea is that we will always use a CGameInputSet to map onto GameImp for now.
+//	// Other code that we have... (and eventually a user UI) can change this default, BUT
+//	// creating it in the first place kind of gives us the best of both worlds...  we can
+//	// always assume that there is a CGameInputSet instance that is actually controlling the action...
+//	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
+//	//      way to keep all of that consistent during the transition will be a big challenge....
+//	//-- --> Maybe add a button or something on the dialog as a HACK?
+//	// We can also detect the directional inputs while we are here....
+//	CGameInputSet dSet;
+//	dSet.GroupCount = 1;
+//
+//	GameInputGroup& dGroup = dSet.InputGroups[0];
+//	dGroup.BurnInputStartIndex = 0;
+//	dGroup.GroupType = IGROUP_UNDEFINED;
+//
+//	{
+//		struct BurnInputInfo bii;
+//		for (UINT32 i = 0; i < nGameInpCount; i++) {
+//			BurnDrvGetInputInfo(&bii, i);
+//
+//			dGroup.InputCount++;
+//			dGroup.Inputs[i] = { GP
+////			bii.nType
+//		}
+//	}
+//	throw std::exception("Create a default CGameInputSet instance from the GameInpArray");
 
 
 	// cache input directions for clearing opposites
@@ -2153,7 +2176,7 @@ INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 // --------------------------------------------------------------------------------
 // Auto-configure any undefined inputs to defaults
 // NOTE: This is where we could properly apply default mappings for joysticks / assigned players.
-INT32 GameInpDefault()
+INT32 SetDefaultGameInputs()
 {
 	struct GameInp* pgi;
 	struct BurnInputInfo bii;

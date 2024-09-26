@@ -193,15 +193,19 @@ int DrvInit(int nDrvNum, bool bRestore)
 
 	// Define nMaxPlayers early; GameInpInit() needs it (normally defined in DoLibInit()).
 	nMaxPlayers = BurnDrvGetMaxPlayers();
-	GameInpInit(); // Init game input
+	
+	// Init game input
+	GameInpInit(); 
+	SetDefaultGamepadInputs();
 
 	if(ConfigGameLoad(true)) {
 		ConfigGameLoadHardwareDefaults();
 	}
 	InputMake(true);
-	GameInpDefault();
+
+
+	SetDefaultGameInputs();
 	
-	SetDefaultGamepadInputs();
 	
 
 	if (kNetGame) {

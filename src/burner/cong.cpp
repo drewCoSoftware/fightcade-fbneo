@@ -34,6 +34,8 @@ static TCHAR* GameConfigName()
 	return szName;
 }
 
+
+// ------------------------------------------------------------------------------------------------------------
 // Read in the config file for the game-specific inputs
 INT32 ConfigGameLoad(bool bOverWrite)
 {
@@ -51,6 +53,7 @@ INT32 ConfigGameLoad(bool bOverWrite)
 	}
 
 	// Go through each line of the config file and process inputs
+	// NOTE: Unsafe, possible buffer overrun.  Use some other line reading code that doesn't do this. (GamepadDatabaseReader for example)
 	while (_fgetts(szLine, sizeof(szLine), h)) {
 		TCHAR *szValue;
 		INT32 nLen = _tcslen(szLine);

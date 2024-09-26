@@ -74,6 +74,9 @@ int ConfigAppLoad()
 		VAR(bBurnUseASMCPUEmulation);
 #endif
 
+		// Yes, we are literally attempting to find + assign values for EVERY line of the file.
+		// VERY efficient!
+
 		// Video
 		VAR(nVidDepth);
 		VAR(nVidRefresh);

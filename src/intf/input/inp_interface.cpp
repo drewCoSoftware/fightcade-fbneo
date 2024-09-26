@@ -244,7 +244,6 @@ INT32 InputSaveGamepadMappings() {
 INT32 InputInit() {
 	INT32 nRet;
 
-
 	LoadGamepadDatabase();
 
 	bInputOkay = false;

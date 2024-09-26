@@ -894,13 +894,13 @@ int init()
 
 	// This is where we will want to load up default mappings for the devices to
 	// match the game that is currently loaded....
-	// Maybe 'GameInpDefault()' in gami.cpp is the place to look?
+	// Maybe 'SetDefaultGameInputs()' in gami.cpp is the place to look?
 	// pDriver[nBurnDrvActive] is the currently loaded game it looks like....
 	int xx = 10;
 
 	// NOTE: We might need to pass in some args to remap / not remap current controllers....
 	SetDefaultGamepadInputs();
-	//GameInpDefault();
+	//SetDefaultGameInputs();
 
 
 	return 0;

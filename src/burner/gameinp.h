@@ -105,7 +105,7 @@ struct giMacro {
 // have more than one pcInput available per game (nType) input.
 
 struct GameInp {
-	//  UINT8 pcInputCount = 1;		// How many PC inputs did we mapp....
+	//  UINT8 pcInputCount = 1;		// How many PC inputs did we map?
 	UINT8 pcInput;				// PC side: see above
 	UINT8 nType;				// game side: see burn.h (BIT_* defs) (BurnInputInfo)
 
@@ -222,6 +222,8 @@ enum EGamepadInput {
 
 };
 
+// REFACTOR: This can describe other inputs, not just gamepads.
+// Its members can also be better defined as they could still be keyboard or mouse inputsm, etc.
 struct GamepadInputDesc {
 	EGamepadInput Input;			// The type of input.
 	INT32 GameInputIndex;			// The corresponding input index (defined in the driver).  NOTE: GameInputIndex can be defined more than once to allow for analog stick + dpad inputs for directions.

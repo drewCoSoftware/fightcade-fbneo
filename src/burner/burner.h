@@ -119,7 +119,7 @@ INT32 GetGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp);
 INT32 SetDefaultGamepadInputs();
 INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp);
 
-INT32 GameInpDefault();
+INT32 SetDefaultGameInputs();
 INT32 GameInpWrite(FILE* h);
 INT32 GameInpRead(TCHAR* szVal, bool bOverWrite);
 INT32 GameInpMacroRead(TCHAR* szVal, bool bOverWrite);
@@ -160,6 +160,8 @@ extern bool bHasFocus;
 // cong.cpp
 extern const INT32 nConfigMinVersion;					// Minimum version of application for which input files are valid
 extern bool bSaveInputs;
+
+// REFACTOR:  'LoadGameConfig' / 'SaveGameConfig'  --> prefer english over yoda names.
 INT32 ConfigGameLoad(bool bOverWrite);				// char* lpszName = NULL
 INT32 ConfigGameSave(bool bSave);
 

@@ -99,7 +99,7 @@ struct GamepadInputProfile {
 #define MAX_INPUTS 16
 
 enum EInputGroupType {
-	IGROUP_UNKNOWN = 0,
+	IGROUP_UNDEFINED = 0,
 	IGROUP_PLAYER,
 	IGROUP_SYSTEM
 };
