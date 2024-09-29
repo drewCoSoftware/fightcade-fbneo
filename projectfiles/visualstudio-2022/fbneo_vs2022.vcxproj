@@ -585,10 +585,14 @@
     <ClCompile Include="..\..\src\intf\video\win32\vid_overlay.cpp" />
     <ClCompile Include="generated\m68kops.c" />
     <CustomBuild Include="..\..\src\burn\drv\capcom\ctv_make.cpp">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl ..\..\src\burn\drv\capcom\%(Filename).cpp 
-%(Filename).exe &gt; generated\ctv.h 
-del %(Filename).obj
-del %(Filename).exe</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist generated\ctv.h (
+  cl ..\..\src\burn\drv\capcom\%(Filename).cpp 
+  %(Filename).exe &gt; generated\ctv.h 
+  del %(Filename).obj
+  del %(Filename).exe
+) else (
+  echo "ctv.h exists"
+)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\generated\ctv.h</Outputs>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl ..\..\src\burn\drv\capcom\%(Filename).cpp 
@@ -802,10 +806,14 @@ del %(Filename).exe</Command>
     <ClCompile Include="..\..\src\burn\drv\pgm\pgm_draw.cpp" />
     <ClCompile Include="..\..\src\burn\drv\pgm\pgm_run.cpp" />
     <CustomBuild Include="..\..\src\burn\drv\pgm\pgm_sprite_create.cpp">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl ..\..\src\burn\drv\pgm\%(Filename).cpp 
-%(Filename).exe &gt; generated\pgm_sprite.h 
-del %(Filename).obj
-del %(Filename).exe</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist generated\pgm_sprite.h (
+  cl ..\..\src\burn\drv\pgm\%(Filename).cpp 
+  %(Filename).exe &gt; generated\pgm_sprite.h 
+  del %(Filename).obj
+  del %(Filename).exe
+) else (
+  echo "pgm_sprite.h exists"
+)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pgm_sprite.h</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl ..\..\src\burn\drv\pgm\%(Filename).cpp 
 %(Filename).exe &gt; generated\pgm_sprite.h 
@@ -1345,12 +1353,17 @@ del %(Filename).exe</Command>
     </ClCompile>
     <CustomBuild Include="..\..\src\cpu\m68k\m68kmake.c">
       <FileType>CppCode</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cl /DINLINE="__inline static" ..\..\src\cpu\m68k\%(Filename).c
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist generated\m68kops.c (set BUILD=1)
+if not exist generated\m68kops.h (set BUILD=1)
+if defined BUILD (
+  cl /DINLINE="__inline static" ..\..\src\cpu\m68k\%(Filename).c
 
-%(Filename).exe generated/ ..\..\src\cpu\m68k\m68k_in.c
-del %(Filename).obj
-del %(Filename).exe
-
+  %(Filename).exe generated/ ..\..\src\cpu\m68k\m68k_in.c
+  del %(Filename).obj
+  del %(Filename).exe
+) else ( 
+  echo "m68kops files exist"
+)
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">m68kmake.exe</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cl /DINLINE="__inline static" ..\..\src\cpu\m68k\%(Filename).c
@@ -1458,16 +1471,19 @@ del %(Filename).exe
     <ClCompile Include="..\..\src\dep\libs\zlib\zutil.c" />
     <CustomBuild Include="..\..\src\dep\scripts\build_details.cpp">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</DeploymentContent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cd ..
-cd ..
-cd src
-cd dep
-cd scripts
-"cl" build_details.cpp
-build_details &gt;../../../projectfiles/visualstudio-2015/generated/build_details.h
-del build_details.obj
-del build_details.exe
-</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">if not exist generated\build_details.h (
+  cd ..
+  cd ..
+  cd src
+  cd dep
+  cd scripts
+  "cl" build_details.cpp
+  build_details &gt;../../../projectfiles/visualstudio-2022/generated/build_details.h
+  del build_details.obj
+  del build_details.exe
+) else (
+  echo "build_details.h exists
+)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build_details.h</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cd ..
 cd ..
