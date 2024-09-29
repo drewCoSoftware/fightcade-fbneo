@@ -216,7 +216,6 @@ void GameInpCheckMouse()
 #endif
 
 // ---------------------------------------------------------------------------
-
 INT32 ResetGameInputs(bool resetDipSwitches)
 {
 	UINT32 i = 0;
@@ -259,6 +258,7 @@ INT32 ResetGameInputs(bool resetDipSwitches)
 	return 0;
 }
 
+// OBSOLETE: Macro system will be removed + replaced.  It is not good.
 static void GameInpInitMacros()
 {
 	struct GameInp* pgi;
@@ -896,9 +896,6 @@ INT32 GameInpInit()
 	// This loop literally just counts up to the size of the input list.
 	// Yep, don't bother to just define the size, loop over it till you overflow :``D
 	// Anyway.... the driver defines the total number of unique inputs....
-
-	// If there is any way for us to expand those mappings it has to happen in a way
-	// that allows us to extend the size of 'GameInp' when we introduce our mapping sets/groups....
 	for (UINT32 i = 0; i < 0x1000; i++) {
 		nRet = BurnDrvGetInputInfo(NULL, i);
 		if (nRet) {														// end of input list
@@ -916,38 +913,38 @@ INT32 GameInpInit()
 	memset(GameInp, 0, nSize);
 
 
-//	// This is where we will / can define a default CGameInputSet instance!
-//	// So the idea is that we will always use a CGameInputSet to map onto GameImp for now.
-//	// Other code that we have... (and eventually a user UI) can change this default, BUT
-//	// creating it in the first place kind of gives us the best of both worlds...  we can
-//	// always assume that there is a CGameInputSet instance that is actually controlling the action...
-//	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
-//	//      way to keep all of that consistent during the transition will be a big challenge....
-//	//-- --> Maybe add a button or something on the dialog as a HACK?
-//	// We can also detect the directional inputs while we are here....
-//	CGameInputSet dSet;
-//	dSet.GroupCount = 1;
-//
-//	GameInputGroup& dGroup = dSet.InputGroups[0];
-//	dGroup.BurnInputStartIndex = 0;
-//	dGroup.GroupType = IGROUP_UNDEFINED;
-//
-//	{
-//		struct BurnInputInfo bii;
-//		for (UINT32 i = 0; i < nGameInpCount; i++) {
-//			BurnDrvGetInputInfo(&bii, i);
-//
-//			dGroup.InputCount++;
-//			dGroup.Inputs[i] = { GP
-////			bii.nType
-//		}
-//	}
-//	throw std::exception("Create a default CGameInputSet instance from the GameInpArray");
+	//	// This is where we will / can define a default CGameInputSet instance!
+	//	// So the idea is that we will always use a CGameInputSet to map onto GameImp for now.
+	//	// Other code that we have... (and eventually a user UI) can change this default, BUT
+	//	// creating it in the first place kind of gives us the best of both worlds...  we can
+	//	// always assume that there is a CGameInputSet instance that is actually controlling the action...
+	//	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
+	//	//      way to keep all of that consistent during the transition will be a big challenge....
+	//	//-- --> Maybe add a button or something on the dialog as a HACK?
+	//	// We can also detect the directional inputs while we are here....
+	//	CGameInputSet dSet;
+	//	dSet.GroupCount = 1;
+	//
+	//	GameInputGroup& dGroup = dSet.InputGroups[0];
+	//	dGroup.BurnInputStartIndex = 0;
+	//	dGroup.GroupType = IGROUP_UNDEFINED;
+	//
+	//	{
+	//		struct BurnInputInfo bii;
+	//		for (UINT32 i = 0; i < nGameInpCount; i++) {
+	//			BurnDrvGetInputInfo(&bii, i);
+	//
+	//			dGroup.InputCount++;
+	//			dGroup.Inputs[i] = { GP
+	////			bii.nType
+	//		}
+	//	}
+	//	throw std::exception("Create a default CGameInputSet instance from the GameInpArray");
 
 
-	// cache input directions for clearing opposites
-	// TODO: Input system needs to be reworked so that it can be aware of directional inputs in a sane way.
-	// NOTE: This is a great place to make note of the directional inputs for a game so that we can look into mapping stick / dpad inputs to directions.
+		// cache input directions for clearing opposites
+		// TODO: Input system needs to be reworked so that it can be aware of directional inputs in a sane way.
+		// NOTE: This is a great place to make note of the directional inputs for a game so that we can look into mapping stick / dpad inputs to directions.
 	memset(InpDirections[0], 0, 4 * sizeof(INT32));
 	memset(InpDirections[1], 0, 4 * sizeof(INT32));
 	struct BurnInputInfo bii;
@@ -1656,6 +1653,7 @@ static UINT32 MacroNameToNum(TCHAR* szName)
 }
 
 // ---------------------------------------------------------------------------
+// Set a reasonable default input for the corresponding PGI.
 static INT32 GameInpAutoOne(struct GameInp* pgi, char* szi)
 {
 	for (INT32 i = 0; i < nMaxPlayers; i++) {
@@ -1804,6 +1802,8 @@ static INT32 AddCustomMacro(TCHAR* szValue, bool bOverWrite)
 	return 1;
 }
 
+// Read game input settings from an ini file.
+// --> This function will probably be removed.
 INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite)
 {
 	TCHAR szLine[1024];
@@ -2174,6 +2174,27 @@ INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 }
 
 // --------------------------------------------------------------------------------
+INT32 CreateDefaultInputSet() {
+
+	struct GameInp* pgi;
+	struct BurnInputInfo bii;
+	UINT32 i;
+
+	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
+
+		// Get the extra info about the input
+		bii.szInfo = NULL;
+		BurnDrvGetInputInfo(&bii, i);
+		if (bii.pVal == NULL) {
+			continue;
+		}
+
+
+	}
+}
+
+
+// --------------------------------------------------------------------------------
 // Auto-configure any undefined inputs to defaults
 // NOTE: This is where we could properly apply default mappings for joysticks / assigned players.
 INT32 SetDefaultGameInputs()
@@ -2182,14 +2203,14 @@ INT32 SetDefaultGameInputs()
 	struct BurnInputInfo bii;
 	UINT32 i;
 
-	for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
+	//for (INT32 nPlayer = 0; nPlayer < nMaxPlayers; nPlayer++) {
 
-		if ((nPlayerDefaultControls[nPlayer] & 0x0F) != 0x0F) {
-			continue;
-		}
+	//	if ((nPlayerDefaultControls[nPlayer] & 0x0F) != 0x0F) {
+	//		continue;
+	//	}
 
-		GameInputAutoIni(nPlayer, szPlayerDefaultIni[nPlayer], false);
-	}
+	//	GameInputAutoIni(nPlayer, szPlayerDefaultIni[nPlayer], false);
+	//}
 
 	// Fill all inputs still undefined
 	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
@@ -2226,7 +2247,11 @@ INT32 SetDefaultGameInputs()
 	}
 
 
-	// Now set the inputs for the 
+	// Now that we have our defaults, we can populate the input set.
+	// NOTE: The code above, where the calls to GameInpAutoOne are made,
+	// can eventually be folded into the code for creating the deafault input set.  We
+	// can probably find a way to greatly reduce its complexity at that time as well.
+	CreateDefaultInputSet();
 
 
 	return 0;

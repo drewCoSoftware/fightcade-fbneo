@@ -20,32 +20,32 @@ static int DrvBzipOpen()
 
 	// If there is a problem with the romset, report it
 	switch (BzipStatus()) {
-		case BZIP_STATUS_BADDATA: {
-			if (!bHideROMWarnings) {
-				FBAPopupDisplay(PUF_TYPE_WARNING);
-			}
-			break;
+	case BZIP_STATUS_BADDATA: {
+		if (!bHideROMWarnings) {
+			FBAPopupDisplay(PUF_TYPE_WARNING);
 		}
-		case BZIP_STATUS_ERROR: {
-			FBAPopupDisplay(PUF_TYPE_ERROR);
+		break;
+	}
+	case BZIP_STATUS_ERROR: {
+		FBAPopupDisplay(PUF_TYPE_ERROR);
 
 #if 0 || !defined FBNEO_DEBUG
-			// Don't even bother trying to start the game if we know it won't work
-			BzipClose();
-			return 1;
+		// Don't even bother trying to start the game if we know it won't work
+		BzipClose();
+		return 1;
 #endif
 
-			break;
-		}
-		default: {
+		break;
+	}
+	default: {
 
 #if 0 && defined FBNEO_DEBUG
-			FBAPopupDisplay(PUF_TYPE_INFO);
+		FBAPopupDisplay(PUF_TYPE_INFO);
 #else
-			FBAPopupDisplay(PUF_TYPE_INFO | PUF_TYPE_LOGONLY);
+		FBAPopupDisplay(PUF_TYPE_INFO | PUF_TYPE_LOGONLY);
 #endif
 
-		}
+	}
 	}
 
 	return 0;
@@ -71,7 +71,8 @@ static int DoLibInit()					// Do Init of Burn library driver
 
 	if (nRet) {
 		return 3;
-	} else {
+	}
+	else {
 		return 0;
 	}
 }
@@ -105,20 +106,20 @@ static int __cdecl DrvLoadRom(unsigned char* Dest, int* pnWrote, int i)
 int __cdecl DrvCartridgeAccess(BurnCartrigeCommand nCommand)
 {
 	switch (nCommand) {
-		case CART_INIT_START:
-			if (!bQuietLoading) ProgressCreate();
-			if (DrvBzipOpen()) {
-				return 1;
-			}
-			break;
-		case CART_INIT_END:
-			if (!bQuietLoading) ProgressDestroy();
-			BzipClose();
-			break;
-		case CART_EXIT:
-			break;
-		default:
+	case CART_INIT_START:
+		if (!bQuietLoading) ProgressCreate();
+		if (DrvBzipOpen()) {
 			return 1;
+		}
+		break;
+	case CART_INIT_END:
+		if (!bQuietLoading) ProgressDestroy();
+		BzipClose();
+		break;
+	case CART_EXIT:
+		break;
+	default:
+		return 1;
 	}
 
 	return 0;
@@ -192,21 +193,43 @@ int DrvInit(int nDrvNum, bool bRestore)
 	bAudOkay = 0;
 
 	// Define nMaxPlayers early; GameInpInit() needs it (normally defined in DoLibInit()).
+	// GameInpInit() needs max players b/c of the macro system.
 	nMaxPlayers = BurnDrvGetMaxPlayers();
-	
-	// Init game input
-	GameInpInit(); 
+
+	// Init game input.
+	// This basically sets everything to zero / sets constants / clears all pc side inputs.
+	GameInpInit();
+
+	//// NOTE: This block is for loading last config, and then defaults for every input
+	//// that hasn't been set yet.  Seems like overkill, but is also game specific.
+	//// Seems better to load defaults first, then player specific stuff....
+	//// --> ANYWAY: The goal would be to construct some kind of default input set based on the system,
+	//// and the last user stuff.......  However, with PNP, last user stuff doesn't really make sense unless
+	//// we could uniquely identify the person behind the pad, which isn't possible.....
+	//{
+	//	// If we don't load the last game input config, we load the hardware defaults instead...
+	//	if (ConfigGameLoad(true)) {
+	//		ConfigGameLoadHardwareDefaults();
+	//	}
+	//	// Fills out all other undefined inputs from some other config file...
+	//}
+
+	// We are just going to create an input set from the default hardware inputs.
+	// Skip the loading of the inis and stuff....
+	// We can come up with a rewrite for that at a later date if we like.
+	// ConfigGameLoadHardwareDefaults();
+	SetDefaultGameInputs();
+
+
+
+	// Now we can modify the input set based on if any gamepads are plugged in.
 	SetDefaultGamepadInputs();
 
-	if(ConfigGameLoad(true)) {
-		ConfigGameLoadHardwareDefaults();
-	}
+
 	InputMake(true);
 
 
-	SetDefaultGameInputs();
-	
-	
+
 
 	if (kNetGame) {
 		nBurnCPUSpeedAdjust = 0x0100;
@@ -239,20 +262,22 @@ int DrvInit(int nDrvNum, bool bRestore)
 	if (BurnDrvGetFlags() & BDF_ORIENTATION_VERTICAL) {
 		nScreenSize = nScreenSizeVer;
 		bVidArcaderes = bVidArcaderesVer;
-		nVidWidth	= nVidVerWidth;
-		nVidHeight	= nVidVerHeight;
-	} else {
+		nVidWidth = nVidVerWidth;
+		nVidHeight = nVidVerHeight;
+	}
+	else {
 		nScreenSize = nScreenSizeHor;
 		bVidArcaderes = bVidArcaderesHor;
-		nVidWidth	= nVidHorWidth;
-		nVidHeight	= nVidHorHeight;
+		nVidWidth = nVidHorWidth;
+		nVidHeight = nVidHorHeight;
 	}
 
 	bSaveRAM = false;
 	if (kNetGame) {
 		NetworkInitInput();
 		NetworkGetInput();
-	} else {
+	}
+	else {
 		if (bRestore) {
 			StatedAuto(0);
 			bSaveRAM = true;
