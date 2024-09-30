@@ -2215,29 +2215,19 @@ EGamepadInput TranslatePCInput(struct GameInp* pgi) {
 			if ((gpCode & BURNER_BUTTON) == BURNER_BUTTON) {
 				// NOTE: We can't really say what button is what...
 				// because of gamepad mappings, so maybe just punt?
-				int a = 1;
+				size_t useCode = gpCode ^ BURNER_BUTTON;
+				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_BUTTONS | (useCode + 1));
+				return res;
 			}
 			else if ((gpCode & BURNER_DPAD) == BURNER_DPAD) {
 				size_t useCode = gpCode ^ BURNER_DPAD;
-				int b = 1;
+				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_DPAD | (useCode + 1));
+				return res;
 			}
 			else if (gpCode < BURNER_DPAD) {
-				// This is an analog..... so we need to translate those codes....
-				// TODO: We can come up with a better way to represent this...
-				if (gpCode == 2) { 
-					return GPINPUT_LSTICK_UP;
-				}
-				if (gpCode == 3) { 
-					return GPINPUT_LSTICK_DOWN;
-				}
-				if (gpCode == 0) {
-					return GPINPUT_LSTICK_DOWN;
-				}
-				if (gpCode == 1) {
-					return GPINPUT_LSTICK_DOWN;
-				}
-
-				return GPINPUT_UNSUPPORTED;
+				// Analog inputs.
+				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_ANALOG | (gpCode + 1));
+				return res;
 			 }
 
 

@@ -150,62 +150,65 @@ enum ECardinalDir {
 	DIR_RIGHT
 };
 
+//enum EPCInput {
+//	
+//};
+
+
 
 // =============================================================================================
 // Standardized names for gamepad inputs.
+// TODO: Rename this type to something that is more general...
+// We pretty much want something that matches the nCode values that are used in FBNEO.
 enum EGamepadInput {
 	GPINPUT_NOT_SET = 0x00,
 	GPINPUT_UNSUPPORTED = 0x01,
 
 	// This value is meant to be used as a mask.
-	GPINPUT_GAMEPAD = 0x1000,
+	GPINPUT_PAD = 0x1000,
+
+	GPINPUT_PAD_ANALOG = GPINPUT_PAD | 0x100,
 
 	// Analog stick directions.
 	// NOTE: We do a bit of extra translation for these when we parse out the SDL database.
-	GPINPUT_LSTICK_UP,		// BURNER_ANALOG | 2 
-	GPINPUT_LSTICK_DOWN,	// BURNER_ANALOG | 0
-	GPINPUT_LSTICK_LEFT,	// BURNER_ANALOG | 3
-	GPINPUT_LSTICK_RIGHT,	// BURNER_ANALOG | 4
+	GPINPUT_LSTICK_LEFT   =	 GPINPUT_PAD_ANALOG | 0x1,  // BURNER_ANALOG | 3
+	GPINPUT_LSTICK_RIGHT  =	 GPINPUT_PAD_ANALOG | 0x2,  // BURNER_ANALOG | 4
+	GPINPUT_LSTICK_UP     =	 GPINPUT_PAD_ANALOG | 0x3,  // BURNER_ANALOG | 2 
+	GPINPUT_LSTICK_DOWN   =	 GPINPUT_PAD_ANALOG | 0x4,  // BURNER_ANALOG | 0
 
+
+	// TODO: Figure out the indexes for this....
 	GPINPUT_RSTICK_UP,
 	GPINPUT_RSTICK_DOWN,
 	GPINPUT_RSTICK_LEFT,
 	GPINPUT_RSTICK_RIGHT,
 
 
-	// NOTE: These are kind of special...  they describe two values (+/-) for a single axis.
-
-	GPINPUT_LSTICK_X,         // x-axis (+/-)
-	GPINPUT_LSTICK_Y,         // y-axis (+/-)
-	
-	// Analog stick directions.
-	GPINPUT_RSTICK_X,         // x-axis (+/-)
-	GPINPUT_RSTICK_Y,         // y-axis (+/-)
+	GPINPUT_PAD_DPAD = GPINPUT_PAD | 0x200,
+	GPINPUT_DPAD_LEFT = GPINPUT_PAD_DPAD | 0x1,
+	GPINPUT_DPAD_RIGHT = GPINPUT_PAD_DPAD | 0x2,
+	GPINPUT_DPAD_UP = GPINPUT_PAD_DPAD | 0x3,
+	GPINPUT_DPAD_DOWN = GPINPUT_PAD_DPAD | 0x4,
 
 	// L/R stick 'click' buttons.
 	GPINPUT_LSTICK_BUTTON,
 	GPINPUT_RSTICK_BUTTON,
 
 
-	// NOTE: I think that a single 'DPAD' type will be OK.
-	GPINPUT_DPAD_UP,
-	GPINPUT_DPAD_DOWN,
-	GPINPUT_DPAD_LEFT,
-	GPINPUT_DPAD_RIGHT,
-
+	GPINPUT_PAD_BUTTONS = GPINPUT_PAD | 0x300,
+	GPINPUT_A,				// PS - cross / x	: SWITCH - B
+	GPINPUT_B,				// PS - circle		: SWITCH - A
+	GPINPUT_X,				// PS - square		: SWITCH - Y
+	GPINPUT_Y,				// PS - triangle	: SWITCH - X
+	GPINPUT_LEFT_TRIGGER,
+	GPINPUT_RIGHT_TRIGGER,
 	GPINPUT_BACK,				// back / select button.
 	GPINPUT_START,
 
-	GPINPUT_X,				// PS - square		: SWITCH - Y
-	GPINPUT_Y,				// PS - triangle	: SWITCH - X
-	GPINPUT_A,				// PS - cross / x	: SWITCH - B
-	GPINPUT_B,				// PS - circle		: SWITCH - A
 
 	// Analog triggers....
-	GPINPUT_LEFT_TRIGGER,
 	GPINPUT_LEFT_BUMPER,
 
-	GPINPUT_RIGHT_TRIGGER,
 	GPINPUT_RIGHT_BUMPER,
 
 	GPINPUT_TOUCHPAD,       // This is some kind of PS specific thing.
@@ -215,13 +218,22 @@ enum EGamepadInput {
 
 	// This value is meant to be masked with the FBK_* defs in inp_keys.h
 	GPINPUT_KEYB = 0x2000,
-	//GPINPUT_KEYB_F1,
-	//GPINPUT_KEYB_F2,
-	//GPINPUT_KEYB_F3,
-	//GPINPUT_KEYB_F4,
-	//GPINPUT_KEYB_F4,
 
-	// GPINPUT_KEYBOARD,		// A keyboard key.
+
+
+	// Special inputs, that have extra / special meaning?
+	// Maybe only used when we read in the gamepad database?
+	GPINPUT_XTRA = 0x8000,
+
+	// NOTE: These are kind of special...  they describe two values (+/-) for a single axis.
+	// Also, this is more of a thing that we use when reading the pad database file....
+	GPINPUT_LSTICK_X,         // x-axis (+/-)
+	GPINPUT_LSTICK_Y,         // y-axis (+/-)
+
+	// Analog stick directions.
+	GPINPUT_RSTICK_X,         // x-axis (+/-)
+	GPINPUT_RSTICK_Y,         // y-axis (+/-)
+
 
 };
 
