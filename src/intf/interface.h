@@ -46,9 +46,9 @@ struct GamepadInput {
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
 };
 
-#define BURNER_BUTTON	0x80
-#define BURNER_DPAD		0x10
-#define BURNER_ANALOG	0x00
+static const UINT16 BURNER_BUTTON = 0x80;
+static const UINT16 BURNER_DPAD = 0x10;
+static const UINT16 BURNER_ANALOG = 0x00;
 
 // Gamepad listing info.....
 // New type that we are using to properly abstract a gamepad for use in the emulator.
@@ -65,6 +65,7 @@ struct GamepadInputEx {
 		switch (type) {
 		case ITYPE_UNSET:
 			return 0;
+
 		case ITYPE_BUTTON:
 			return BURNER_BUTTON | index;
 
@@ -99,7 +100,7 @@ struct GamepadInputProfile {
 #define MAX_INPUTS 16
 
 enum EInputGroupType {
-	IGROUP_UNDEFINED = 0,
+	IGROUP_NOT_USED = 0,
 	IGROUP_PLAYER,
 	IGROUP_SYSTEM
 };
@@ -121,7 +122,8 @@ struct GameInputGroup {
 
 };
 
-static const UINT32 MAX_GROUPS  = 4;
+static const UINT32 MAX_GROUPS = 5;
+static const UINT32 MAX_PLAYERS = 4;
 
 // Describes a set of input groups for an entire game.
 struct CGameInputSet {
@@ -180,13 +182,15 @@ struct InputProfileEntry {
 // Other Input Related Defines:
 #define MAX_GAMEPAD_BUTTONS	(16)
 
+// TODO: Replace with static const.
 // TODO: These defines would be right at home in the rest of the code!
 // They describe address ranges for input codes!
 // Let's make an effort to remove magic values!
-#define JOYSTICK_LOWER 0x4000
-#define JOYSTICK_UPPER 0x8000
-#define MOUSE_LOWER JOYSTICK_UPPER
-#define MOUSE_UPPER 0xC000
+static const UINT32 JOYSTICK_LOWER = 0x4000;
+static const UINT32 JOYSTICK_UPPER = 0x8000;
+
+static const UINT32 MOUSE_LOWER = JOYSTICK_UPPER;
+static const UINT32 MOUSE_UPPER = 0xC000;
 
 #define MAX_DIRS 4
 

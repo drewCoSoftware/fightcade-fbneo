@@ -72,6 +72,8 @@ struct giMacro {
 	UINT8 nSysMacro;			// mappable system macro (1) or Auto-Fire (15)
 };
 
+// TODO: This should be an enum.
+
 #define GIT_UNDEFINED		(0x00)
 #define GIT_CONSTANT		(0x01)
 #define GIT_SWITCH			(0x02)
@@ -106,7 +108,7 @@ struct giMacro {
 
 struct GameInp {
 	//  UINT8 pcInputCount = 1;		// How many PC inputs did we map?
-	UINT8 pcInput;				// PC side: see above
+	UINT8 pcInput;				// PC side: see above  --> This is the TYPE of pc input!  Nothing else!
 	UINT8 nType;				// game side: see burn.h (BIT_* defs) (BurnInputInfo)
 
 	union {
@@ -152,17 +154,18 @@ enum ECardinalDir {
 // =============================================================================================
 // Standardized names for gamepad inputs.
 enum EGamepadInput {
-	GPINPUT_UNSUPPORTED = 0x00,
+	GPINPUT_NOT_SET = 0x00,
+	GPINPUT_UNSUPPORTED = 0x01,
 
 	// This value is meant to be used as a mask.
 	GPINPUT_GAMEPAD = 0x1000,
 
 	// Analog stick directions.
 	// NOTE: We do a bit of extra translation for these when we parse out the SDL database.
-	GPINPUT_LSTICK_UP,
-	GPINPUT_LSTICK_DOWN,
-	GPINPUT_LSTICK_LEFT,
-	GPINPUT_LSTICK_RIGHT,
+	GPINPUT_LSTICK_UP,		// BURNER_ANALOG | 2 
+	GPINPUT_LSTICK_DOWN,	// BURNER_ANALOG | 0
+	GPINPUT_LSTICK_LEFT,	// BURNER_ANALOG | 3
+	GPINPUT_LSTICK_RIGHT,	// BURNER_ANALOG | 4
 
 	GPINPUT_RSTICK_UP,
 	GPINPUT_RSTICK_DOWN,

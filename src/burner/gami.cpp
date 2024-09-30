@@ -927,7 +927,7 @@ INT32 GameInpInit()
 	//
 	//	GameInputGroup& dGroup = dSet.InputGroups[0];
 	//	dGroup.BurnInputStartIndex = 0;
-	//	dGroup.GroupType = IGROUP_UNDEFINED;
+	//	dGroup.GroupType = IGROUP_NOT_USED;
 	//
 	//	{
 	//		struct BurnInputInfo bii;
@@ -1436,7 +1436,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 	TCHAR* szName = _T("");
 
 	// Mouse
-	if (c >= 0x8000) {
+	if (c >= MOUSE_LOWER) {
 		INT32 nMouse = (c >> 8) & 0x3F;
 		INT32 nCode = c & 0xFF;
 		if (nCode >= 0x80) {
@@ -1458,7 +1458,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 
 	// Joystick
 	// NOTE: If formatting for aliases, we would replace 'Joy' below with the alias name!
-	if (c >= 0x4000 && c < 0x8000) {
+	if (c >= JOYSTICK_LOWER && c < JOYSTICK_UPPER) {
 
 		INT32 nJoy = (c >> 8) & 0x3F;			// Translate the index of the joystick.
 		INT32 nCode = c & 0xFF;
@@ -1493,6 +1493,7 @@ TCHAR* InputCodeDesc(INT32 c, GamepadFileEntry** padInfos)
 		}
 	}
 
+	// Keyboard
 	for (INT32 i = 0; KeyNames[i].nCode; i++) {
 		if (c == KeyNames[i].nCode) {
 			if (KeyNames[i].szName) {
@@ -2158,12 +2159,12 @@ INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 		code |= JOYSTICK_LOWER;
 
 		auto useInp = (pGameInput + i);
-		UINT8 nInput = useInp->pcInput;
+		UINT8 pcInput = useInp->pcInput;
 
-		if (nInput == GIT_SWITCH) {
+		if (pcInput == GIT_SWITCH) {
 			useInp->Input.Switch.nCode = code;
 		}
-		else if (nInput & GIT_GROUP_JOYSTICK) {
+		else if (pcInput & GIT_GROUP_JOYSTICK) {
 			// Joysticks / analogs don't have a code, it is all encoded in the nType data....
 			int x = 10;
 		}
@@ -2174,12 +2175,125 @@ INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp) {
 }
 
 // --------------------------------------------------------------------------------
+// From the BurnInputInfo.szInfo member, determine the default group index.
+// typically, system = 0, p1 = 1, p2 = 2, etc.
+INT32 GetGroupIndex(char* szInfo) {
+	if (szInfo[0] == 'p') {
+		// If the next value is a number.....
+		char index = szInfo[1];
+		if (index >= 48 && index <= 57) {
+			return index - 48;
+		}
+	}
+
+	// Default / system.
+	return 0;
+}
+
+// --------------------------------------------------------------------------------
+EGamepadInput TranslatePCInput(struct GameInp* pgi) {
+
+	UINT8 i = pgi->pcInput;
+
+
+	switch (pgi->pcInput) {
+	case GIT_SWITCH:
+	{
+		UINT16 code = pgi->Input.Switch.nCode;
+
+
+		if (code >= MOUSE_LOWER) {
+			// TEMP: We haven't considered a mouse yet.....
+			return EGamepadInput::GPINPUT_UNSUPPORTED;
+		}
+
+		else if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER) {
+			// return EGamepadInput::
+			UINT16 gpCode = code & 0xFF;
+			UINT16 joyIndex = (code >> 8) & 0x3F;
+
+			if ((gpCode & BURNER_BUTTON) == BURNER_BUTTON) {
+				// NOTE: We can't really say what button is what...
+				// because of gamepad mappings, so maybe just punt?
+				int a = 1;
+			}
+			else if ((gpCode & BURNER_DPAD) == BURNER_DPAD) {
+				size_t useCode = gpCode ^ BURNER_DPAD;
+				int b = 1;
+			}
+			else if (gpCode < BURNER_DPAD) {
+				// This is an analog..... so we need to translate those codes....
+				// TODO: We can come up with a better way to represent this...
+				if (gpCode == 2) { 
+					return GPINPUT_LSTICK_UP;
+				}
+				if (gpCode == 3) { 
+					return GPINPUT_LSTICK_DOWN;
+				}
+				if (gpCode == 0) {
+					return GPINPUT_LSTICK_DOWN;
+				}
+				if (gpCode == 1) {
+					return GPINPUT_LSTICK_DOWN;
+				}
+
+				return GPINPUT_UNSUPPORTED;
+			 }
+
+
+			int z = 10;
+		}
+
+		else {
+
+			// NOTE: We shouldn't have to scan every frikkin key....
+			// Like maybe organize the key indexes by nCode?
+			for (INT32 i = 0; KeyNames[i].nCode; i++) {
+				if (code == KeyNames[i].nCode) {
+					EGamepadInput res = (EGamepadInput)(GPINPUT_KEYB | code);
+					return res;
+				}
+			}
+
+		}
+
+		// NOT FOUND!
+		break;
+	}
+	default:
+		return EGamepadInput::GPINPUT_UNSUPPORTED;
+		break;
+	}
+
+
+	return EGamepadInput::GPINPUT_UNSUPPORTED;
+}
+
+// --------------------------------------------------------------------------------
 INT32 CreateDefaultInputSet() {
 
 	struct GameInp* pgi;
 	struct BurnInputInfo bii;
 	UINT32 i;
 
+	// nMax
+	ZeroMemory(&GameInputSet, sizeof(CGameInputSet));
+	GameInputSet.GroupCount = nMaxPlayers + 1;
+
+	if (nMaxPlayers > MAX_PLAYERS) {
+		throw std::exception("Max players exceeded!");
+	}
+
+	auto& sysGroup = GameInputSet.InputGroups[0];
+	sysGroup.GroupType = EInputGroupType::IGROUP_SYSTEM;
+
+	for (size_t i = 0; i < nMaxPlayers; i++)
+	{
+		GameInputSet.InputGroups[i + 1].GroupType = IGROUP_PLAYER;
+	}
+
+	// NOTE: In a better, brighter world, we would have a driver system that would
+	// just allow us to assing the groups along with the other defs.
 	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
 
 		// Get the extra info about the input
@@ -2189,8 +2303,19 @@ INT32 CreateDefaultInputSet() {
 			continue;
 		}
 
+		int groupIndex = GetGroupIndex(bii.szInfo);
+		auto& set = GameInputSet.InputGroups[groupIndex];
+
+		GamepadInputDesc gpDesc;
+		gpDesc.GameInputIndex = i;
+		gpDesc.Input = TranslatePCInput(pgi);
+
+		set.Inputs[set.InputCount] = gpDesc;
+		set.InputCount += 1;
 
 	}
+
+	return 0;
 }
 
 
