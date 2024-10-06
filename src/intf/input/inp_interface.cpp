@@ -330,400 +330,402 @@ INT32 InputMake(bool bCopy)
 		for (size_t i = 0; i < g.InputCount; i++)
 		{
 			auto& input = g.Inputs[i];
-			UINT32 code =  input.GetBurnerCode();
-
-			int x = 10;
-		}
-	}
-	//		GamepadInputDesc& input = g.Inputs[i];
-	//		if (input.Input == GPINPUT_UNSUPPORTED) { continue; }
-
-	//		// Get the pointer to the game input....
-	//		pgi = (GameInp + input.DriverInputIndex);
+			UINT32 code = input.GetBurnerCode();
+			if (code == 0) { continue; }
 
 
-	//		if (pgi->Input.pVal == NULL) {
-	//			continue;
-	//		}
-
-	//		switch (pgi->pcInput) {
-	//		case GIT_UNDEFINED:						// Undefined
-	//			pgi->Input.nVal = 0;
-	//			break;
-
-	//		case GIT_CONSTANT:						// Constant value
-	//			pgi->Input.nVal = INPUT_MERGE(pgi->Input.Constant.nConst);
-	//			if (bCopy) {
-	//				*(pgi->Input.pVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-
-	//		case GIT_SWITCH: {						// Digital input
-
-	//			INT32 useCode = 
-
-	//			INT32 s = CinpState(pgi->Input.Switch.nCode);
-
-	//			if (pgi->nType & BIT_GROUP_ANALOG) {
-	//				// Set analog controls to full
-	//				if (s) {
-	//					pgi->Input.nVal = INPUT_MERGE(0xFFFF);
-	//				}
-	//				else {
-	//					pgi->Input.nVal = INPUT_MERGE(0x0001);
-	//				}
-	//				if (bCopy) {
-	//					*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//				}
-	//			}
-	//			else {
-	//				// Binary controls
-	//				if (s) {
-	//					pgi->Input.nVal = INPUT_MERGE(1);
-	//				}
-	//				else {
-	//					pgi->Input.nVal = INPUT_MERGE(0);
-	//				}
-	//				if (bCopy) {
-	//					*(pgi->Input.pVal) = pgi->Input.nVal;
-	//				}
-	//			}
-
-	//			break;
-	//		}
-
-	//					   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
-	//		case GIT_KEYSLIDER:						// Keyboard slider
-	//		case GIT_JOYSLIDER: {					// Joystick slider
-	//			INT32 nSlider = pgi->Input.Slider.nSliderValue;
-	//			if (pgi->nType == BIT_ANALOG_REL) {
-	//				nSlider -= 0x8000;
-	//				nSlider >>= 4;
-	//			}
-
-	//			nSlider *= nAnalogSpeed;
-	//			nSlider >>= 8;
-
-	//			// Clip axis to 16 bits (signed)
-	//			if (nSlider < -32768) {
-	//				nSlider = -32768;
-	//			}
-	//			if (nSlider > 32767) {
-	//				nSlider = 32767;
-	//			}
-
-	//			pgi->Input.nVal = (UINT16)nSlider;
-	//			if (bCopy) {
-	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-	//		}
-	//		case GIT_MOUSEAXIS: {					// Mouse axis
-	//			INT32 nMouse = CinpMouseAxis(pgi->Input.MouseAxis.nMouse, pgi->Input.MouseAxis.nAxis) * nAnalogSpeed;
-	//			// Clip axis to 16 bits (signed)
-	//			if (nMouse < -32768) {
-	//				nMouse = -32768;
-	//			}
-	//			if (nMouse > 32767) {
-	//				nMouse = 32767;
-	//			}
-	//			pgi->Input.nVal = (UINT16)nMouse;
-	//			if (bCopy) {
-	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-	//		}
-	//		case GIT_JOYAXIS_FULL: {				// Joystick axis
-	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-
-	//			if (pgi->nType == BIT_ANALOG_REL) {
-	//				nJoy *= nAnalogSpeed;
-	//				nJoy >>= 13;
-
-	//				// Clip axis to 16 bits (signed)
-	//				if (nJoy < -32768) {
-	//					nJoy = -32768;
-	//				}
-	//				if (nJoy > 32767) {
-	//					nJoy = 32767;
-	//				}
-	//			}
-	//			else {
-	//				nJoy >>= 1;
-	//				nJoy += 0x8000;
-
-	//				// Clip axis to 16 bits
-	//				if (nJoy < 0x0001) {
-	//					nJoy = 0x0001;
-	//				}
-	//				if (nJoy > 0xFFFF) {
-	//					nJoy = 0xFFFF;
-	//				}
-	//			}
-
-	//			pgi->Input.nVal = (UINT16)nJoy;
-	//			if (bCopy) {
-	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-	//		}
-	//		case GIT_JOYAXIS_NEG: {				// Joystick axis Lo
-	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-	//			if (nJoy < 32767) {
-	//				nJoy = -nJoy;
-
-	//				if (nJoy < 0x0000) {
-	//					nJoy = 0x0000;
-	//				}
-	//				if (nJoy > 0xFFFF) {
-	//					nJoy = 0xFFFF;
-	//				}
-
-	//				pgi->Input.nVal = INPUT_MERGE((UINT16)nJoy);
-	//			}
-	//			else {
-	//				pgi->Input.nVal = INPUT_MERGE(0);
-	//			}
-
-	//			if (bCopy) {
-	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-	//		}
-	//		case GIT_JOYAXIS_POS: {				// Joystick axis Hi
-	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-	//			if (nJoy > 32767) {
-
-	//				if (nJoy < 0x0000) {
-	//					nJoy = 0x0000;
-	//				}
-	//				if (nJoy > 0xFFFF) {
-	//					nJoy = 0xFFFF;
-	//				}
-
-	//				pgi->Input.nVal = (UINT16)nJoy;
-	//			}
-	//			else {
-	//				pgi->Input.nVal = 0;
-	//			}
-
-	//			if (bCopy) {
-	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-	//			}
-	//			break;
-	//		}
-	//		}
-
-
-
-	//	}
-	//}
-
-	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
-		if (pgi->Input.pVal == NULL) {
-			continue;
-		}
-
-		switch (pgi->pcInput) {
-		case GIT_UNDEFINED:						// Undefined
-			pgi->Input.nVal = 0;
-			break;
-
-		case GIT_CONSTANT:						// Constant value
-			pgi->Input.nVal = INPUT_MERGE(pgi->Input.Constant.nConst);
-			if (bCopy) {
-				*(pgi->Input.pVal) = pgi->Input.nVal;
+			// Whatever the last detected input was, we will assign it.
+			pgi = (GameInp + input.driverInputIndex);
+			if (pgi->Input.pVal == NULL) {
+				continue;
 			}
-			break;
 
-		case GIT_SWITCH: {						// Digital input
-			INT32 s = CinpState(pgi->Input.Switch.nCode);
+			switch (pgi->pcInput) {
+			case GIT_UNDEFINED:						// Undefined
+				pgi->Input.nVal = 0;
+				break;
 
-			if (pgi->nType & BIT_GROUP_ANALOG) {
-				// Set analog controls to full
-				if (s) {
-					pgi->Input.nVal = INPUT_MERGE(0xFFFF);
+			case GIT_CONSTANT:						// Constant value
+				pgi->Input.nVal = INPUT_MERGE(pgi->Input.Constant.nConst);
+				if (bCopy) {
+					*(pgi->Input.pVal) = pgi->Input.nVal;
+				}
+				break;
+
+			case GIT_SWITCH: {						// Digital input
+
+				// Old Way... use the nCode on the input....
+				// INT32 s = CinpState(pgi->Input.Switch.nCode);
+				INT32 s = CinpState(code);
+
+				// TODO: We need to have a way to detect when things are double mapped and merge the inputs
+				// accordingly....  Basically, use the last non-zero value....
+
+				if (pgi->nType & BIT_GROUP_ANALOG) {
+					// Set analog controls to full
+					if (s) {
+						pgi->Input.nVal = INPUT_MERGE(0xFFFF);
+					}
+					else {
+						pgi->Input.nVal = INPUT_MERGE(0x0001);
+					}
+					if (bCopy) {
+						*(pgi->Input.pShortVal) = pgi->Input.nVal;
+					}
 				}
 				else {
-					pgi->Input.nVal = INPUT_MERGE(0x0001);
+					// Binary controls
+					if (s) {
+						pgi->Input.nVal = INPUT_MERGE(1);
+					}
+					else {
+						pgi->Input.nVal = INPUT_MERGE(0);
+					}
+					if (bCopy) {
+						*(pgi->Input.pVal) = pgi->Input.nVal;
+					}
 				}
+
+				break;
+			}
+
+						   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
+			case GIT_KEYSLIDER:						// Keyboard slider
+			case GIT_JOYSLIDER: {					// Joystick slider
+				INT32 nSlider = pgi->Input.Slider.nSliderValue;
+				if (pgi->nType == BIT_ANALOG_REL) {
+					nSlider -= 0x8000;
+					nSlider >>= 4;
+				}
+
+				nSlider *= nAnalogSpeed;
+				nSlider >>= 8;
+
+				// Clip axis to 16 bits (signed)
+				if (nSlider < -32768) {
+					nSlider = -32768;
+				}
+				if (nSlider > 32767) {
+					nSlider = 32767;
+				}
+
+				pgi->Input.nVal = (UINT16)nSlider;
 				if (bCopy) {
 					*(pgi->Input.pShortVal) = pgi->Input.nVal;
 				}
+				break;
 			}
-			else {
-				// Binary controls
-				if (s) {
-					pgi->Input.nVal = INPUT_MERGE(1);
+			case GIT_MOUSEAXIS: {					// Mouse axis
+				INT32 nMouse = CinpMouseAxis(pgi->Input.MouseAxis.nMouse, pgi->Input.MouseAxis.nAxis) * nAnalogSpeed;
+				// Clip axis to 16 bits (signed)
+				if (nMouse < -32768) {
+					nMouse = -32768;
+				}
+				if (nMouse > 32767) {
+					nMouse = 32767;
+				}
+				pgi->Input.nVal = (UINT16)nMouse;
+				if (bCopy) {
+					*(pgi->Input.pShortVal) = pgi->Input.nVal;
+				}
+				break;
+			}
+			case GIT_JOYAXIS_FULL: {				// Joystick axis
+				INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+
+				if (pgi->nType == BIT_ANALOG_REL) {
+					nJoy *= nAnalogSpeed;
+					nJoy >>= 13;
+
+					// Clip axis to 16 bits (signed)
+					if (nJoy < -32768) {
+						nJoy = -32768;
+					}
+					if (nJoy > 32767) {
+						nJoy = 32767;
+					}
+				}
+				else {
+					nJoy >>= 1;
+					nJoy += 0x8000;
+
+					// Clip axis to 16 bits
+					if (nJoy < 0x0001) {
+						nJoy = 0x0001;
+					}
+					if (nJoy > 0xFFFF) {
+						nJoy = 0xFFFF;
+					}
+				}
+
+				pgi->Input.nVal = (UINT16)nJoy;
+				if (bCopy) {
+					*(pgi->Input.pShortVal) = pgi->Input.nVal;
+				}
+				break;
+			}
+			case GIT_JOYAXIS_NEG: {				// Joystick axis Lo
+				INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+				if (nJoy < 32767) {
+					nJoy = -nJoy;
+
+					if (nJoy < 0x0000) {
+						nJoy = 0x0000;
+					}
+					if (nJoy > 0xFFFF) {
+						nJoy = 0xFFFF;
+					}
+
+					pgi->Input.nVal = INPUT_MERGE((UINT16)nJoy);
 				}
 				else {
 					pgi->Input.nVal = INPUT_MERGE(0);
 				}
+
 				if (bCopy) {
-					*(pgi->Input.pVal) = pgi->Input.nVal;
+					*(pgi->Input.pShortVal) = pgi->Input.nVal;
 				}
+				break;
 			}
-
-			break;
-		}
-
-					   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
-		case GIT_KEYSLIDER:						// Keyboard slider
-		case GIT_JOYSLIDER: {					// Joystick slider
-			INT32 nSlider = pgi->Input.Slider.nSliderValue;
-			if (pgi->nType == BIT_ANALOG_REL) {
-				nSlider -= 0x8000;
-				nSlider >>= 4;
-			}
-
-			nSlider *= nAnalogSpeed;
-			nSlider >>= 8;
-
-			// Clip axis to 16 bits (signed)
-			if (nSlider < -32768) {
-				nSlider = -32768;
-			}
-			if (nSlider > 32767) {
-				nSlider = 32767;
-			}
-
-			pgi->Input.nVal = (UINT16)nSlider;
-			if (bCopy) {
-				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-			}
-			break;
-		}
-		case GIT_MOUSEAXIS: {					// Mouse axis
-			INT32 nMouse = CinpMouseAxis(pgi->Input.MouseAxis.nMouse, pgi->Input.MouseAxis.nAxis) * nAnalogSpeed;
-			// Clip axis to 16 bits (signed)
-			if (nMouse < -32768) {
-				nMouse = -32768;
-			}
-			if (nMouse > 32767) {
-				nMouse = 32767;
-			}
-			pgi->Input.nVal = (UINT16)nMouse;
-			if (bCopy) {
-				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-			}
-			break;
-		}
-		case GIT_JOYAXIS_FULL: {				// Joystick axis
-			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-
-			if (pgi->nType == BIT_ANALOG_REL) {
-				nJoy *= nAnalogSpeed;
-				nJoy >>= 13;
-
-				// Clip axis to 16 bits (signed)
-				if (nJoy < -32768) {
-					nJoy = -32768;
-				}
+			case GIT_JOYAXIS_POS: {				// Joystick axis Hi
+				INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
 				if (nJoy > 32767) {
-					nJoy = 32767;
-				}
-			}
-			else {
-				nJoy >>= 1;
-				nJoy += 0x8000;
 
-				// Clip axis to 16 bits
-				if (nJoy < 0x0001) {
-					nJoy = 0x0001;
-				}
-				if (nJoy > 0xFFFF) {
-					nJoy = 0xFFFF;
-				}
-			}
-
-			pgi->Input.nVal = (UINT16)nJoy;
-			if (bCopy) {
-				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-			}
-			break;
-		}
-		case GIT_JOYAXIS_NEG: {				// Joystick axis Lo
-			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-			if (nJoy < 32767) {
-				nJoy = -nJoy;
-
-				if (nJoy < 0x0000) {
-					nJoy = 0x0000;
-				}
-				if (nJoy > 0xFFFF) {
-					nJoy = 0xFFFF;
-				}
-
-				pgi->Input.nVal = INPUT_MERGE((UINT16)nJoy);
-			}
-			else {
-				pgi->Input.nVal = INPUT_MERGE(0);
-			}
-
-			if (bCopy) {
-				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-			}
-			break;
-		}
-		case GIT_JOYAXIS_POS: {				// Joystick axis Hi
-			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
-			if (nJoy > 32767) {
-
-				if (nJoy < 0x0000) {
-					nJoy = 0x0000;
-				}
-				if (nJoy > 0xFFFF) {
-					nJoy = 0xFFFF;
-				}
-
-				pgi->Input.nVal = (UINT16)nJoy;
-			}
-			else {
-				pgi->Input.nVal = 0;
-			}
-
-			if (bCopy) {
-				*(pgi->Input.pShortVal) = pgi->Input.nVal;
-			}
-			break;
-		}
-		}
-	}
-
-	for (i = 0; i < nMacroCount; i++, pgi++) {
-		if (pgi->Macro.nMode == 1 && pgi->Macro.nSysMacro == 0) { // Macro is defined
-			if (bCopy && CinpState(pgi->Macro.Switch.nCode)) {
-				for (INT32 j = 0; j < 4; j++) {
-					if (pgi->Macro.pVal[j]) {
-						*(pgi->Macro.pVal[j]) = pgi->Macro.nVal[j];
+					if (nJoy < 0x0000) {
+						nJoy = 0x0000;
 					}
-				}
-			}
-		}
-		if (pgi->Macro.nSysMacro) { // System-Macro is defined -dink
-			if (CinpState(pgi->Macro.Switch.nCode)) {
-				if (pgi->Macro.pVal[0]) {
-					*(pgi->Macro.pVal[0]) = pgi->Macro.nVal[0];
-					if (pgi->Macro.nSysMacro == 15) { //Auto-Fire mode!
-						if (AutofirePick() || bLastAF[i] == 0)
-							*(pgi->Macro.pVal[0]) = pgi->Macro.nVal[0];
-						else
-							*(pgi->Macro.pVal[0]) = 0;
-						bLastAF[i] = 1;
+					if (nJoy > 0xFFFF) {
+						nJoy = 0xFFFF;
 					}
-				}
-			}
-			else { // Disable System-Macro when key up
-				if (pgi->Macro.pVal[0] && pgi->Macro.nSysMacro == 1) {
-					*(pgi->Macro.pVal[0]) = 0;
+
+					pgi->Input.nVal = (UINT16)nJoy;
 				}
 				else {
-					if (pgi->Macro.nSysMacro == 15)
-						bLastAF[i] = 0;
+					pgi->Input.nVal = 0;
 				}
+
+				if (bCopy) {
+					*(pgi->Input.pShortVal) = pgi->Input.nVal;
+				}
+				break;
 			}
+			}
+
+
+
+			int x = 10;
 		}
 	}
+
+
+
+	//// LEGACY:
+	//// Use the codes that are assigned to pgi->Inputs.
+	//for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
+	//	if (pgi->Input.pVal == NULL) {
+	//		continue;
+	//	}
+
+	//	switch (pgi->pcInput) {
+	//	case GIT_UNDEFINED:						// Undefined
+	//		pgi->Input.nVal = 0;
+	//		break;
+
+	//	case GIT_CONSTANT:						// Constant value
+	//		pgi->Input.nVal = INPUT_MERGE(pgi->Input.Constant.nConst);
+	//		if (bCopy) {
+	//			*(pgi->Input.pVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+
+	//	case GIT_SWITCH: {						// Digital input
+	//		INT32 s = CinpState(pgi->Input.Switch.nCode);
+
+	//		if (pgi->nType & BIT_GROUP_ANALOG) {
+	//			// Set analog controls to full
+	//			if (s) {
+	//				pgi->Input.nVal = INPUT_MERGE(0xFFFF);
+	//			}
+	//			else {
+	//				pgi->Input.nVal = INPUT_MERGE(0x0001);
+	//			}
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//		}
+	//		else {
+	//			// Binary controls
+	//			if (s) {
+	//				pgi->Input.nVal = INPUT_MERGE(1);
+	//			}
+	//			else {
+	//				pgi->Input.nVal = INPUT_MERGE(0);
+	//			}
+	//			if (bCopy) {
+	//				*(pgi->Input.pVal) = pgi->Input.nVal;
+	//			}
+	//		}
+
+	//		break;
+	//	}
+
+	//				   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
+	//	case GIT_KEYSLIDER:						// Keyboard slider
+	//	case GIT_JOYSLIDER: {					// Joystick slider
+	//		INT32 nSlider = pgi->Input.Slider.nSliderValue;
+	//		if (pgi->nType == BIT_ANALOG_REL) {
+	//			nSlider -= 0x8000;
+	//			nSlider >>= 4;
+	//		}
+
+	//		nSlider *= nAnalogSpeed;
+	//		nSlider >>= 8;
+
+	//		// Clip axis to 16 bits (signed)
+	//		if (nSlider < -32768) {
+	//			nSlider = -32768;
+	//		}
+	//		if (nSlider > 32767) {
+	//			nSlider = 32767;
+	//		}
+
+	//		pgi->Input.nVal = (UINT16)nSlider;
+	//		if (bCopy) {
+	//			*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+	//	}
+	//	case GIT_MOUSEAXIS: {					// Mouse axis
+	//		INT32 nMouse = CinpMouseAxis(pgi->Input.MouseAxis.nMouse, pgi->Input.MouseAxis.nAxis) * nAnalogSpeed;
+	//		// Clip axis to 16 bits (signed)
+	//		if (nMouse < -32768) {
+	//			nMouse = -32768;
+	//		}
+	//		if (nMouse > 32767) {
+	//			nMouse = 32767;
+	//		}
+	//		pgi->Input.nVal = (UINT16)nMouse;
+	//		if (bCopy) {
+	//			*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+	//	}
+	//	case GIT_JOYAXIS_FULL: {				// Joystick axis
+	//		INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+
+	//		if (pgi->nType == BIT_ANALOG_REL) {
+	//			nJoy *= nAnalogSpeed;
+	//			nJoy >>= 13;
+
+	//			// Clip axis to 16 bits (signed)
+	//			if (nJoy < -32768) {
+	//				nJoy = -32768;
+	//			}
+	//			if (nJoy > 32767) {
+	//				nJoy = 32767;
+	//			}
+	//		}
+	//		else {
+	//			nJoy >>= 1;
+	//			nJoy += 0x8000;
+
+	//			// Clip axis to 16 bits
+	//			if (nJoy < 0x0001) {
+	//				nJoy = 0x0001;
+	//			}
+	//			if (nJoy > 0xFFFF) {
+	//				nJoy = 0xFFFF;
+	//			}
+	//		}
+
+	//		pgi->Input.nVal = (UINT16)nJoy;
+	//		if (bCopy) {
+	//			*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+	//	}
+	//	case GIT_JOYAXIS_NEG: {				// Joystick axis Lo
+	//		INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+	//		if (nJoy < 32767) {
+	//			nJoy = -nJoy;
+
+	//			if (nJoy < 0x0000) {
+	//				nJoy = 0x0000;
+	//			}
+	//			if (nJoy > 0xFFFF) {
+	//				nJoy = 0xFFFF;
+	//			}
+
+	//			pgi->Input.nVal = INPUT_MERGE((UINT16)nJoy);
+	//		}
+	//		else {
+	//			pgi->Input.nVal = INPUT_MERGE(0);
+	//		}
+
+	//		if (bCopy) {
+	//			*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+	//	}
+	//	case GIT_JOYAXIS_POS: {				// Joystick axis Hi
+	//		INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+	//		if (nJoy > 32767) {
+
+	//			if (nJoy < 0x0000) {
+	//				nJoy = 0x0000;
+	//			}
+	//			if (nJoy > 0xFFFF) {
+	//				nJoy = 0xFFFF;
+	//			}
+
+	//			pgi->Input.nVal = (UINT16)nJoy;
+	//		}
+	//		else {
+	//			pgi->Input.nVal = 0;
+	//		}
+
+	//		if (bCopy) {
+	//			*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//		}
+	//		break;
+	//	}
+	//	}
+	//}
+
+	//for (i = 0; i < nMacroCount; i++, pgi++) {
+	//	if (pgi->Macro.nMode == 1 && pgi->Macro.nSysMacro == 0) { // Macro is defined
+	//		if (bCopy && CinpState(pgi->Macro.Switch.nCode)) {
+	//			for (INT32 j = 0; j < 4; j++) {
+	//				if (pgi->Macro.pVal[j]) {
+	//					*(pgi->Macro.pVal[j]) = pgi->Macro.nVal[j];
+	//				}
+	//			}
+	//		}
+	//	}
+	//	if (pgi->Macro.nSysMacro) { // System-Macro is defined -dink
+	//		if (CinpState(pgi->Macro.Switch.nCode)) {
+	//			if (pgi->Macro.pVal[0]) {
+	//				*(pgi->Macro.pVal[0]) = pgi->Macro.nVal[0];
+	//				if (pgi->Macro.nSysMacro == 15) { //Auto-Fire mode!
+	//					if (AutofirePick() || bLastAF[i] == 0)
+	//						*(pgi->Macro.pVal[0]) = pgi->Macro.nVal[0];
+	//					else
+	//						*(pgi->Macro.pVal[0]) = 0;
+	//					bLastAF[i] = 1;
+	//				}
+	//			}
+	//		}
+	//		else { // Disable System-Macro when key up
+	//			if (pgi->Macro.pVal[0] && pgi->Macro.nSysMacro == 1) {
+	//				*(pgi->Macro.pVal[0]) = 0;
+	//			}
+	//			else {
+	//				if (pgi->Macro.nSysMacro == 15)
+	//					bLastAF[i] = 0;
+	//			}
+	//		}
+	//	}
+	//}
 
 	return 0;
 }

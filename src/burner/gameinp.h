@@ -165,9 +165,11 @@ const static UINT32 MOUSE_MASK = 0x4000;
 
 // TODO: We will get rid of the mask types, etc.  They really don't make sense....
 // NOTE: We can also just define all of these are regular ints that match their corresponding FBNEO values.  That is actually probably the best thing to do..?
+// REFACTOR: 'EInputDescription' --> This enum describes inputs....
 enum EGamepadInput {
 	GPINPUT_NOT_SET = 0x00,
 	GPINPUT_UNSUPPORTED = 0x01,
+	GPINPUT_CONSTANT = 0x02,			// An input with a constant value.
 
 	// This value is meant to be used as a mask.
 	GPINPUT_PAD = 0x1000,

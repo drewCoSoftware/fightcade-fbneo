@@ -2186,6 +2186,9 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 
 
 	switch (pgi->pcInput) {
+	case GIT_CONSTANT:
+		return GPINPUT_CONSTANT;
+	
 	case GIT_SWITCH:
 	{
 		UINT16 code = pgi->Input.Switch.nCode;
@@ -2227,9 +2230,10 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 
 			// NOTE: We shouldn't have to scan every frikkin key....
 			// Like maybe organize the key indexes by nCode?
-			for (INT32 i = 0; KeyNames[i].nCode; i++) {
-				if (code == KeyNames[i].nCode) {
-					EGamepadInput res = (EGamepadInput)(GPINPUT_KEYB | (code + 1));
+			auto count = ARRAYSIZE(KeyNames);
+			for (INT32 i = 0; count; i++) {
+				if ((code + 1) == KeyNames[i].nCode) {
+					EGamepadInput res = (EGamepadInput)(GPINPUT_KEYB | code);
 					return res;
 				}
 			}
@@ -2310,71 +2314,57 @@ INT32 RebuildInputSet() {
 	GamepadDatabase.GetDefaultMapping(defaultPadMapping);
 
 	memset(&GameInputSet, 0, sizeof(CGameInputSet));
-
+	GameInputSet.GroupCount = GameInputDesc.GroupCount;
 
 
 	for (size_t i = 0; i < GameInputDesc.GroupCount; i++)
 	{
 		auto& srcGroup = GameInputDesc.InputGroups[i];
 
-		CGameInputGroup& g = GameInputSet.Groups[i];
-		g.InputCount = srcGroup.InputCount;
+		CGameInputGroup& destGroup = GameInputSet.Groups[i];
+		destGroup.InputCount = srcGroup.InputCount;
 
 
 		for (size_t j = 0; j < srcGroup.InputCount; j++)
 		{
-			GamepadInputDesc& inputDesc = srcGroup.Inputs[i];
+			GamepadInputDesc& inputDesc = srcGroup.Inputs[j];
 
-			GamepadInputEx& input = g.Inputs[j];
+			GamepadInputEx& targetInput = destGroup.Inputs[j];
+			targetInput.driverInputIndex = inputDesc.DriverInputIndex;
 
 			size_t type = inputDesc.Input & 0xF000;
 
 			if (type == GAMEPAD_MASK) {
-				// This is a gamepad input.
+
+				const CGamepadMappingEntry* entry = defaultPadMapping.GetMappingFor(inputDesc.Input);
+				if (entry)
+				{
+					targetInput.type = entry->Type;
+					targetInput.index = entry->Index;
+				}
+				else {
+					// TODO: Log
+					// Not supported
+					targetInput.type = ITYPE_UNSET;
+					targetInput.index = 0;
+				}
+
+
 				int x = 10;
 			}
 			else if (type == KEYBOARD_MASK) {
+				targetInput.type = ITYPE_KEYBOARD;
+				targetInput.index = inputDesc.Input ^ KEYBOARD_MASK;
 				int y = 10;
 			}
 			else {
+				// TODO: Log
 				// Not supported
-				input.type = ITYPE_UNSET;
-				input.index = 0;
+				targetInput.type = ITYPE_UNSET;
+				targetInput.index = 0;
 			}
-
-			// input.type
 		}
 	}
-
-
-	//// NOTE: The mappings that we create a game dependent.  A check
-	//// for this might need to take place at some point.
-	//CInputGroupDesc playerInputs;
-	//GetDefaultPlayerMappingsForGame(playerInputs);
-
-	//// Get the device specific mappings.
-	//CGamepadButtonMapping mapping;
-	//if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
-	//{
-	//	GamepadDatabase.GetDefaultMapping(mapping);
-	//}
-
-
-	//// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
-	//ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
-	//gpp.inputCount = playerInputs.InputCount;
-	//for (size_t i = 0; i < gpp.inputCount; i++)
-	//{
-	//	GamepadInputDesc inputDesc = playerInputs.Inputs[i];
-
-	//	const CGamepadMappingEntry* e = mapping.GetMappingFor(inputDesc.Input);
-	//	if (e) {
-	//		gpp.inputs[i] = { e->Type, e->Index };
-	//	}
-	//	else {
-	//		gpp.inputs[i] = { ITYPE_UNSET, 0 };
-	//	}
-	//}
 
 	// All good.
 	return 0;

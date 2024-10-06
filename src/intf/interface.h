@@ -54,6 +54,7 @@ struct GamepadInput {
 struct GamepadInputEx {
 	EInputType type;			// Type of input.  Button, stick, etc.
 	UINT16 index;				// Index for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	UINT16 driverInputIndex;	// Index for that game input that this should be mapped onto.
 
 	// -------------------------------------------------------------
 	// Return an input code (nCode) that is compatible with the emulator.
@@ -72,6 +73,9 @@ struct GamepadInputEx {
 
 		case ITYPE_DPAD:
 			return BURNER_DPAD | index;
+
+		case ITYPE_KEYBOARD:
+			return index;
 
 		default:
 			throw std::exception("NOT SUPPORTTED!");
