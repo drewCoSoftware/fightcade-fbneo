@@ -46,9 +46,6 @@ struct GamepadInput {
 	// See gami.cpp:1386 to see where gamepad index and code are tranlated.
 };
 
-static const UINT16 BURNER_BUTTON = 0x80;
-static const UINT16 BURNER_DPAD = 0x10;
-static const UINT16 BURNER_ANALOG = 0x00;
 
 // Gamepad listing info.....
 // New type that we are using to properly abstract a gamepad for use in the emulator.
@@ -56,7 +53,7 @@ static const UINT16 BURNER_ANALOG = 0x00;
 // is super janky IMO.
 struct GamepadInputEx {
 	EInputType type;			// Type of input.  Button, stick, etc.
-	UINT16 index;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
+	UINT16 index;				// Index for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 
 	// -------------------------------------------------------------
 	// Return an input code (nCode) that is compatible with the emulator.
@@ -107,7 +104,7 @@ enum EInputGroupType {
 
 // Describes a logical group of inputs (player, system, etc.) for a game.
 // For all reasonable purposes, the set for p1/p2/px should be the same.
-struct GameInputGroup {
+struct CInputGroupDesc {
 	EInputGroupType GroupType;
 	GamepadInputDesc Inputs[MAX_INPUTS];
 	UINT16 InputCount;
@@ -126,15 +123,18 @@ static const UINT32 MAX_GROUPS = 5;
 static const UINT32 MAX_PLAYERS = 4;
 
 // Describes a set of input groups for an entire game.
-struct CGameInputSet {
+// This type is not used to map pc->emulator inputs, rather it is intended to be
+// used to describe/configure input sets for games. (Imagine an INI or other file)
+// The type 'CGameInputSet' can be created from this and is actually used to map the pc->emulator inputs.
+struct CGameInputDescription {
 	// Input group count + defs.
 	UINT32 GroupCount;
-	GameInputGroup InputGroups[MAX_GROUPS];
+	CInputGroupDesc InputGroups[MAX_GROUPS];
 	UINT32 MaxPlayerCount;
 
 	// Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
-	inline GameInputGroup* GetPlayerGroup(size_t player) {
-		GameInputGroup* res = nullptr;
+	inline CInputGroupDesc* GetPlayerGroup(size_t player) {
+		CInputGroupDesc* res = nullptr;
 		if (player <= MaxPlayerCount)
 		{
 			size_t playerIndex;
@@ -154,12 +154,29 @@ struct CGameInputSet {
 	}
 };
 
-// NOTE: This is different than 'GameInputGroup' as the inputs have specific types + indexes that are later
+// OBOSOLETE: This will be removed!
+// NOTE: This is different than 'CInputGroupDesc' as the inputs have specific types + indexes that are later
 // used by the input system to poll devices and so on.
 struct GamepadInputProfileEx {
 	GamepadInputEx inputs[MAX_INPUTS];
 	UINT16 inputCount;
 };
+
+
+struct CGameInputGroup {
+	UINT8 InputCount;
+	GamepadInputEx Inputs[MAX_INPUTS];
+};
+
+
+
+struct CGameInputSet {
+	UINT8 GroupCount;
+	CGameInputGroup Groups[MAX_GROUPS];
+	UINT8 PlayerNumber;		// 1, 2, etc.
+};
+
+
 
 // REFACTOR: This name might be a bit misleading....
 // There can be many entries per file, each of which would map to a game, and any number of input profiles

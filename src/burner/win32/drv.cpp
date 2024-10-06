@@ -220,11 +220,15 @@ int DrvInit(int nDrvNum, bool bRestore)
 	// ConfigGameLoadHardwareDefaults();
 	SetDefaultGameInputs();
 
+	// NOTE: This is where we can check to see if there are any gamepads, etc. plugged in.
+	// If so, then the default(current) input desc or whatever can be modified.
+	// --> Now we can modify the input set based on if any gamepads are plugged in.
+	// SetDefaultGamepadInputs();
+	// Other note: If there aren't pads currently plugged in, then I don't really
+	// see a reason for them to be mapped (via defaults) in the first place.  We
+	// should just keep a reasonable set of keyboard inputs for all of it.
 
-
-	// Now we can modify the input set based on if any gamepads are plugged in.
-	SetDefaultGamepadInputs();
-
+	RebuildInputSet();
 
 	InputMake(true);
 

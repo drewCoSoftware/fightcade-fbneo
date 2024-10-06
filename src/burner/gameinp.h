@@ -1,6 +1,7 @@
 #ifndef GAMEINP_H
 #define GAMEINP_H
 
+#include <exception>
 
 struct giConstant {
 	UINT8 nConst;				// The constant value
@@ -58,7 +59,7 @@ struct giForce {
 };
 
 // OBSOLETE:  Macro system is janky, so we will find a way to repeal and replace it.
-// With defineable CGameInputSet code we can certainly come up with a better system.
+// With defineable CGameInputDescription code we can certainly come up with a better system.
 struct giMacro {
 	UINT8 nMode;				// 0 = Unused, 1 = used
 
@@ -71,6 +72,11 @@ struct giMacro {
 	char szName[33];			// Maximum name length 16 chars
 	UINT8 nSysMacro;			// mappable system macro (1) or Auto-Fire (15)
 };
+
+static const UINT16 BURNER_BUTTON = 0x80;
+static const UINT16 BURNER_DPAD = 0x10;
+static const UINT16 BURNER_ANALOG = 0x00;
+
 
 // TODO: This should be an enum.
 
@@ -127,20 +133,12 @@ enum EInputType {
 
 	// NOTE: These inputs technically make sense, but they should be expanded so that they are more compatible with FBNEO.
 	ITYPE_FULL_ANALOG,		// The full +/- minus range.  Something like a stick. (NOTE: We might need to infer / expand in indexes to make sure that this works....)
-	ITYPE_HALF_ANALOG		// Half axis range, + or -.  Something like a trigger.
+	ITYPE_HALF_ANALOG,		// Half axis range, + or -.  Something like a trigger.
+
+	// A keyboard!
+	ITYPE_KEYBOARD
 };
 
-//
-//// Input types for gamepads.  This is part of an effort to get things
-//// a bit more standard, a bit more SDL like...
-//enum EInputType {
-//	ITYPE_UNSET = 0,
-//	ITYPE_BUTTON,				// on/off
-//	ITYPE_DPAD,
-//	ITYPE_ANALOG					// Axes, sticks, triggers, etc.
-//	//ITYPE_STICK,				// analog stick
-//	//ITYPE_TRIGGER				// triggers, like LT/RT on gamepad
-//};
 
 enum ECardinalDir {
 	DIR_NONE,
@@ -150,16 +148,23 @@ enum ECardinalDir {
 	DIR_RIGHT
 };
 
-//enum EPCInput {
-//	
-//};
+//const static UINT32 GAMEPAD_BUTTON_MASK = GAMEPAD_MASK | 0x300;
+//const static UINT32 GAMEPAD_ANALOG_MASK = 0x1000;
 
-
+const static UINT32 GAMEPAD_MASK = 0x1000;
+const static UINT32 KEYBOARD_MASK = 0x2000;
+const static UINT32 MOUSE_MASK = 0x4000;
 
 // =============================================================================================
 // Standardized names for gamepad inputs.
 // TODO: Rename this type to something that is more general...
 // We pretty much want something that matches the nCode values that are used in FBNEO.
+// HACK: This thing is currently enum abuse.  Terrible way to do it.  Originally this was just set up
+// so that we could uniquely identify buttons on a gamepad.  Now it is some kind of frankenstein monster!
+// trying to encode button, axis, etc. inputs into these values was the big mistake!
+
+// TODO: We will get rid of the mask types, etc.  They really don't make sense....
+// NOTE: We can also just define all of these are regular ints that match their corresponding FBNEO values.  That is actually probably the best thing to do..?
 enum EGamepadInput {
 	GPINPUT_NOT_SET = 0x00,
 	GPINPUT_UNSUPPORTED = 0x01,
@@ -171,10 +176,10 @@ enum EGamepadInput {
 
 	// Analog stick directions.
 	// NOTE: We do a bit of extra translation for these when we parse out the SDL database.
-	GPINPUT_LSTICK_LEFT   =	 GPINPUT_PAD_ANALOG | 0x1,  // BURNER_ANALOG | 3
-	GPINPUT_LSTICK_RIGHT  =	 GPINPUT_PAD_ANALOG | 0x2,  // BURNER_ANALOG | 4
-	GPINPUT_LSTICK_UP     =	 GPINPUT_PAD_ANALOG | 0x3,  // BURNER_ANALOG | 2 
-	GPINPUT_LSTICK_DOWN   =	 GPINPUT_PAD_ANALOG | 0x4,  // BURNER_ANALOG | 0
+	GPINPUT_LSTICK_LEFT = GPINPUT_PAD_ANALOG | 0x1,  // BURNER_ANALOG | 3
+	GPINPUT_LSTICK_RIGHT = GPINPUT_PAD_ANALOG | 0x2,  // BURNER_ANALOG | 4
+	GPINPUT_LSTICK_UP = GPINPUT_PAD_ANALOG | 0x3,  // BURNER_ANALOG | 2 
+	GPINPUT_LSTICK_DOWN = GPINPUT_PAD_ANALOG | 0x4,  // BURNER_ANALOG | 0
 
 
 	// TODO: Figure out the indexes for this....
@@ -219,6 +224,12 @@ enum EGamepadInput {
 	// This value is meant to be masked with the FBK_* defs in inp_keys.h
 	GPINPUT_KEYB = 0x2000,
 
+	// NOTE: Add the rest of the keyboard inputs.  They should match the values that FBNeo Uses.
+	GPINPUT_KEYB_A,
+
+
+	GPINPUT_MOUSE = 0x4000,
+
 
 
 	// Special inputs, that have extra / special meaning?
@@ -238,11 +249,10 @@ enum EGamepadInput {
 };
 
 // REFACTOR: This can describe other inputs, not just gamepads.
-// Its members can also be better defined as they could still be keyboard or mouse inputsm, etc.
+// This type is used as a way to describe a unique button,etc. and how it maps onto the driver input.
 struct GamepadInputDesc {
-	EGamepadInput Input;			// The type of input.
-	INT32 GameInputIndex;			// The corresponding input index (defined in the driver).  NOTE: GameInputIndex can be defined more than once to allow for analog stick + dpad inputs for directions.
-	//	ECardinalDir Dir;				// Does this input represent a cardinal direction.  NOTE: This is kind of a HACK as the driver for the game should be responsible for defining this stuff, IMO.
+	EGamepadInput Input;				// The type of input.  This is really just a unique identifier for the input....
+	UINT32 DriverInputIndex;		// The corresponding input index (defined in the driver).  NOTE: DriverInputIndex can be defined more than once to allow for analog stick + dpad inputs for directions.
 };
 
 #endif

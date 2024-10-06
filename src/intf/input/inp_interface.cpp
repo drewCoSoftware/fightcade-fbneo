@@ -312,36 +312,212 @@ INT32 InputMake(bool bCopy)
 		return 1;
 	}
 
-	// This is where any kind of multi-input type system will go....
-	// Really what we want to do is either:
-	// --> 1. Create a full input state and then map it onto GameInp[x].nInput
-	// --> 2. Somehow use the indexes from GameInp[x] to ask the input state what to do......
 
-	// --> I think that option 1 makes more sense...  We will take our input sets, get the device states, do the computation,
-	// and then set the appropriate input codes on GameInp[x].nInput
-
-
-
-	// So.. and input map, like the one defined in d_cps3.cpp needs to be broken up / redefined into input sets...
-	// P1 / P2 / Px
-	// System --> Reset - Diagnostic - Service - Region - FAKE DIP
-	// --> p.s.  I think that the 'fake dip' and 'not used' inputs are just there so that there are always the
-	// same number of inputs for the CP3 memory map...
-
-
-	pInputInOut[nInputSelect]->NewFrame();			// Clear existing input states.
+	// Clear existing input states.
+	pInputInOut[nInputSelect]->NewFrame();
 	bEnableKeyboardInputs = !IsEditActive();
 
-	// NOTE: If this flag is set, we are basically agreeing to hijack / override the current GameInp way of doing things...
-	// That breaks compatibility in a really bad way tho.....
-	if (UseGameInputSetForPCInputs) {
-		// Run through all of the GameInput sets, and merge / copy the values over to the GameInp.pcInput stuf.....
-		int x = 10;
-	}
-
-
-
 	ProcessSliders();
+
+
+	// This is where we will run the inputs for GameInputSet, and copy them over to
+	// 'GameInp'.  The most important thing here is that we have some way to run
+	// / merge our multi-inputs and map them to the correct pgi index.
+
+	for (size_t gIndex = 0; gIndex < GameInputSet.GroupCount; gIndex++)
+	{
+		auto& g = GameInputSet.Groups[gIndex];
+		for (size_t i = 0; i < g.InputCount; i++)
+		{
+			auto& input = g.Inputs[i];
+			UINT32 code =  input.GetBurnerCode();
+
+			int x = 10;
+		}
+	}
+	//		GamepadInputDesc& input = g.Inputs[i];
+	//		if (input.Input == GPINPUT_UNSUPPORTED) { continue; }
+
+	//		// Get the pointer to the game input....
+	//		pgi = (GameInp + input.DriverInputIndex);
+
+
+	//		if (pgi->Input.pVal == NULL) {
+	//			continue;
+	//		}
+
+	//		switch (pgi->pcInput) {
+	//		case GIT_UNDEFINED:						// Undefined
+	//			pgi->Input.nVal = 0;
+	//			break;
+
+	//		case GIT_CONSTANT:						// Constant value
+	//			pgi->Input.nVal = INPUT_MERGE(pgi->Input.Constant.nConst);
+	//			if (bCopy) {
+	//				*(pgi->Input.pVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+
+	//		case GIT_SWITCH: {						// Digital input
+
+	//			INT32 useCode = 
+
+	//			INT32 s = CinpState(pgi->Input.Switch.nCode);
+
+	//			if (pgi->nType & BIT_GROUP_ANALOG) {
+	//				// Set analog controls to full
+	//				if (s) {
+	//					pgi->Input.nVal = INPUT_MERGE(0xFFFF);
+	//				}
+	//				else {
+	//					pgi->Input.nVal = INPUT_MERGE(0x0001);
+	//				}
+	//				if (bCopy) {
+	//					*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//				}
+	//			}
+	//			else {
+	//				// Binary controls
+	//				if (s) {
+	//					pgi->Input.nVal = INPUT_MERGE(1);
+	//				}
+	//				else {
+	//					pgi->Input.nVal = INPUT_MERGE(0);
+	//				}
+	//				if (bCopy) {
+	//					*(pgi->Input.pVal) = pgi->Input.nVal;
+	//				}
+	//			}
+
+	//			break;
+	//		}
+
+	//					   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
+	//		case GIT_KEYSLIDER:						// Keyboard slider
+	//		case GIT_JOYSLIDER: {					// Joystick slider
+	//			INT32 nSlider = pgi->Input.Slider.nSliderValue;
+	//			if (pgi->nType == BIT_ANALOG_REL) {
+	//				nSlider -= 0x8000;
+	//				nSlider >>= 4;
+	//			}
+
+	//			nSlider *= nAnalogSpeed;
+	//			nSlider >>= 8;
+
+	//			// Clip axis to 16 bits (signed)
+	//			if (nSlider < -32768) {
+	//				nSlider = -32768;
+	//			}
+	//			if (nSlider > 32767) {
+	//				nSlider = 32767;
+	//			}
+
+	//			pgi->Input.nVal = (UINT16)nSlider;
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+	//		}
+	//		case GIT_MOUSEAXIS: {					// Mouse axis
+	//			INT32 nMouse = CinpMouseAxis(pgi->Input.MouseAxis.nMouse, pgi->Input.MouseAxis.nAxis) * nAnalogSpeed;
+	//			// Clip axis to 16 bits (signed)
+	//			if (nMouse < -32768) {
+	//				nMouse = -32768;
+	//			}
+	//			if (nMouse > 32767) {
+	//				nMouse = 32767;
+	//			}
+	//			pgi->Input.nVal = (UINT16)nMouse;
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+	//		}
+	//		case GIT_JOYAXIS_FULL: {				// Joystick axis
+	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+
+	//			if (pgi->nType == BIT_ANALOG_REL) {
+	//				nJoy *= nAnalogSpeed;
+	//				nJoy >>= 13;
+
+	//				// Clip axis to 16 bits (signed)
+	//				if (nJoy < -32768) {
+	//					nJoy = -32768;
+	//				}
+	//				if (nJoy > 32767) {
+	//					nJoy = 32767;
+	//				}
+	//			}
+	//			else {
+	//				nJoy >>= 1;
+	//				nJoy += 0x8000;
+
+	//				// Clip axis to 16 bits
+	//				if (nJoy < 0x0001) {
+	//					nJoy = 0x0001;
+	//				}
+	//				if (nJoy > 0xFFFF) {
+	//					nJoy = 0xFFFF;
+	//				}
+	//			}
+
+	//			pgi->Input.nVal = (UINT16)nJoy;
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+	//		}
+	//		case GIT_JOYAXIS_NEG: {				// Joystick axis Lo
+	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+	//			if (nJoy < 32767) {
+	//				nJoy = -nJoy;
+
+	//				if (nJoy < 0x0000) {
+	//					nJoy = 0x0000;
+	//				}
+	//				if (nJoy > 0xFFFF) {
+	//					nJoy = 0xFFFF;
+	//				}
+
+	//				pgi->Input.nVal = INPUT_MERGE((UINT16)nJoy);
+	//			}
+	//			else {
+	//				pgi->Input.nVal = INPUT_MERGE(0);
+	//			}
+
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+	//		}
+	//		case GIT_JOYAXIS_POS: {				// Joystick axis Hi
+	//			INT32 nJoy = CinpJoyAxis(pgi->Input.JoyAxis.nJoy, pgi->Input.JoyAxis.nAxis);
+	//			if (nJoy > 32767) {
+
+	//				if (nJoy < 0x0000) {
+	//					nJoy = 0x0000;
+	//				}
+	//				if (nJoy > 0xFFFF) {
+	//					nJoy = 0xFFFF;
+	//				}
+
+	//				pgi->Input.nVal = (UINT16)nJoy;
+	//			}
+	//			else {
+	//				pgi->Input.nVal = 0;
+	//			}
+
+	//			if (bCopy) {
+	//				*(pgi->Input.pShortVal) = pgi->Input.nVal;
+	//			}
+	//			break;
+	//		}
+	//		}
+
+
+
+	//	}
+	//}
 
 	for (i = 0, pgi = GameInp; i < nGameInpCount; i++, pgi++) {
 		if (pgi->Input.pVal == NULL) {
@@ -391,7 +567,7 @@ INT32 InputMake(bool bCopy)
 			break;
 		}
 
-		// TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
+					   // TODO: Shouldn't the sliders be handled in the 'ProcessSliders' function?
 		case GIT_KEYSLIDER:						// Keyboard slider
 		case GIT_JOYSLIDER: {					// Joystick slider
 			INT32 nSlider = pgi->Input.Slider.nSliderValue;
