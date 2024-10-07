@@ -10,7 +10,7 @@
 INT32 nPlayerDefaultControls[5] = { 0, 1, 2, 3, 4 };
 TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("") };
 
-// New mapping of PC inputs to game inputs.
+// New mapping of PC inputs to game inputs->
 // GameInp.pcInput will not be used in the future.
 // Inputs are broken into logical sets, i.e. 'player', 'system', etc.
 CGameInputDescription GameInputDesc;
@@ -18,7 +18,7 @@ CGameInputSet GameInputSet;
 
 // Mapping of PC inputs to game inputs
 struct GameInp* GameInp = NULL;
-UINT32 nGameInpCount = 0;							// The number of buttons/analog/other inputs.
+UINT32 nGameInpCount = 0;							// The number of buttons/analog/other inputs->
 UINT32 nMacroCount = 0;
 UINT32 nMaxMacro = 0;
 
@@ -892,7 +892,7 @@ INT32 GameInpInit()
 
 	// This loop literally just counts up to the size of the input list.
 	// Yep, don't bother to just define the size, loop over it till you overflow :``D
-	// Anyway.... the driver defines the total number of unique inputs....
+	// Anyway.... the driver defines the total number of unique inputs->...
 	for (UINT32 i = 0; i < 0x1000; i++) {
 		nRet = BurnDrvGetInputInfo(NULL, i);
 		if (nRet) {														// end of input list
@@ -1946,91 +1946,96 @@ INT32 ConfigGameLoadHardwareDefaults()
 
 
 // --------------------------------------------------------------------------------
-INT32 GetDefaultPlayerMappingsForGame(CInputGroupDesc& playerInputs) {
+INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 
 	// These are describing the default inputs for the game, NOT the gamepad!
 	// NOTE: This is for sfiii3nr1 ONLY!
+	// Also NOTE: Each game can have default sets of inputs for keyboard/mouse/gamepad.  This
+	// function really just describes a reasonable default for a gamepad!
+	// --> I make note, because I want to have reasonable defaults for keyboards, mice, etc. when
+	// there are no gamepads that are plugged in.
 	ZeroMemory(&playerInputs, sizeof(CInputGroupDesc));
 
 	// NOTE: The inputs in this case map 1:1 to the indexes for the player inputs
 	// in the driver....
 	// See the defintion of 'cps3InputList' in 'd_cps3.cpp' for an example.
 
-	// playerInputs.inputCount = 16;
-	playerInputs.Inputs[0] = { GPINPUT_BACK, 0 };
-	playerInputs.Inputs[1] = { GPINPUT_START, 1 };
+	// playerInputs->inputCount = 16;
+	playerInputs->Inputs[0] = { GPINPUT_BACK, 0 };
+	playerInputs->Inputs[1] = { GPINPUT_START, 1 };
 
 	// The directinal inputs need to be mapped onto the DRIVER inputs somehow....
 	// The code that does the SOCD stuff just looks for the BurnInputInfo.szInfo value to decide
 	// what is up/down/left/right..  IMO, not the most robust way, but it can work....
-	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs.)
-	playerInputs.Inputs[2] = { GPINPUT_DPAD_UP, 2 };			// Up			
-	playerInputs.Inputs[3] = { GPINPUT_DPAD_DOWN, 3 };			// Down		
-	playerInputs.Inputs[4] = { GPINPUT_DPAD_LEFT, 4 };			// Left		
-	playerInputs.Inputs[5] = { GPINPUT_DPAD_RIGHT, 5 };			// Right		
+	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs->)
+	playerInputs->Inputs[2] = { GPINPUT_DPAD_UP, 2 };			// Up			
+	playerInputs->Inputs[3] = { GPINPUT_DPAD_DOWN, 3 };			// Down		
+	playerInputs->Inputs[4] = { GPINPUT_DPAD_LEFT, 4 };			// Left		
+	playerInputs->Inputs[5] = { GPINPUT_DPAD_RIGHT, 5 };			// Right		
 
 	// ANALOG STICK (0x0)
-	playerInputs.Inputs[6] = { GPINPUT_LSTICK_UP, 2 };			// Up			
-	playerInputs.Inputs[7] = { GPINPUT_LSTICK_DOWN, 3 };			// Down		
-	playerInputs.Inputs[8] = { GPINPUT_LSTICK_LEFT, 4 };			// Left		
-	playerInputs.Inputs[9] = { GPINPUT_LSTICK_RIGHT, 5 };		// Right		
+	playerInputs->Inputs[6] = { GPINPUT_LSTICK_UP, 2 };			// Up			
+	playerInputs->Inputs[7] = { GPINPUT_LSTICK_DOWN, 3 };			// Down		
+	playerInputs->Inputs[8] = { GPINPUT_LSTICK_LEFT, 4 };			// Left		
+	playerInputs->Inputs[9] = { GPINPUT_LSTICK_RIGHT, 5 };		// Right		
 
-	playerInputs.Inputs[10] = { GPINPUT_X, 6 };
-	playerInputs.Inputs[11] = { GPINPUT_Y, 7 };
-	playerInputs.Inputs[12] = { GPINPUT_RIGHT_BUMPER, 8 };
-	playerInputs.Inputs[13] = { GPINPUT_A, 9 };
-	playerInputs.Inputs[14] = { GPINPUT_B, 10 };
-	playerInputs.Inputs[15] = { GPINPUT_RIGHT_TRIGGER, 11 };
+	playerInputs->Inputs[10] = { GPINPUT_X, 6 };
+	playerInputs->Inputs[11] = { GPINPUT_Y, 7 };
+	playerInputs->Inputs[12] = { GPINPUT_RIGHT_BUMPER, 8 };
+	playerInputs->Inputs[13] = { GPINPUT_A, 9 };
+	playerInputs->Inputs[14] = { GPINPUT_B, 10 };
+	playerInputs->Inputs[15] = { GPINPUT_RIGHT_TRIGGER, 11 };
 
-	playerInputs.InputCount = 16;
-
-	return 0;
-}
-
-// --------------------------------------------------------------------------------
-// Given a product guid, this will lookup alternate mappings tables.
-INT32 SetInputsFromGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
-
-	// NOTE: The mappings that we create a game dependent.  A check
-	// for this might need to take place at some point.
-	CInputGroupDesc playerInputs;
-	GetDefaultPlayerMappingsForGame(playerInputs);
-
-	// Get the device specific mappings.
-	CGamepadButtonMapping mapping;
-	if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
-	{
-		GamepadDatabase.GetDefaultMapping(mapping);
-	}
-
-
-	// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
-	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
-	gpp.inputCount = playerInputs.InputCount;
-	for (size_t i = 0; i < gpp.inputCount; i++)
-	{
-		GamepadInputDesc inputDesc = playerInputs.Inputs[i];
-
-		const CGamepadMappingEntry* e = mapping.GetMappingFor(inputDesc.Input);
-		if (e) {
-			gpp.inputs[i] = { e->Type, e->Index };
-		}
-		else {
-			gpp.inputs[i] = { ITYPE_UNSET, 0 };
-		}
-	}
+	playerInputs->InputCount = 16;
 
 	return 0;
 }
+//
+//// --------------------------------------------------------------------------------
+//// Given a product guid, this will lookup alternate mappings tables.
+//// obsolete: this will be removed.
+//INT32 SetInputsFromGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
+//
+//	// NOTE: The mappings that we create a game dependent.  A check
+//	// for this might need to take place at some point.
+//	CInputGroupDesc playerInputs;
+//	SetDefaultDescriptionForPlayer(playerInputs);
+//
+//	// Get the device specific mappings.
+//	CGamepadButtonMapping mapping;
+//	if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
+//	{
+//		GamepadDatabase.GetDefaultMapping(mapping);
+//	}
+//
+//
+//	// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
+//	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
+//	gpp.inputCount = playerInputs->InputCount;
+//	for (size_t i = 0; i < gpp.inputCount; i++)
+//	{
+//		GamepadInputDesc inputDesc = playerInputs->Inputs[i];
+//
+//		const CGamepadMappingEntry* e = mapping.GetMappingFor(inputDesc.Input);
+//		if (e) {
+//			gpp.inputs[i] = { e->Type, e->Index };
+//		}
+//		else {
+//			gpp.inputs[i] = { ITYPE_UNSET, 0 };
+//		}
+//	}
+//
+//	return 0;
+//}
 
 // --------------------------------------------------------------------------------
 // Since we almost always play on gamepads / joysticks, we will auto detect +
-// set those inputs.  This should happen as controllers are plugged in / out.
+// set those inputs->  This should happen as controllers are plugged in / out.
 // Because of the janky input system, this isn't as easy as it may seem....
 // In reality, inputs shouldn't be a loose collection of 'buttons', rather there
 // should be a device associated with each player....  A 'mixed-mode' device could even
 // exist that could be mouse + keyboard + etc.
-INT32 SetDefaultGamepadInputs() {
+INT32 UpdateInputDescriptionForGamepads() {
 
 	// NOTE: Check for specific game that supports this notion.
 	// TODO: Some way to list the games that support this feature.  Probably
@@ -2044,40 +2049,11 @@ INT32 SetDefaultGamepadInputs() {
 		return 0;
 	}
 
-	// NOTE: Players should be listed in order.
-	// So first GroupType == IGROUP_PLAYER = Player 1, etc.
-	CInputGroupDesc p1;
-	GetDefaultPlayerMappingsForGame(p1);
-	p1.BurnInputStartIndex = 0;
-	p1.GroupType = IGROUP_PLAYER;
 
-	CInputGroupDesc p2;
-	GetDefaultPlayerMappingsForGame(p2);
-	p2.BurnInputStartIndex = 12;
-	p2.GroupType = IGROUP_PLAYER;
+	// Check all of the plugged in pads. up to the max players.
+	// for each pad, update the corresponding player description.
+	// if there isn't a pad for a player, revert it to the default which should be a mouse / keyboard or whatever... (this part might be hard...)
 
-	// TODO: Finish mappings for system.  This means that we have to also support
-	// keyboard inputs, properly.  ATM we are really only caring about gamepad stuff,
-	// which is OK, but won't work long term.
-	CInputGroupDesc sys;
-	sys.BurnInputStartIndex = 24;
-	sys.InputCount = 5;
-	sys.Inputs[0] = { (EGamepadInput)(GPINPUT_KEYB | FBK_F2), 0 };
-	sys.Inputs[1] = { (EGamepadInput)(GPINPUT_KEYB | FBK_F3), 1 };
-	sys.Inputs[2] = { (EGamepadInput)(GPINPUT_KEYB | FBK_9), 2 };
-	sys.Inputs[3] = { GPINPUT_UNSUPPORTED, 3 };
-	sys.Inputs[4] = { GPINPUT_UNSUPPORTED, 4 };
-
-	// Let's make a input set for third strike!
-	CGameInputDescription iSet;
-	iSet.MaxPlayerCount = 2;
-	iSet.GroupCount = 3;
-	iSet.InputGroups[0] = p1;
-	iSet.InputGroups[1] = p2;
-	iSet.InputGroups[2] = sys;
-
-	// Assign the datas...
-	GameInputDesc = iSet;
 
 	// We grab all of the currently plugged gamepads, and use those, up to max
 	// players for the game to get the inputs mapped.
@@ -2085,34 +2061,51 @@ INT32 SetDefaultGamepadInputs() {
 	UINT32 nPadCount = 0;
 	InputGetGamepads(pads, &nPadCount);
 
-	UINT32 usePlayerCount = nPadCount;
-	if (GameInputDesc.MaxPlayerCount < usePlayerCount) {
-		usePlayerCount = GameInputDesc.MaxPlayerCount;
+	UINT32 usePadCount = nPadCount;
+	if (GameInputDesc.MaxPlayerCount < usePadCount) {
+		usePadCount = GameInputDesc.MaxPlayerCount;
 	}
 
 
 	UINT32 padsSet = 0;
-	for (size_t i = 0; i < usePlayerCount; i++)
+	for (size_t i = 0; i < usePadCount; i++)
 	{
 		// NOTE: Based on the product guid, we need to add some mapping data.. (indexes are not 1:1 across all pads)
-		// In this case we would directly modify gpp to have the correct offsets.....
+		// In this case we would directly modify gpp to have the correct offsets->....
 		// We will start with a hard-coded set, and then later pull it from disk...
 		GUID& prodGuid = pads[i]->info.guidProduct;
 
-		GamepadInputProfileEx gpp;
-		SetInputsFromGamepadMapping(prodGuid, gpp);
+
+		// From the input desc, get the player....
+		CInputGroupDesc* playerInputs = GameInputDesc.GetPlayerGroup(i + 1);
+
+		// NOTE: The mappings that we create a game dependent.  A check
+		// for this might need to take place at some point.
+		SetDefaultDescriptionForPlayer(playerInputs);
+
+		// NOTE: When we are setting mappings for gamepads, we could also check the
+		// device guid or something to see if there is a custom mapping.  Of course, since
+		// there is no way to actually uniquely identify a pad, this is somewhat impossible
+		// or even error prone.  Maybe someone will come up with a way for people to attach
+		// a handle to their input device in the future!
+		// --> NOTE: It should be technically possible for a user to even STORE the configuration
+		// for a game inside of their gamepad.  Most boards have some ridiculous amount of flash
+		// memory, and the USB spec would support it, so why not?
+
+		// GamepadInputProfileEx gpp;
+		// SetInputsFromGamepadMapping(prodGuid, gpp);
 
 
-		throw std::exception("Looks like what we need is some kind of way to use 'GamepadInputPRofileEx' for the abstracted game inputs....");
+		throw std::exception("Looks like what we need is some kind of way to use 'GamepadInputPRofileEx' for the abstracted game inputs->...");
 		// NOTE: This is where we can check the system guid, or whatever... to choose a user-specific mapping.
 		// CopyPadInputsToGameInputs(i, gpp);
 
 		++padsSet;
 	}
 
-	if (padsSet < usePlayerCount) {
+	if (padsSet < usePadCount) {
 		// TODO:
-		// Clear or otherwise set the other player inputs p.x... to default keyboard inputs.
+		// Clear or otherwise set the other player inputs p.x... to default keyboard inputs->
 		int abc = 10;
 	}
 	//pInputInOut[nInputSelect]
@@ -2188,7 +2181,7 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 	switch (pgi->pcInput) {
 	case GIT_CONSTANT:
 		return GPINPUT_CONSTANT;
-	
+
 	case GIT_SWITCH:
 	{
 		UINT16 code = pgi->Input.Switch.nCode;
@@ -2217,7 +2210,7 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 				return res;
 			}
 			else if (gpCode < BURNER_DPAD) {
-				// Analog inputs.
+				// Analog inputs->
 				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_ANALOG | (gpCode + 1));
 				return res;
 			}
@@ -2269,6 +2262,8 @@ INT32 CreateDefaultInputDesc() {
 
 	auto& sysGroup = GameInputDesc.InputGroups[0];
 	sysGroup.GroupType = EInputGroupType::IGROUP_SYSTEM;
+
+	GameInputDesc.MaxPlayerCount = nMaxPlayers;
 
 	for (size_t i = 0; i < nMaxPlayers; i++)
 	{
@@ -2423,12 +2418,6 @@ INT32 SetDefaultGameInputs()
 	}
 
 
-	// Now that we have our defaults, we can populate the input set.
-	// NOTE: The code above, where the calls to GameInpAutoOne are made,
-	// can eventually be folded into the code for creating the deafault input set.  We
-	// can probably find a way to greatly reduce its complexity at that time as well.
-
-	CreateDefaultInputDesc();
 
 	return 0;
 }

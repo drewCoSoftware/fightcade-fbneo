@@ -137,17 +137,17 @@ struct CGameInputDescription {
 	UINT32 MaxPlayerCount;
 
 	// Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
-	inline CInputGroupDesc* GetPlayerGroup(size_t player) {
+	inline CInputGroupDesc* GetPlayerGroup(size_t playerNumber) {
 		CInputGroupDesc* res = nullptr;
-		if (player <= MaxPlayerCount)
+		if (playerNumber <= MaxPlayerCount)
 		{
-			size_t playerIndex;
+			size_t pi = 0;
 			for (size_t i = 0; i < GroupCount; i++)
 			{
 				if (InputGroups[i].GroupType == IGROUP_PLAYER)
 				{
-					++playerIndex;
-					if (playerIndex == player) {
+					++pi;
+					if (pi == playerNumber) {
 						return &InputGroups[i];
 					}
 				}

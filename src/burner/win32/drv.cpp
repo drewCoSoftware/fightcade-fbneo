@@ -220,10 +220,22 @@ int DrvInit(int nDrvNum, bool bRestore)
 	// ConfigGameLoadHardwareDefaults();
 	SetDefaultGameInputs();
 
+	// Now that we have our defaults, we can populate the input set.
+	// NOTE: The code above, where the calls to GameInpAutoOne are made,
+	// can eventually be folded into the code for creating the deafault input set.  We
+	// can probably find a way to greatly reduce its complexity at that time as well.
+	CreateDefaultInputDesc();
+
 	// NOTE: This is where we can check to see if there are any gamepads, etc. plugged in.
 	// If so, then the default(current) input desc or whatever can be modified.
 	// --> Now we can modify the input set based on if any gamepads are plugged in.
-	// SetDefaultGamepadInputs();
+
+	// Really what we want to do is MODIFY the current input description so that it
+	// includes any plugged in gamepads....
+	// So we don't need to do a whole mapping step, we just need to modify the parts
+	// of the description that correspond to each player.
+	UpdateInputDescriptionForGamepads();
+
 	// Other note: If there aren't pads currently plugged in, then I don't really
 	// see a reason for them to be mapped (via defaults) in the first place.  We
 	// should just keep a reasonable set of keyboard inputs for all of it.

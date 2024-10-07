@@ -899,7 +899,7 @@ int init()
 	int xx = 10;
 
 	// NOTE: We might need to pass in some args to remap / not remap current controllers....
-	SetDefaultGamepadInputs();
+	UpdateInputDescriptionForGamepads();
 	//SetDefaultGameInputs();
 
 

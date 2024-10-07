@@ -116,11 +116,13 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
 
 INT32 SetInputsFromGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp);
-INT32 SetDefaultGamepadInputs();
+INT32 UpdateInputDescriptionForGamepads();
 INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp);
 
 INT32 RebuildInputSet();
 INT32 SetDefaultGameInputs();
+INT32 CreateDefaultInputDesc();
+
 INT32 GameInpWrite(FILE* h);
 INT32 GameInpRead(TCHAR* szVal, bool bOverWrite);
 INT32 GameInpMacroRead(TCHAR* szVal, bool bOverWrite);
