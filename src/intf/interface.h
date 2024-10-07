@@ -56,32 +56,10 @@ struct GamepadInputEx {
 	UINT16 index;				// Index for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 	UINT16 driverInputIndex;	// Index for that game input that this should be mapped onto.
 
-	// -------------------------------------------------------------
-	// Return an input code (nCode) that is compatible with the emulator.
-	// NOTE: 'burner/burn' is a term used often as fbNeo = 'final burn neo'
-	UINT32 GetBurnerCode() const {
-		switch (type) {
-		case ITYPE_UNSET:
-			return 0;
+	UINT32 burnerCode;			// FBNeo compatible input code.
 
-		case ITYPE_BUTTON:
-			return BURNER_BUTTON | index;
-
-		case ITYPE_FULL_ANALOG:
-		case ITYPE_HALF_ANALOG:
-			return BURNER_ANALOG | index;
-
-		case ITYPE_DPAD:
-			return BURNER_DPAD | index;
-
-		case ITYPE_KEYBOARD:
-			return index;
-
-		default:
-			throw std::exception("NOT SUPPORTTED!");
-		}
-	}
-
+	// OBSOLETE:
+	UINT32 GetBurnerCode() const;
 };
 
 // These are guesses....
@@ -121,6 +99,12 @@ struct CInputGroupDesc {
 	// What is this group (optional)?
 	wchar_t* Description;
 
+	// Optional GUID to identify the input that is associated with this group.
+	// NOTE: This doesn't actually make sense in situations where the group
+	// is mapped to multiple devices (keyboard/mouse, for example).  It is more of
+	// a band-aid while we still deal with the somewhat redundant input group/set
+	// concept.
+	GUID ProductGuid;
 };
 
 static const UINT32 MAX_GROUPS = 5;
@@ -136,26 +120,7 @@ struct CGameInputDescription {
 	CInputGroupDesc InputGroups[MAX_GROUPS];
 	UINT32 MaxPlayerCount;
 
-	// Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
-	inline CInputGroupDesc* GetPlayerGroup(size_t playerNumber) {
-		CInputGroupDesc* res = nullptr;
-		if (playerNumber <= MaxPlayerCount)
-		{
-			size_t pi = 0;
-			for (size_t i = 0; i < GroupCount; i++)
-			{
-				if (InputGroups[i].GroupType == IGROUP_PLAYER)
-				{
-					++pi;
-					if (pi == playerNumber) {
-						return &InputGroups[i];
-					}
-				}
-			}
-		}
-
-		return res;
-	}
+	CInputGroupDesc* GetPlayerGroup(size_t playerNumber);
 };
 
 // OBOSOLETE: This will be removed!
@@ -170,6 +135,7 @@ struct GamepadInputProfileEx {
 struct CGameInputGroup {
 	UINT8 InputCount;
 	GamepadInputEx Inputs[MAX_INPUTS];
+	UINT8 PlayerNumber;		// 1, 2, etc.  Set to zero if this group doesn't represent a player.
 };
 
 

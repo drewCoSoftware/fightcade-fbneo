@@ -128,7 +128,7 @@ struct GameInp {
 // a bit more standard, a bit more SDL like...
 enum EInputType {
 	ITYPE_UNSET = 0,
-	ITYPE_BUTTON,				// on/off
+	ITYPE_GAMEPAD_BUTTON,				// on/off
 	ITYPE_DPAD,
 
 	// NOTE: These inputs technically make sense, but they should be expanded so that they are more compatible with FBNEO.
@@ -136,7 +136,8 @@ enum EInputType {
 	ITYPE_HALF_ANALOG,		// Half axis range, + or -.  Something like a trigger.
 
 	// A keyboard!
-	ITYPE_KEYBOARD
+	ITYPE_KEYBOARD,
+	ITYPE_CONSTANT
 };
 
 
@@ -154,6 +155,7 @@ enum ECardinalDir {
 const static UINT32 GAMEPAD_MASK = 0x1000;
 const static UINT32 KEYBOARD_MASK = 0x2000;
 const static UINT32 MOUSE_MASK = 0x4000;
+const static UINT32 CONSTANT_MASK = 0x5000;
 
 // =============================================================================================
 // Standardized names for gamepad inputs.

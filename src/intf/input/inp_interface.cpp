@@ -323,14 +323,15 @@ INT32 InputMake(bool bCopy)
 	// This is where we will run the inputs for GameInputSet, and copy them over to
 	// 'GameInp'.  The most important thing here is that we have some way to run
 	// / merge our multi-inputs and map them to the correct pgi index.
-
 	for (size_t gIndex = 0; gIndex < GameInputSet.GroupCount; gIndex++)
 	{
-		auto& g = GameInputSet.Groups[gIndex];
+		CGameInputGroup& g = GameInputSet.Groups[gIndex];
+		
 		for (size_t i = 0; i < g.InputCount; i++)
 		{
 			auto& input = g.Inputs[i];
-			UINT32 code = input.GetBurnerCode();
+			UINT32 code = input.burnerCode;
+
 			if (code == 0) { continue; }
 
 

@@ -58,7 +58,7 @@ INT32 IntInfoAddStringInterface(InterfaceInfo* pInfo, TCHAR* szString)
 {
 	INT32 i;
 
-	for (i = 0; pInfo->ppszInterfaceSettings[i] && i < INT_INFO_STRINGS; i++) { }
+	for (i = 0; pInfo->ppszInterfaceSettings[i] && i < INT_INFO_STRINGS; i++) {}
 
 	if (i >= INT_INFO_STRINGS) {
 		return 1;
@@ -78,7 +78,7 @@ INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString)
 {
 	INT32 i;
 
-	for (i = 0; pInfo->ppszModuleSettings[i] && i < INT_INFO_STRINGS; i++) { }
+	for (i = 0; pInfo->ppszModuleSettings[i] && i < INT_INFO_STRINGS; i++) {}
 
 	if (i >= INT_INFO_STRINGS) {
 		return 1;
@@ -94,6 +94,8 @@ INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString)
 	return 0;
 }
 
+
+
 // ---------------------------------------------------------------------------
 // Return an input code (nCode) that is compatible with the emulator.
 // NOTE: 'burner/burn' is a term used often as fbNeo = 'final burn neo'
@@ -102,7 +104,7 @@ UINT32 GamepadInputEx::GetBurnerCode() const {
 	case ITYPE_UNSET:
 		return 0;
 
-	case ITYPE_GAMEPAD_BUTTON:
+	case ITYPE_BUTTON:
 		return BURNER_BUTTON | index;
 
 	case ITYPE_FULL_ANALOG:
@@ -119,6 +121,7 @@ UINT32 GamepadInputEx::GetBurnerCode() const {
 		throw std::exception("NOT SUPPORTTED!");
 	}
 }
+
 
 // ---------------------------------------------------------------------------
 // Get the input for the given player number: 1 = player 1, 2 = player 2, etc.

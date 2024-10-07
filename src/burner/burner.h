@@ -115,7 +115,6 @@ INT32 ResetGameInputs(bool resetDipSwitches);
 INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
 
-INT32 SetInputsFromGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp);
 INT32 UpdateInputDescriptionForGamepads();
 INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp);
 

@@ -1954,7 +1954,6 @@ INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 	// function really just describes a reasonable default for a gamepad!
 	// --> I make note, because I want to have reasonable defaults for keyboards, mice, etc. when
 	// there are no gamepads that are plugged in.
-	ZeroMemory(&playerInputs, sizeof(CInputGroupDesc));
 
 	// NOTE: The inputs in this case map 1:1 to the indexes for the player inputs
 	// in the driver....
@@ -1990,43 +1989,7 @@ INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 
 	return 0;
 }
-//
-//// --------------------------------------------------------------------------------
-//// Given a product guid, this will lookup alternate mappings tables.
-//// obsolete: this will be removed.
-//INT32 SetInputsFromGamepadMapping(GUID& productGuid, GamepadInputProfileEx& gpp) {
-//
-//	// NOTE: The mappings that we create a game dependent.  A check
-//	// for this might need to take place at some point.
-//	CInputGroupDesc playerInputs;
-//	SetDefaultDescriptionForPlayer(playerInputs);
-//
-//	// Get the device specific mappings.
-//	CGamepadButtonMapping mapping;
-//	if (!GamepadDatabase.TryGetMapping(productGuid, mapping))
-//	{
-//		GamepadDatabase.GetDefaultMapping(mapping);
-//	}
-//
-//
-//	// Now, with the set of inputs, and the gamepad mappings, we can populate the input profile!
-//	ZeroMemory(&gpp, sizeof(GamepadInputProfileEx));
-//	gpp.inputCount = playerInputs->InputCount;
-//	for (size_t i = 0; i < gpp.inputCount; i++)
-//	{
-//		GamepadInputDesc inputDesc = playerInputs->Inputs[i];
-//
-//		const CGamepadMappingEntry* e = mapping.GetMappingFor(inputDesc.Input);
-//		if (e) {
-//			gpp.inputs[i] = { e->Type, e->Index };
-//		}
-//		else {
-//			gpp.inputs[i] = { ITYPE_UNSET, 0 };
-//		}
-//	}
-//
-//	return 0;
-//}
+
 
 // --------------------------------------------------------------------------------
 // Since we almost always play on gamepads / joysticks, we will auto detect +
@@ -2083,32 +2046,20 @@ INT32 UpdateInputDescriptionForGamepads() {
 		// for this might need to take place at some point.
 		SetDefaultDescriptionForPlayer(playerInputs);
 
-		// NOTE: When we are setting mappings for gamepads, we could also check the
-		// device guid or something to see if there is a custom mapping.  Of course, since
-		// there is no way to actually uniquely identify a pad, this is somewhat impossible
-		// or even error prone.  Maybe someone will come up with a way for people to attach
-		// a handle to their input device in the future!
-		// --> NOTE: It should be technically possible for a user to even STORE the configuration
-		// for a game inside of their gamepad.  Most boards have some ridiculous amount of flash
-		// memory, and the USB spec would support it, so why not?
-
-		// GamepadInputProfileEx gpp;
-		// SetInputsFromGamepadMapping(prodGuid, gpp);
-
-
-		throw std::exception("Looks like what we need is some kind of way to use 'GamepadInputPRofileEx' for the abstracted game inputs->...");
-		// NOTE: This is where we can check the system guid, or whatever... to choose a user-specific mapping.
-		// CopyPadInputsToGameInputs(i, gpp);
+		playerInputs->ProductGuid = prodGuid;
 
 		++padsSet;
 	}
 
+	// TODO: Compare to max players to set reasonable defaults!
 	if (padsSet < usePadCount) {
 		// TODO:
 		// Clear or otherwise set the other player inputs p.x... to default keyboard inputs->
+		// We could also modify the return value of this function, or we could rename it
+		// to make it more obvious as to what it is doing...
+		// --> I like option #2, personally.
 		int abc = 10;
 	}
-	//pInputInOut[nInputSelect]
 
 	return 0;
 }
@@ -2305,20 +2256,30 @@ INT32 CreateDefaultInputDesc() {
 // players to this function?  For now, just use the default set.
 INT32 RebuildInputSet() {
 
-	CGamepadButtonMapping defaultPadMapping;
-	GamepadDatabase.GetDefaultMapping(defaultPadMapping);
-
 	memset(&GameInputSet, 0, sizeof(CGameInputSet));
 	GameInputSet.GroupCount = GameInputDesc.GroupCount;
 
 
+	UINT32 playerNumber = 0;
 	for (size_t i = 0; i < GameInputDesc.GroupCount; i++)
 	{
-		auto& srcGroup = GameInputDesc.InputGroups[i];
+		CInputGroupDesc& srcGroup = GameInputDesc.InputGroups[i];
 
 		CGameInputGroup& destGroup = GameInputSet.Groups[i];
 		destGroup.InputCount = srcGroup.InputCount;
 
+		bool isPlayer = srcGroup.GroupType == IGROUP_PLAYER;
+		if (isPlayer)
+		{
+			++playerNumber;
+			destGroup.PlayerNumber = playerNumber;
+		}
+
+		CGamepadButtonMapping padMapping;
+		if (!GamepadDatabase.TryGetMapping(srcGroup.ProductGuid, padMapping))
+		{
+			GamepadDatabase.GetDefaultMapping(padMapping);
+		}
 
 		for (size_t j = 0; j < srcGroup.InputCount; j++)
 		{
@@ -2331,7 +2292,7 @@ INT32 RebuildInputSet() {
 
 			if (type == GAMEPAD_MASK) {
 
-				const CGamepadMappingEntry* entry = defaultPadMapping.GetMappingFor(inputDesc.Input);
+				const CGamepadMappingEntry* entry = padMapping.GetMappingFor(inputDesc.Input);
 				if (entry)
 				{
 					targetInput.type = entry->Type;
@@ -2352,12 +2313,60 @@ INT32 RebuildInputSet() {
 				targetInput.index = inputDesc.Input ^ KEYBOARD_MASK;
 				int y = 10;
 			}
+			else if (type == CONSTANT_MASK) {
+				targetInput.type = ITYPE_CONSTANT;
+				targetInput.index = inputDesc.Input;
+			}
 			else {
 				// TODO: Log
 				// Not supported
 				targetInput.type = ITYPE_UNSET;
 				targetInput.index = 0;
 			}
+
+
+			// Assign an appropriate burner code...
+			UINT32 useBurnerCode = 0;
+			UINT32 codeMask = 0;
+
+			switch (targetInput.type) {
+
+			case ITYPE_UNSET:
+				useBurnerCode = 0;
+				codeMask = 0;
+				break;
+
+			case ITYPE_GAMEPAD_BUTTON:
+				useBurnerCode = BURNER_BUTTON | targetInput.index;
+				codeMask = JOYSTICK_LOWER;
+				break;
+
+			case ITYPE_FULL_ANALOG:
+			case ITYPE_HALF_ANALOG:
+				useBurnerCode = BURNER_ANALOG | targetInput.index;
+				codeMask = JOYSTICK_LOWER;
+				break;
+
+			case ITYPE_DPAD:
+				useBurnerCode = BURNER_DPAD | targetInput.index;
+				codeMask = JOYSTICK_LOWER;
+				break;
+
+			case ITYPE_KEYBOARD:
+				useBurnerCode = targetInput.index;
+				break;
+
+			default:
+				throw std::exception("NOT SUPPORTTED!");
+			}
+
+
+			// Adjust the code for gamepad + player index....
+			UINT32 playerMask = codeMask == JOYSTICK_LOWER ? (playerNumber - 1) : 0;
+			playerMask = playerMask << 8;
+			targetInput.burnerCode = useBurnerCode | codeMask | playerMask;
+
+			int x = 10;
 		}
 	}
 

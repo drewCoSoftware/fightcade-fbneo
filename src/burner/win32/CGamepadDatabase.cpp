@@ -146,13 +146,13 @@ bool TranslateMappingEntry(const std::vector<std::wstring> parts, CGamepadMappin
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 void BuildInputTypeMap() {
-	TypeCodesToInputTypes[GetHash(L"b")] = ITYPE_BUTTON;
+	TypeCodesToInputTypes[GetHash(L"b")] = ITYPE_GAMEPAD_BUTTON;
 	TypeCodesToInputTypes[GetHash(L"h")] = ITYPE_DPAD;
 	TypeCodesToInputTypes[GetHash(L"a")] = ITYPE_FULL_ANALOG;       // a = full axis?
 	TypeCodesToInputTypes[GetHash(L"+a")] = ITYPE_HALF_ANALOG;      // +a = single (+) axis? trigger?
 	TypeCodesToInputTypes[GetHash(L"-a")] = ITYPE_HALF_ANALOG;      // -a = single (-) axis? trigger?
 
-	//  TypeCodesToInputTypes[GetHash(L"b")] = ITYPE_BUTTON;
+	//  TypeCodesToInputTypes[GetHash(L"b")] = ITYPE_GAMEPAD_BUTTON;
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------
@@ -593,19 +593,19 @@ void CGamepadDatabase::CreateDefaultMapping() {
 	mapping.Entries[10] = { GPINPUT_DPAD_LEFT, ITYPE_DPAD, 0x00 };
 	mapping.Entries[11] = { GPINPUT_DPAD_RIGHT, ITYPE_DPAD, 0x01 };
 
-	mapping.Entries[12] = { GPINPUT_BACK, ITYPE_BUTTON, 0x06 };
-	mapping.Entries[13] = { GPINPUT_START, ITYPE_BUTTON, 0x07 };
+	mapping.Entries[12] = { GPINPUT_BACK, ITYPE_GAMEPAD_BUTTON, 0x06 };
+	mapping.Entries[13] = { GPINPUT_START, ITYPE_GAMEPAD_BUTTON, 0x07 };
 
-	mapping.Entries[14] = { GPINPUT_X, ITYPE_BUTTON, 0x02 };
-	mapping.Entries[15] = { GPINPUT_Y, ITYPE_BUTTON, 0x03 };
-	mapping.Entries[16] = { GPINPUT_A, ITYPE_BUTTON, 0x00 };
-	mapping.Entries[17] = { GPINPUT_B, ITYPE_BUTTON, 0x01 };
+	mapping.Entries[14] = { GPINPUT_X, ITYPE_GAMEPAD_BUTTON, 0x02 };
+	mapping.Entries[15] = { GPINPUT_Y, ITYPE_GAMEPAD_BUTTON, 0x03 };
+	mapping.Entries[16] = { GPINPUT_A, ITYPE_GAMEPAD_BUTTON, 0x00 };
+	mapping.Entries[17] = { GPINPUT_B, ITYPE_GAMEPAD_BUTTON, 0x01 };
 
 	// ?? Maybe......
-	mapping.Entries[18] = { GPINPUT_LEFT_BUMPER, ITYPE_BUTTON, 0x04 };
+	mapping.Entries[18] = { GPINPUT_LEFT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x04 };
 	mapping.Entries[19] = { GPINPUT_LEFT_TRIGGER, 	ITYPE_HALF_ANALOG, 0x05 };
 
-	mapping.Entries[20] = { GPINPUT_RIGHT_BUMPER, ITYPE_BUTTON, 0x05 };
+	mapping.Entries[20] = { GPINPUT_RIGHT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x05 };
 	mapping.Entries[21] = { GPINPUT_RIGHT_TRIGGER, ITYPE_HALF_ANALOG, 0x04 };
 
 	mapping.EntryCount = 22;
