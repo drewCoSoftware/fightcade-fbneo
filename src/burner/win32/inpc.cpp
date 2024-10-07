@@ -36,7 +36,7 @@ static int InpcInit()
 	pgi = GameInp + nInpcInput;
 
 	// Get current constant
-	if (pgi->pcInput == GIT_CONSTANT) {
+	if (pgi->nInput == GIT_CONSTANT) {
 	nCurrent=pgi->Input.Constant.nConst; }
 	_stprintf(szNewTitle, _T("0x%.2X"), nCurrent);
 	SetWindowText(hValue, szNewTitle);
@@ -96,7 +96,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM /*
 			GetWindowText(hValue, szNew, sizeof(szNew));
 
 			// Set new constant
-			pgi->pcInput = GIT_CONSTANT;
+			pgi->nInput = GIT_CONSTANT;
 			nVal = _tcstol(szNew, NULL, 0);
 			pgi->Input.Constant.nConst = (unsigned char)nVal;
 

@@ -55,7 +55,7 @@ struct InputProfileFileData {
 } inputProfiles;
 
 // Convenience:
-std::map<GUID, GamepadFileEntry*, GUIDComparer> _entryMap;
+std::map<GUID, GamepadFileEntry, GUIDComparer> _entryMap;
 
 struct TCHARComparer
 {
@@ -420,22 +420,22 @@ void clearInputMappingsData() {
 	// Compose the mappings data.  This will end up being our source of data for 'getGamepadInfos'....
 	memset(&inputProfiles, 0, sizeof(InputProfileFileData));
 }
-
-// ---------------------------------------------------------------------------------------------------------
-void createGamepadMappingData() {
-
-	// NOTE: This should happen during the merge step.....	
-	gamepadFile.entryCount = gamepadCount;
-	for (int i = 0; i < gamepadCount; i++)
-	{
-		GamepadFileEntry& e = gamepadFile.entries[i];
-		e.info.guidInstance = gamepadProperties[i].guidInstance;
-		e.info.guidProduct = gamepadProperties[i].guidProduct;
-
-		// Set our nice, internal alias.
-		_entryMap[e.info.guidInstance] = &e;
-	}
-}
+//
+//// ---------------------------------------------------------------------------------------------------------
+//void createGamepadMappingData() {
+//
+//	// NOTE: This should happen during the merge step.....	
+//	gamepadFile.entryCount = gamepadCount;
+//	for (int i = 0; i < gamepadCount; i++)
+//	{
+//		GamepadFileEntry& e = gamepadFile.entries[i];
+//		e.info.guidInstance = gamepadProperties[i].guidInstance;
+//		e.info.guidProduct = gamepadProperties[i].guidProduct;
+//
+//		// Set our nice, internal alias.
+//		_entryMap[e.info.guidInstance] = &e;
+//	}
+//}
 
 // ---------------------------------------------------------------------------------------------------------
 // Save all of the gamepad data to disk.  Alias + button mappings.....
@@ -493,18 +493,18 @@ INT32 saveGamepadMappings() {
 	return 0;
 }
 
-
-// ---------------------------------------------------------------------------------------------------------
-void refreshEntryMap() {
-	// Create our convenient guid map..
-	_entryMap.clear();
-	size_t len = gamepadFile.entryCount;
-	for (size_t i = 0; i < len; i++)
-	{
-		auto& e = gamepadFile.entries[i];
-		_entryMap[e.info.guidInstance] = &e;
-	}
-}
+//
+//// ---------------------------------------------------------------------------------------------------------
+//void refreshEntryMap() {
+//	// Create our convenient guid map..
+//	_entryMap.clear();
+//	size_t len = gamepadFile.entryCount;
+//	for (size_t i = 0; i < len; i++)
+//	{
+//		auto& e = gamepadFile.entries[i];
+//		_entryMap[e.info.guidInstance] = &e;
+//	}
+//}
 
 // ---------------------------------------------------------------------------------------------------------
 INT32 loadInputProfiles() {
@@ -628,32 +628,31 @@ INT32 addInputProfile(const TCHAR* profileName) {
 //void deleteInputProfile(size_t index) {
 //	// inputProfiles
 //}
-
-// ---------------------------------------------------------------------------------------------------------
-// TODO: This needs to be ported....
-void addGamepad(gamepadData& props) {
-	//	throw std::exception("NOT SUPPORTED YET!");
-
-	UINT16 index = gamepadFile.entryCount;
-	if (index >= MAX_GAMEPAD_INFOS) {
-		throw "TOO MANY GAMEPADS!";
-	}
-	gamepadFile.entryCount += 1;
-
-	// This is all we need, just to add the guid....
-	GamepadFileEntry& e = gamepadFile.entries[index];
-	e.info.guidInstance = props.guidInstance;
-	e.info.guidProduct = props.guidProduct;
-
-	// This is refreshed in a subsequent step....
-	// _entryMap[e.info.guidInstance] = &e;
-
-	//strcpy(e.info.Alias, _T("
-	//e.info.
-	// Set our nice, internal alias.
-
-}
-
+//
+//// ---------------------------------------------------------------------------------------------------------
+//// TODO: This needs to be ported....
+//void addGamepad(gamepadData& props) {
+//	//	throw std::exception("NOT SUPPORTED YET!");
+//
+//	UINT16 index = gamepadFile.entryCount;
+//	if (index >= MAX_GAMEPAD_INFOS) {
+//		throw "TOO MANY GAMEPADS!";
+//	}
+//	gamepadFile.entryCount += 1;
+//
+//	// This is all we need, just to add the guid....
+//	GamepadFileEntry& e = gamepadFile.entries[index];
+//	e.info.guidInstance = props.guidInstance;
+//	e.info.guidProduct = props.guidProduct;
+//
+//	_entryMap[e.info.guidInstance] = &e;
+//
+//	//strcpy(e.info.Alias, _T("
+//	//e.info.
+//	// Set our nice, internal alias.
+//
+//}
+//
 
 //// ---------------------------------------------------------------------------------------------------------
 //// Merge any *new* gamepads that have been detected with the current data file.
@@ -680,30 +679,29 @@ void addGamepad(gamepadData& props) {
 //
 //}
 
-// ---------------------------------------------------------------------------------------------------------
-// Merge any *new* gamepads that have been detected with the current data file.
-// OBSOLETE:  Will be removed!
-void mergeGamepadMappings() {
-
-	bool saveData = false;
-	for (int i = 0; i < gamepadCount; i++)
-	{
-		// Check for entry.  If there isn't one, we will create something new!
-		auto match = _entryMap.find(gamepadProperties[i].guidInstance);
-		if (match == _entryMap.end())
-		{
-			// This is a new entry!
-			addGamepad(gamepadProperties[i]);
-			saveData = true;
-		}
-	}
-	if (saveData)
-	{
-		saveGamepadMappings();
-		refreshEntryMap();
-	}
-
-}
+//// ---------------------------------------------------------------------------------------------------------
+//// Merge any *new* gamepads that have been detected with the current data file.
+//// OBSOLETE:  Will be removed!
+//void mergeGamepadMappings() {
+//
+//	bool saveData = false;
+//	for (int i = 0; i < gamepadCount; i++)
+//	{
+//		// Check for entry.  If there isn't one, we will create something new!
+//		auto match = _entryMap.find(gamepadProperties[i].guidInstance);
+//		if (match == _entryMap.end())
+//		{
+//			// This is a new entry!
+//			addGamepad(gamepadProperties[i]);
+//			saveData = true;
+//		}
+//	}
+//	if (saveData)
+//	{
+//		saveGamepadMappings();
+//		refreshEntryMap();
+//	}
+//}
 
 // ---------------------------------------------------------------------------------------------------------
 // Quick n' dirty, probably not accurate way to check for an existing file....
@@ -770,7 +768,7 @@ INT32 loadGamepadMappings() {
 		clearGamepadMappingData();
 	}
 
-	refreshEntryMap();
+	//refreshEntryMap();
 
 	return mappingsLoaded ? 0 : -1;
 }
@@ -806,8 +804,19 @@ INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, UINT32* nPadCount)
 	// NOTE: We only want data for plugged controllers, NOT all of them!
 	for (int i = 0; i < gamepadCount; i++)
 	{
-		GUID& guid = gamepadProperties[i].guidInstance;
-		auto match = _entryMap.find(guid);
+		// This is all we need, just to add the guid....
+		auto props = gamepadProperties[i];
+		GamepadFileEntry e; 
+		e.info.guidInstance = props.guidInstance;
+		e.info.guidProduct = props.guidProduct;
+
+		_entryMap[props.guidInstance] = e;
+
+		//// NOTE: This is redundant... adding the gamepad and then looking it up....
+		//addGamepad(gamepadProperties[i]);
+		//GUID& guid = gamepadProperties[i].guidInstance;
+
+		auto match = _entryMap.find(props.guidInstance);
 		if (match == _entryMap.end())
 		{
 			// This is wrong!  
@@ -817,7 +826,7 @@ INT32 getGamepadInfos(GamepadFileEntry** ppPadInfos, UINT32* nPadCount)
 		}
 
 		// Set the pointer.
-		ppPadInfos[i] = match->second;
+		ppPadInfos[i] = &match->second;
 	}
 	*nPadCount = gamepadCount;
 
@@ -880,15 +889,11 @@ int init()
 			clearInputMappingsData();
 		}
 	}
+
 	// NOTE: We don't merge input profiles because they aren't something that is 'detected'
 	// by the input system. See the 'mergeGamepadMappings' code for more information.
 	// mergeInputProfiles();
-
-
-	mergeGamepadMappings();
-
-	// NOTE: This might be a good place to save data about our input devices.
-	// Tracking the guids + allowing player association in the UI would be useful I think... something like that.....
+	//mergeGamepadMappings();
 
 	firstInit = false;
 
@@ -900,7 +905,8 @@ int init()
 
 	// NOTE: We might need to pass in some args to remap / not remap current controllers....
 	UpdateInputDescriptionForGamepads();
-	//SetDefaultGameInputs();
+	RebuildInputSet();
+
 
 
 	return 0;

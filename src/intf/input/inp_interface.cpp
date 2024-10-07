@@ -94,11 +94,11 @@ static INT32 ProcessSliders()
 		INT32 nAdd = 0;
 		INT32 bGotKey = 0;
 
-		if ((pgi->pcInput & GIT_GROUP_SLIDER) == 0) {				// not a slider
+		if ((pgi->nInput & GIT_GROUP_SLIDER) == 0) {				// not a slider
 			continue;
 		}
 
-		if (pgi->pcInput == GIT_KEYSLIDER) {
+		if (pgi->nInput == GIT_KEYSLIDER) {
 			// Get states of the two keys
 			if (CinpState(pgi->Input.Slider.SliderAxis.nSlider[0])) {
 				bGotKey = 1;
@@ -110,7 +110,7 @@ static INT32 ProcessSliders()
 			}
 		}
 
-		if (pgi->pcInput == GIT_JOYSLIDER) {
+		if (pgi->nInput == GIT_JOYSLIDER) {
 			// Get state of the axis
 			nAdd = CinpJoyAxis(pgi->Input.Slider.JoyAxis.nJoy, pgi->Input.Slider.JoyAxis.nAxis);
 
@@ -334,18 +334,18 @@ INT32 InputMake(bool bCopy)
 		for (size_t i = 0; i < g.InputCount; i++)
 		{
 			auto& input = g.Inputs[i];
-			UINT32 code = input.burnerCode;
+			UINT32 code = input.BurnerCode;
 
 
 
 
 			// Whatever the last detected input was, we will assign it.
-			pgi = (GameInp + input.driverInputIndex);
+			pgi = (GameInp + input.DriverInputIndex);
 			if (pgi->Input.pVal == NULL) {
 				continue;
 			}
 
-			switch (pgi->pcInput) {
+			switch (pgi->nInput) {
 			case GIT_UNDEFINED:						// Undefined
 				pgi->Input.nVal = 0;
 				break;
@@ -366,13 +366,13 @@ INT32 InputMake(bool bCopy)
 
 				// This is crappy, but it will do for a POC!
 				if (useS == 0) {
-					auto f = driverIndexToValue.find(input.driverInputIndex);
+					auto f = driverIndexToValue.find(input.DriverInputIndex);
 					if (f != driverIndexToValue.end()) {
 						useS = f->second;
 					}
 				}
 				else {
-					driverIndexToValue[input.driverInputIndex] = useS;
+					driverIndexToValue[input.DriverInputIndex] = useS;
 				}
 				s = useS;
 
@@ -545,7 +545,7 @@ INT32 InputMake(bool bCopy)
 	//		continue;
 	//	}
 
-	//	switch (pgi->pcInput) {
+	//	switch (pgi->nInput) {
 	//	case GIT_UNDEFINED:						// Undefined
 	//		pgi->Input.nVal = 0;
 	//		break;

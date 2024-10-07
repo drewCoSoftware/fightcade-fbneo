@@ -160,6 +160,7 @@ struct BurnHDDInfo {
 };
 
 // Inputs
+// TODO: This should also be an enum.
 
 #define BIT_DIGITAL			(1)
 

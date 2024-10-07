@@ -95,32 +95,6 @@ INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString)
 }
 
 // ---------------------------------------------------------------------------
-// Return an input code (nCode) that is compatible with the emulator.
-// NOTE: 'burner/burn' is a term used often as fbNeo = 'final burn neo'
-UINT32 GamepadInputEx::GetBurnerCode() const {
-	switch (type) {
-	case ITYPE_UNSET:
-		return 0;
-
-	case ITYPE_GAMEPAD_BUTTON:
-		return BURNER_BUTTON | index;
-
-	case ITYPE_FULL_ANALOG:
-	case ITYPE_HALF_ANALOG:
-		return BURNER_ANALOG | index;
-
-	case ITYPE_DPAD:
-		return BURNER_DPAD | index;
-
-	case ITYPE_KEYBOARD:
-		return index;
-
-	default:
-		throw std::exception("NOT SUPPORTTED!");
-	}
-}
-
-// ---------------------------------------------------------------------------
 // Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
 CInputGroupDesc* CGameInputDescription::GetPlayerGroup(size_t playerNumber) {
 	CInputGroupDesc* res = nullptr;

@@ -239,7 +239,6 @@ int DrvInit(int nDrvNum, bool bRestore)
 	// Other note: If there aren't pads currently plugged in, then I don't really
 	// see a reason for them to be mapped (via defaults) in the first place.  We
 	// should just keep a reasonable set of keyboard inputs for all of it.
-
 	RebuildInputSet();
 
 	InputMake(true);

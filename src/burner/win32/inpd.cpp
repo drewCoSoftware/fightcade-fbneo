@@ -182,7 +182,7 @@ static int InpdUseUpdate()
 		LVITEM LvItem;
 		TCHAR* pszVal = NULL;
 
-		if (pgi->pcInput & GIT_GROUP_MACRO) {
+		if (pgi->nInput & GIT_GROUP_MACRO) {
 			pszVal = InpMacroToDesc(pgi);
 
 			if (_tcscmp(pszVal, _T("code 0x00")) == 0)
@@ -990,7 +990,7 @@ int InpdListMake(int bBuild)
 	for (unsigned int i = 0; i < nMacroCount; i++, pgi++) {
 		LVITEM LvItem;
 
-		if (pgi->pcInput & GIT_GROUP_MACRO) {
+		if (pgi->nInput & GIT_GROUP_MACRO) {
 			memset(&LvItem, 0, sizeof(LvItem));
 			LvItem.mask = LVIF_TEXT | LVIF_PARAM;
 			LvItem.iItem = j;
@@ -1386,7 +1386,7 @@ static int ActivateInputListItem()
 		InpcCreate();
 	}
 	else {
-		if (GameInp[nSel].pcInput == GIT_MACRO_CUSTOM) {
+		if (GameInp[nSel].nInput == GIT_MACRO_CUSTOM) {
 #if 0
 			InpMacroCreate(nSel);
 #endif
@@ -1462,7 +1462,7 @@ static int DeleteInput(unsigned int i)
 			return 1;
 		}
 
-		GameInp[i].pcInput = 0;
+		GameInp[i].nInput = 0;
 	}
 
 	GameInpCheckLeftAlt();
@@ -1618,7 +1618,7 @@ int UsePreset(bool bMakeDefault)
 				continue;
 			}
 
-			if (GameInp[i].pcInput == 0) {
+			if (GameInp[i].nInput == 0) {
 				DeleteInput(j);
 			}
 
@@ -1740,7 +1740,7 @@ static void saveMappingsInfo() {
 		}
 
 		GamepadInput& pi = profile->Inputs[i];
-		UINT8 nInput = pgi->pcInput;
+		UINT8 nInput = pgi->nInput;
 
 		//pi.SetInputType(pgi->nInput);
 		//pi.nInput = pgi->nInput;
@@ -2104,7 +2104,7 @@ static INT_PTR CALLBACK DialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 				if (plvcd->nmcd.dwItemSpec < nGameInpCount) {
 					if (GameInp[plvcd->nmcd.dwItemSpec].nType & BIT_GROUP_CONSTANT) {
 
-						if (GameInp[plvcd->nmcd.dwItemSpec].pcInput == 0) {
+						if (GameInp[plvcd->nmcd.dwItemSpec].nInput == 0) {
 							plvcd->clrTextBk = RGB(0xDF, 0xDF, 0xDF);
 
 							SetWindowLongPtr(hInpdDlg, DWLP_MSGRESULT, CDRF_NEWFONT);

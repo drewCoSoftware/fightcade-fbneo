@@ -118,6 +118,20 @@ bool TranslateMappingEntry(const std::vector<std::wstring> parts, CGamepadMappin
 			}
 
 			memcpy(indexString, inputVal + (dotPos + 1), wcslen(inputVal) - (dotPos + 1));
+
+			// The button indexes for the hats are a bit odd.....
+			// We will translate them to something that our system expects:
+			wchar_t code = indexString[0];
+			if (code == '1') {					// Up
+				indexString[0] = '3';
+			} else if (code == '4') {			// Down
+				indexString[0] = '2';
+			} else if (code == '8') {			// Left
+				indexString[0] = '0';
+			} else if (code == '2') {			// Right
+				indexString[0] = '1';
+			}
+
 			int abc = 10;
 
 		}

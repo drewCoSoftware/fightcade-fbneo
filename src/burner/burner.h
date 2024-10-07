@@ -116,7 +116,6 @@ INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
 
 INT32 UpdateInputDescriptionForGamepads();
-INT32 CopyPadInputsToGameInputs(int playerIndex, GamepadInputProfileEx& gpp);
 
 INT32 RebuildInputSet();
 INT32 SetDefaultGameInputs();

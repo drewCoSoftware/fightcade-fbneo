@@ -110,11 +110,10 @@ static const UINT16 BURNER_ANALOG = 0x00;
 // --> to 'organize' everything....
 
 // So... if we have a fixed number of game inputs (probably unavoidable at this point, but also makes sense) then we need to
-// have more than one pcInput available per game (nType) input.
+// have more than one nInput available per game (nType) input.
 
 struct GameInp {
-	//  UINT8 pcInputCount = 1;		// How many PC inputs did we map?
-	UINT8 pcInput;				// PC side: see above  --> This is the TYPE of pc input!  Nothing else!
+	UINT8 nInput;				// PC side: see above  --> This is the TYPE of pc input!  Nothing else!
 	UINT8 nType;				// game side: see burn.h (BIT_* defs) (BurnInputInfo)
 
 	union {

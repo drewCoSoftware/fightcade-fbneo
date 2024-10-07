@@ -360,7 +360,6 @@ static LRESULT CALLBACK ScrnProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lPar
 }
 
 // --------------------------------------------------------------------------------
-// NOTE: This is where we will detect controllers being plugged in / out.
 // NOTE: A lot of this code was cribbed from/inspired by: https://www.codeproject.com/articles/14500/detecting-hardware-insertion-and-or-removal
 // and: https://stackoverflow.com/questions/16528170/using-directinput-to-receive-signal-after-plugging-in-joystick
 static int OnDeviceChange(HWND, WPARAM wParam, LPARAM lParam)

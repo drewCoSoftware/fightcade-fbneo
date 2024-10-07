@@ -1637,6 +1637,7 @@ del build_details.exe
       <CompileAs>Default</CompileAs>
       <PreprocessorDefinitions>BUILD_WIN32;FASTCALL;_DEBUG;FBNEO_DEBUG;LSB_FIRST;INLINE=__inline static;INCLUDE_AVI_RECORDING;INCLUDE_LIB_PNGH;C_INLINE=__inline;MAME_INLINE=__inline static;_CRT_SECURE_NO_WARNINGS;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
