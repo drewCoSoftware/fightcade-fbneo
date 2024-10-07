@@ -319,6 +319,10 @@ INT32 InputMake(bool bCopy)
 
 	ProcessSliders();
 
+	// NOTE: We can actually set this up when we first create the GameInp (or whatever) data.
+	// For now, we will hang out....
+	std::map<UINT32, UINT32> driverIndexToValue;
+
 
 	// This is where we will run the inputs for GameInputSet, and copy them over to
 	// 'GameInp'.  The most important thing here is that we have some way to run
@@ -326,13 +330,13 @@ INT32 InputMake(bool bCopy)
 	for (size_t gIndex = 0; gIndex < GameInputSet.GroupCount; gIndex++)
 	{
 		CGameInputGroup& g = GameInputSet.Groups[gIndex];
-		
+
 		for (size_t i = 0; i < g.InputCount; i++)
 		{
 			auto& input = g.Inputs[i];
 			UINT32 code = input.burnerCode;
 
-			if (code == 0) { continue; }
+
 
 
 			// Whatever the last detected input was, we will assign it.
@@ -356,8 +360,22 @@ INT32 InputMake(bool bCopy)
 			case GIT_SWITCH: {						// Digital input
 
 				// Old Way... use the nCode on the input....
-				// INT32 s = CinpState(pgi->Input.Switch.nCode);
 				INT32 s = CinpState(code);
+
+				UINT32 useS = s;
+
+				// This is crappy, but it will do for a POC!
+				if (useS == 0) {
+					auto f = driverIndexToValue.find(input.driverInputIndex);
+					if (f != driverIndexToValue.end()) {
+						useS = f->second;
+					}
+				}
+				else {
+					driverIndexToValue[input.driverInputIndex] = useS;
+				}
+				s = useS;
+
 
 				// TODO: We need to have a way to detect when things are double mapped and merge the inputs
 				// accordingly....  Basically, use the last non-zero value....
