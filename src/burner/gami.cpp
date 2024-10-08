@@ -1964,30 +1964,30 @@ INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 	auto offset = playerInputs->Inputs[0].DriverInputIndex;
 
 	// playerInputs->inputCount = 16;
-	playerInputs->Inputs[0] = { PCINPUT_BACK, 0 };
-	playerInputs->Inputs[1] = { PCINPUT_START, 1 };
+	playerInputs->Inputs[0] = { PCI_PAD_BACK, 0 };
+	playerInputs->Inputs[1] = { PCI_PAD_START, 1 };
 
 	// The directinal inputs need to be mapped onto the DRIVER inputs somehow....
 	// The code that does the SOCD stuff just looks for the BurnInputInfo.szInfo value to decide
 	// what is up/down/left/right..  IMO, not the most robust way, but it can work....
 	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs->)
-	playerInputs->Inputs[2] = { PCINPUT_DPAD_UP, 2 };			// Up			
-	playerInputs->Inputs[3] = { PCINPUT_DPAD_DOWN, 3 };			// Down		
-	playerInputs->Inputs[4] = { PCINPUT_DPAD_LEFT, 4 };			// Left		
-	playerInputs->Inputs[5] = { PCINPUT_DPAD_RIGHT, 5 };			// Right		
+	playerInputs->Inputs[2] = { PIC_PAD_DPAD_UP, 2 };			// Up			
+	playerInputs->Inputs[3] = { PIC_PAD_DPAD_DOWN, 3 };			// Down		
+	playerInputs->Inputs[4] = { PIC_PAD_DPAD_LEFT, 4 };			// Left		
+	playerInputs->Inputs[5] = { PIC_PAD_DPAD_RIGHT, 5 };			// Right		
 
 	// ANALOG STICK (0x0)
-	playerInputs->Inputs[6] = { PCINPUT_LSTICK_UP, 2 };			// Up			
-	playerInputs->Inputs[7] = { PCINPUT_LSTICK_DOWN, 3 };			// Down		
-	playerInputs->Inputs[8] = { PCINPUT_LSTICK_LEFT, 4 };			// Left		
-	playerInputs->Inputs[9] = { PCINPUT_LSTICK_RIGHT, 5 };		// Right		
+	playerInputs->Inputs[6] = { PIC_PAD_LSTICK_UP, 2 };			// Up			
+	playerInputs->Inputs[7] = { PIC_PAD_LSTICK_DOWN, 3 };			// Down		
+	playerInputs->Inputs[8] = { PIC_PAD_LSTICK_LEFT, 4 };			// Left		
+	playerInputs->Inputs[9] = { PIC_PAD_LSTICK_RIGHT, 5 };		// Right		
 
-	playerInputs->Inputs[10] = { PCINPUT_X, 6 };
-	playerInputs->Inputs[11] = { PCINPUT_Y, 7 };
-	playerInputs->Inputs[12] = { PCINPUT_RIGHT_BUMPER, 8 };
-	playerInputs->Inputs[13] = { PCINPUT_A, 9 };
-	playerInputs->Inputs[14] = { PCINPUT_B, 10 };
-	playerInputs->Inputs[15] = { PCINPUT_RIGHT_TRIGGER, 11 };
+	playerInputs->Inputs[10] = { PCI_PAD_X, 6 };
+	playerInputs->Inputs[11] = { PCI_PAD_Y, 7 };
+	playerInputs->Inputs[12] = { PCI_PAD_RIGHT_BUMPER, 8 };
+	playerInputs->Inputs[13] = { PCI_PAD_A, 9 };
+	playerInputs->Inputs[14] = { PCI_PAD_B, 10 };
+	playerInputs->Inputs[15] = { PCI_PAD_RIGHT_TRIGGER, 11 };
 
 
 	const size_t INPUT_COUNT = 16;
@@ -2100,7 +2100,7 @@ PCInputs TranslateInput(struct GameInp* pgi) {
 
 	switch (pgi->nInput) {
 	case GIT_CONSTANT:
-		return PCINPUT_CONSTANT;
+		return PCI_CONSTANT;
 
 	case GIT_SWITCH:
 	{
@@ -2110,7 +2110,7 @@ PCInputs TranslateInput(struct GameInp* pgi) {
 
 		if (code >= MOUSE_LOWER) {
 			// TEMP: We haven't considered a mouse yet.....
-			return PCInputs::PCINPUT_UNSUPPORTED;
+			return PCInputs::PCI_UNSUPPORTED;
 		}
 
 		else if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER) {
@@ -2122,17 +2122,17 @@ PCInputs TranslateInput(struct GameInp* pgi) {
 				// NOTE: We can't really say what button is what...
 				// because of gamepad mappings, so maybe just punt?
 				size_t useCode = gpCode ^ BURNER_BUTTON;
-				PCInputs res = (PCInputs)(PCINPUT_PAD_BUTTONS | (useCode + 1));
+				PCInputs res = (PCInputs)(PCI_PAD_BUTTONS | (useCode + 1));
 				return res;
 			}
 			else if ((gpCode & BURNER_DPAD) == BURNER_DPAD) {
 				size_t useCode = gpCode ^ BURNER_DPAD;
-				PCInputs res = (PCInputs)(PCINPUT_PAD_DPAD | (useCode + 1));
+				PCInputs res = (PCInputs)(PCI_PAD_DPAD | (useCode + 1));
 				return res;
 			}
 			else if (gpCode < BURNER_DPAD) {
 				// Analog inputs->
-				PCInputs res = (PCInputs)(PCINPUT_PAD_ANALOG | (gpCode + 1));
+				PCInputs res = (PCInputs)(PCI_PAD_ANALOG | (gpCode + 1));
 				return res;
 			}
 
@@ -2147,7 +2147,7 @@ PCInputs TranslateInput(struct GameInp* pgi) {
 			auto count = ARRAYSIZE(KeyNames);
 			for (INT32 i = 0; count; i++) {
 				if ((code + 1) == KeyNames[i].nCode) {
-					PCInputs res = (PCInputs)(PCINPUT_KEYB | code);
+					PCInputs res = (PCInputs)(PCI_KEYB | code);
 					return res;
 				}
 			}
@@ -2158,12 +2158,12 @@ PCInputs TranslateInput(struct GameInp* pgi) {
 		break;
 	}
 	default:
-		return PCInputs::PCINPUT_UNSUPPORTED;
+		return PCInputs::PCI_UNSUPPORTED;
 		break;
 	}
 
 
-	return PCInputs::PCINPUT_UNSUPPORTED;
+	return PCInputs::PCI_UNSUPPORTED;
 }
 
 // --------------------------------------------------------------------------------

@@ -172,60 +172,60 @@ void BuildInputTypeMap() {
 // ------------------------------------------------------------------------------------------------------------------------------------
 void BuildSDLButtonMap() {
 
-	SDLButtonsToGamepadInputs[GetHash(L"a")] = PCINPUT_A;
-	SDLButtonsToGamepadInputs[GetHash(L"b")] = PCINPUT_B;
-	SDLButtonsToGamepadInputs[GetHash(L"x")] = PCINPUT_X;
-	SDLButtonsToGamepadInputs[GetHash(L"y")] = PCINPUT_Y;
+	SDLButtonsToGamepadInputs[GetHash(L"a")] = PCI_PAD_A;
+	SDLButtonsToGamepadInputs[GetHash(L"b")] = PCI_PAD_B;
+	SDLButtonsToGamepadInputs[GetHash(L"x")] = PCI_PAD_X;
+	SDLButtonsToGamepadInputs[GetHash(L"y")] = PCI_PAD_Y;
 
-	SDLButtonsToGamepadInputs[GetHash(L"back")] = PCINPUT_BACK;
-	SDLButtonsToGamepadInputs[GetHash(L"start")] = PCINPUT_START;
+	SDLButtonsToGamepadInputs[GetHash(L"back")] = PCI_PAD_BACK;
+	SDLButtonsToGamepadInputs[GetHash(L"start")] = PCI_PAD_START;
 
-	SDLButtonsToGamepadInputs[GetHash(L"dpup")] = PCINPUT_DPAD_DOWN;
-	SDLButtonsToGamepadInputs[GetHash(L"dpdown")] = PCINPUT_DPAD_UP;
-	SDLButtonsToGamepadInputs[GetHash(L"dpleft")] = PCINPUT_DPAD_LEFT;
-	SDLButtonsToGamepadInputs[GetHash(L"dpright")] = PCINPUT_DPAD_RIGHT;
+	SDLButtonsToGamepadInputs[GetHash(L"dpup")] = PIC_PAD_DPAD_DOWN;
+	SDLButtonsToGamepadInputs[GetHash(L"dpdown")] = PIC_PAD_DPAD_UP;
+	SDLButtonsToGamepadInputs[GetHash(L"dpleft")] = PIC_PAD_DPAD_LEFT;
+	SDLButtonsToGamepadInputs[GetHash(L"dpright")] = PIC_PAD_DPAD_RIGHT;
 
-	SDLButtonsToGamepadInputs[GetHash(L"leftshoulder")] = PCINPUT_LEFT_BUMPER;
-	SDLButtonsToGamepadInputs[GetHash(L"rightshoulder")] = PCINPUT_RIGHT_BUMPER;
+	SDLButtonsToGamepadInputs[GetHash(L"leftshoulder")] = PCI_PAD_LEFT_BUMPER;
+	SDLButtonsToGamepadInputs[GetHash(L"rightshoulder")] = PCI_PAD_RIGHT_BUMPER;
 
-	SDLButtonsToGamepadInputs[GetHash(L"lefttrigger")] = PCINPUT_LEFT_TRIGGER;
-	SDLButtonsToGamepadInputs[GetHash(L"righttrigger")] = PCINPUT_RIGHT_TRIGGER;
+	SDLButtonsToGamepadInputs[GetHash(L"lefttrigger")] = PCI_PAD_LEFT_TRIGGER;
+	SDLButtonsToGamepadInputs[GetHash(L"righttrigger")] = PCI_PAD_RIGHT_TRIGGER;
 
-	SDLButtonsToGamepadInputs[GetHash(L"leftstick")] = PCINPUT_LSTICK_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"rightstick")] = PCINPUT_RSTICK_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"leftstick")] = PIC_PAD_LSTICK_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"rightstick")] = PIC_PAD_RSTICK_BUTTON;
 
-	SDLButtonsToGamepadInputs[GetHash(L"leftx")] = PCINPUT_LSTICK_X;
-	SDLButtonsToGamepadInputs[GetHash(L"lefty")] = PCINPUT_LSTICK_Y;
-	SDLButtonsToGamepadInputs[GetHash(L"rightx")] = PCINPUT_RSTICK_X;
-	SDLButtonsToGamepadInputs[GetHash(L"righty")] = PCINPUT_RSTICK_Y;
+	SDLButtonsToGamepadInputs[GetHash(L"leftx")] = PIC_PAD_LSTICK_X;
+	SDLButtonsToGamepadInputs[GetHash(L"lefty")] = PIC_PAD_LSTICK_Y;
+	SDLButtonsToGamepadInputs[GetHash(L"rightx")] = PIC_PAD_RSTICK_X;
+	SDLButtonsToGamepadInputs[GetHash(L"righty")] = PIC_PAD_RSTICK_Y;
 
-	SDLButtonsToGamepadInputs[GetHash(L"guide")] = PCINPUT_GUIDE;
+	SDLButtonsToGamepadInputs[GetHash(L"guide")] = PCI_PAD_GUIDE;
 
 	// These are the 'camera' buttons on an n64.  we don't support these at the moment.
-	SDLButtonsToGamepadInputs[GetHash(L"+rightx")] = PCINPUT_DPAD_RIGHT;
-	SDLButtonsToGamepadInputs[GetHash(L"-rightx")] = PCINPUT_DPAD_LEFT;
-	SDLButtonsToGamepadInputs[GetHash(L"+righty")] = PCINPUT_DPAD_UP;
-	SDLButtonsToGamepadInputs[GetHash(L"-righty")] = PCINPUT_DPAD_DOWN;
+	SDLButtonsToGamepadInputs[GetHash(L"+rightx")] = PIC_PAD_DPAD_RIGHT;
+	SDLButtonsToGamepadInputs[GetHash(L"-rightx")] = PIC_PAD_DPAD_LEFT;
+	SDLButtonsToGamepadInputs[GetHash(L"+righty")] = PIC_PAD_DPAD_UP;
+	SDLButtonsToGamepadInputs[GetHash(L"-righty")] = PIC_PAD_DPAD_DOWN;
 
 	// These are apparently unique to an 8bit-do controller...?
 	// https://app.8bitdo.com/  Just regular buttons, but they are on the back of the controller....
-	SDLButtonsToGamepadInputs[GetHash(L"paddle1")] = PCINPUT_MISC_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"paddle2")] = PCINPUT_MISC_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"paddle3")] = PCINPUT_MISC_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"paddle4")] = PCINPUT_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"paddle1")] = PCI_PAD_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"paddle2")] = PCI_PAD_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"paddle3")] = PCI_PAD_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"paddle4")] = PCI_PAD_MISC_BUTTON;
 
-	SDLButtonsToGamepadInputs[GetHash(L"misc1")] = PCINPUT_MISC_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"misc2")] = PCINPUT_MISC_BUTTON;
-	SDLButtonsToGamepadInputs[GetHash(L"misc3")] = PCINPUT_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"misc1")] = PCI_PAD_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"misc2")] = PCI_PAD_MISC_BUTTON;
+	SDLButtonsToGamepadInputs[GetHash(L"misc3")] = PCI_PAD_MISC_BUTTON;
 
-	SDLButtonsToGamepadInputs[GetHash(L"touchpad")] = PCINPUT_TOUCHPAD;
+	SDLButtonsToGamepadInputs[GetHash(L"touchpad")] = PCI_PAD_TOUCHPAD;
 
 	// Not sure if this is the correct way to handle this, but this seems to be specific to the 'Gravis Destroyer' / 'JoyCon'
 	// It is just a dpad, but has a weird entry in the SDL DB.
-	SDLButtonsToGamepadInputs[GetHash(L"+leftx")] = PCINPUT_DPAD_RIGHT;
-	SDLButtonsToGamepadInputs[GetHash(L"-leftx")] = PCINPUT_DPAD_LEFT;
-	SDLButtonsToGamepadInputs[GetHash(L"+lefty")] = PCINPUT_DPAD_UP;
-	SDLButtonsToGamepadInputs[GetHash(L"-lefty")] = PCINPUT_DPAD_DOWN;
+	SDLButtonsToGamepadInputs[GetHash(L"+leftx")] = PIC_PAD_DPAD_RIGHT;
+	SDLButtonsToGamepadInputs[GetHash(L"-leftx")] = PIC_PAD_DPAD_LEFT;
+	SDLButtonsToGamepadInputs[GetHash(L"+lefty")] = PIC_PAD_DPAD_UP;
+	SDLButtonsToGamepadInputs[GetHash(L"-lefty")] = PIC_PAD_DPAD_DOWN;
 
 
 	// TODO: The rest of them....
@@ -344,21 +344,21 @@ size_t CGamepadDatabase::ParseLine(std::wstring& curLine, CGamepadButtonMapping&
 		if (mappingOK) {
 
 			// Expand 'full analog' inputs as needed.
-			bool isStickType = entry.Input == PCINPUT_LSTICK_X || entry.Input == PCINPUT_LSTICK_Y || entry.Input == PCINPUT_RSTICK_X || entry.Input == PCINPUT_RSTICK_Y;
+			bool isStickType = entry.Input == PIC_PAD_LSTICK_X || entry.Input == PIC_PAD_LSTICK_Y || entry.Input == PIC_PAD_RSTICK_X || entry.Input == PIC_PAD_RSTICK_Y;
 
 			if (entry.Type == ITYPE_FULL_ANALOG && isStickType)
 			{
 				switch (entry.Input)
 				{
-				case PCINPUT_LSTICK_X:
+				case PIC_PAD_LSTICK_X:
 				{
 					CGamepadMappingEntry e1;
-					e1.Input = PCINPUT_LSTICK_LEFT;
+					e1.Input = PIC_PAD_LSTICK_LEFT;
 					e1.Type = ITYPE_HALF_ANALOG;
 					e1.Index = 0;
 
 					CGamepadMappingEntry e2;
-					e2.Input = PCINPUT_LSTICK_RIGHT;
+					e2.Input = PIC_PAD_LSTICK_RIGHT;
 					e2.Type = ITYPE_HALF_ANALOG;
 					e2.Index = 1;
 
@@ -368,15 +368,15 @@ size_t CGamepadDatabase::ParseLine(std::wstring& curLine, CGamepadButtonMapping&
 					entryIndex += 2;
 					break;
 				}
-				case PCINPUT_LSTICK_Y:
+				case PIC_PAD_LSTICK_Y:
 				{
 					CGamepadMappingEntry e1;
-					e1.Input = PCINPUT_LSTICK_UP;
+					e1.Input = PIC_PAD_LSTICK_UP;
 					e1.Type = ITYPE_HALF_ANALOG;
 					e1.Index = 2;
 
 					CGamepadMappingEntry e2;
-					e2.Input = PCINPUT_LSTICK_DOWN;
+					e2.Input = PIC_PAD_LSTICK_DOWN;
 					e2.Type = ITYPE_HALF_ANALOG;
 					e2.Index = 3;
 
@@ -387,15 +387,15 @@ size_t CGamepadDatabase::ParseLine(std::wstring& curLine, CGamepadButtonMapping&
 					break;
 				}
 
-				case PCINPUT_RSTICK_X:
+				case PIC_PAD_RSTICK_X:
 				{
 					CGamepadMappingEntry e1;
-					e1.Input = PCINPUT_RSTICK_LEFT;
+					e1.Input = PIC_PAD_RSTICK_LEFT;
 					e1.Type = ITYPE_HALF_ANALOG;
 					e1.Index = 0;
 
 					CGamepadMappingEntry e2;
-					e2.Input = PCINPUT_RSTICK_RIGHT;
+					e2.Input = PIC_PAD_RSTICK_RIGHT;
 					e2.Type = ITYPE_HALF_ANALOG;
 					e2.Index = 1;
 
@@ -405,15 +405,15 @@ size_t CGamepadDatabase::ParseLine(std::wstring& curLine, CGamepadButtonMapping&
 					entryIndex += 2;
 					break;
 				}
-				case PCINPUT_RSTICK_Y:
+				case PIC_PAD_RSTICK_Y:
 				{
 					CGamepadMappingEntry e1;
-					e1.Input = PCINPUT_RSTICK_UP;
+					e1.Input = PIC_PAD_RSTICK_UP;
 					e1.Type = ITYPE_HALF_ANALOG;
 					e1.Index = 0;
 
 					CGamepadMappingEntry e2;
-					e2.Input = PCINPUT_RSTICK_DOWN;
+					e2.Input = PIC_PAD_RSTICK_DOWN;
 					e2.Type = ITYPE_HALF_ANALOG;
 					e2.Index = 3;
 
@@ -426,10 +426,10 @@ size_t CGamepadDatabase::ParseLine(std::wstring& curLine, CGamepadButtonMapping&
 
 				// NOTE: We also have to deal with full analog triggers....which is a thing somehow.... :(
 
-				//case PCINPUT_LEFT_BUMPER:
-				//case PCINPUT_RIGHT_BUMPER:
-				//case PCINPUT_LEFT_TRIGGER:
-				//case PCINPUT_RIGHT_TRIGGER:
+				//case PCI_LEFT_BUMPER:
+				//case PCI_RIGHT_BUMPER:
+				//case PCI_LEFT_TRIGGER:
+				//case PCI_RIGHT_TRIGGER:
 				//{
 				//	// Normal
 				//	entry.Type = ITYPE_HALF_ANALOG;
@@ -590,37 +590,37 @@ void CGamepadDatabase::CreateDefaultMapping() {
 	ZeroMemory(&mapping, sizeof(CGamepadButtonMapping));
 
 	// NOTE: These inputs technically make sense, but they should be expanded so that they are more compatible with FBNEO.
-	mapping.Entries[0] = { PCINPUT_LSTICK_UP, ITYPE_HALF_ANALOG, 0x02 };
-	mapping.Entries[1] = { PCINPUT_LSTICK_DOWN, ITYPE_HALF_ANALOG, 0x03 };
-	mapping.Entries[2] = { PCINPUT_LSTICK_LEFT, ITYPE_HALF_ANALOG, 0x00 };
-	mapping.Entries[3] = { PCINPUT_LSTICK_RIGHT, ITYPE_HALF_ANALOG, 0x01 };
+	mapping.Entries[0] = { PIC_PAD_LSTICK_UP, ITYPE_HALF_ANALOG, 0x02 };
+	mapping.Entries[1] = { PIC_PAD_LSTICK_DOWN, ITYPE_HALF_ANALOG, 0x03 };
+	mapping.Entries[2] = { PIC_PAD_LSTICK_LEFT, ITYPE_HALF_ANALOG, 0x00 };
+	mapping.Entries[3] = { PIC_PAD_LSTICK_RIGHT, ITYPE_HALF_ANALOG, 0x01 };
 
 	// NOTE: These may be incorrect.
-	mapping.Entries[4] = { PCINPUT_RSTICK_UP, ITYPE_HALF_ANALOG, 0x02 };
-	mapping.Entries[5] = { PCINPUT_RSTICK_DOWN, ITYPE_HALF_ANALOG, 0x03 };
-	mapping.Entries[6] = { PCINPUT_RSTICK_LEFT, ITYPE_HALF_ANALOG, 0x00 };
-	mapping.Entries[7] = { PCINPUT_RSTICK_RIGHT, ITYPE_HALF_ANALOG, 0x01 };
+	mapping.Entries[4] = { PIC_PAD_RSTICK_UP, ITYPE_HALF_ANALOG, 0x02 };
+	mapping.Entries[5] = { PIC_PAD_RSTICK_DOWN, ITYPE_HALF_ANALOG, 0x03 };
+	mapping.Entries[6] = { PIC_PAD_RSTICK_LEFT, ITYPE_HALF_ANALOG, 0x00 };
+	mapping.Entries[7] = { PIC_PAD_RSTICK_RIGHT, ITYPE_HALF_ANALOG, 0x01 };
 
 
-	mapping.Entries[8] = { PCINPUT_DPAD_UP, ITYPE_DPAD, 0x02 };
-	mapping.Entries[9] = { PCINPUT_DPAD_DOWN, ITYPE_DPAD, 0x03 };
-	mapping.Entries[10] = { PCINPUT_DPAD_LEFT, ITYPE_DPAD, 0x00 };
-	mapping.Entries[11] = { PCINPUT_DPAD_RIGHT, ITYPE_DPAD, 0x01 };
+	mapping.Entries[8] = { PIC_PAD_DPAD_UP, ITYPE_DPAD, 0x02 };
+	mapping.Entries[9] = { PIC_PAD_DPAD_DOWN, ITYPE_DPAD, 0x03 };
+	mapping.Entries[10] = { PIC_PAD_DPAD_LEFT, ITYPE_DPAD, 0x00 };
+	mapping.Entries[11] = { PIC_PAD_DPAD_RIGHT, ITYPE_DPAD, 0x01 };
 
-	mapping.Entries[12] = { PCINPUT_BACK, ITYPE_GAMEPAD_BUTTON, 0x06 };
-	mapping.Entries[13] = { PCINPUT_START, ITYPE_GAMEPAD_BUTTON, 0x07 };
+	mapping.Entries[12] = { PCI_PAD_BACK, ITYPE_GAMEPAD_BUTTON, 0x06 };
+	mapping.Entries[13] = { PCI_PAD_START, ITYPE_GAMEPAD_BUTTON, 0x07 };
 
-	mapping.Entries[14] = { PCINPUT_X, ITYPE_GAMEPAD_BUTTON, 0x02 };
-	mapping.Entries[15] = { PCINPUT_Y, ITYPE_GAMEPAD_BUTTON, 0x03 };
-	mapping.Entries[16] = { PCINPUT_A, ITYPE_GAMEPAD_BUTTON, 0x00 };
-	mapping.Entries[17] = { PCINPUT_B, ITYPE_GAMEPAD_BUTTON, 0x01 };
+	mapping.Entries[14] = { PCI_PAD_X, ITYPE_GAMEPAD_BUTTON, 0x02 };
+	mapping.Entries[15] = { PCI_PAD_Y, ITYPE_GAMEPAD_BUTTON, 0x03 };
+	mapping.Entries[16] = { PCI_PAD_A, ITYPE_GAMEPAD_BUTTON, 0x00 };
+	mapping.Entries[17] = { PCI_PAD_B, ITYPE_GAMEPAD_BUTTON, 0x01 };
 
 	// ?? Maybe......
-	mapping.Entries[18] = { PCINPUT_LEFT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x04 };
-	mapping.Entries[19] = { PCINPUT_LEFT_TRIGGER, 	ITYPE_HALF_ANALOG, 0x05 };
+	mapping.Entries[18] = { PCI_PAD_LEFT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x04 };
+	mapping.Entries[19] = { PCI_PAD_LEFT_TRIGGER, 	ITYPE_HALF_ANALOG, 0x05 };
 
-	mapping.Entries[20] = { PCINPUT_RIGHT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x05 };
-	mapping.Entries[21] = { PCINPUT_RIGHT_TRIGGER, ITYPE_HALF_ANALOG, 0x04 };
+	mapping.Entries[20] = { PCI_PAD_RIGHT_BUMPER, ITYPE_GAMEPAD_BUTTON, 0x05 };
+	mapping.Entries[21] = { PCI_PAD_RIGHT_TRIGGER, ITYPE_HALF_ANALOG, 0x04 };
 
 	mapping.EntryCount = 22;
 	mapping.IsDefault = true;
