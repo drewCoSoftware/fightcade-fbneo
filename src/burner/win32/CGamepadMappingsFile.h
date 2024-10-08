@@ -19,8 +19,8 @@ typedef signed int							INT32;
 
 // =============================================================================================
 struct CGamepadMappingEntry {
-	EGamepadInput Input;
-	EInputType Type;
+	PCInputs Input;
+	EInputDeviceType Type;
 	UINT16 Index;
 };
 
@@ -38,7 +38,7 @@ struct CGamepadButtonMapping {
 
 	// Get the mapping for the corresponding input.
 	// Returns null if there is no matching entry.
-	const CGamepadMappingEntry* GetMappingFor(const EGamepadInput& i);
+	const CGamepadMappingEntry* GetMappingFor(const PCInputs& i);
 };
 
 

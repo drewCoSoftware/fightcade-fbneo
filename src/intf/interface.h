@@ -54,7 +54,7 @@ struct GamepadInfo
 // Legacy type for keeping track of older input mappings files.
 // OBSOLETE: This will be removed in the future.
 struct GamepadInput {
-	EInputType type;			// Type of input.  Switch, analog, etc.
+	EInputDeviceType type;			// Type of input.  Switch, analog, etc.
 	UINT16 nCode;				// Code for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 };
 
@@ -64,7 +64,7 @@ struct GamepadInput {
 // NOTE: I fully intend to do a full rewrite of the input system as the current version
 // is super janky IMO.
 struct CGameInput {
-	EInputType Type;			// Type of input.  Button, stick, etc.
+	EInputDeviceType Type;			// Type of input.  Button, stick, etc.
 	UINT16 Index;				// Index for input.  NOTE: These are translated codes.  Internally the system will add extra bits to identify the gamepad index.
 	UINT16 DriverInputIndex;	// Index for that game input that this should be mapped onto.
 
@@ -93,11 +93,6 @@ struct CInputGroupDesc {
 	GamepadInputDesc Inputs[MAX_INPUTS];
 	UINT8 InputCount;
 
-	//// The starting index that this group corresponds to in the BurnInputInfo definition for the game.
-	//// For example, if your game uses 'cps3InputList' (d_cps3.cpp:32) and this group is for
-	// player 2, then the start index will == 12.
-	UINT8 BurnInputStartIndex;
-
 	// What is this group (optional)?
 	wchar_t* Description;
 
@@ -114,7 +109,7 @@ struct CInputGroupDesc {
 // This type is not used to map pc->emulator inputs, rather it is intended to be
 // used to describe/configure input sets for games. (Imagine an INI or other file)
 // The type 'CGameInputSet' can be created from this and is actually used to map the pc->emulator inputs.
-struct CGameInputDescription {
+struct CGamPCInputs {
 	// Input group count + defs.
 	UINT32 GroupCount;
 	CInputGroupDesc InputGroups[MAX_GROUPS];

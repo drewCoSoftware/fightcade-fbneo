@@ -234,7 +234,7 @@ int DrvInit(int nDrvNum, bool bRestore)
 	// includes any plugged in gamepads....
 	// So we don't need to do a whole mapping step, we just need to modify the parts
 	// of the description that correspond to each player.
-	UpdateInputDescriptionForGamepads();
+	UpdatPCInputsForGamepads();
 
 	// Other note: If there aren't pads currently plugged in, then I don't really
 	// see a reason for them to be mapped (via defaults) in the first place.  We

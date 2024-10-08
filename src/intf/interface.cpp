@@ -96,7 +96,7 @@ INT32 IntInfoAddStringModule(InterfaceInfo* pInfo, TCHAR* szString)
 
 // ---------------------------------------------------------------------------
 // Get the input for the given player number: 1 = player 1, 2 = player 2, etc.
-CInputGroupDesc* CGameInputDescription::GetPlayerGroup(size_t playerNumber) {
+CInputGroupDesc* CGamPCInputs::GetPlayerGroup(size_t playerNumber) {
 	CInputGroupDesc* res = nullptr;
 	if (playerNumber <= MaxPlayerCount)
 	{

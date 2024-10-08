@@ -86,7 +86,7 @@ INT32 PNGLoadBuffer(IMAGE* img, unsigned char* buffer, int bufferLength, INT32 n
 INT32 PNGGetInfo(IMAGE* img, FILE *fp);
 INT32 PNGGetInfoBuffer(IMAGE* img, unsigned char* buffer, int bufferLength);
 
-extern CGameInputDescription GameInputDesc;
+extern CGamPCInputs GameInputDesc;
 extern CGameInputSet GameInputSet;
 
 // gami.cpp
@@ -115,7 +115,7 @@ INT32 ResetGameInputs(bool resetDipSwitches);
 INT32 GameInputAutoIni(INT32 nPlayer, TCHAR* lpszFile, bool bOverWrite);
 INT32 ConfigGameLoadHardwareDefaults();
 
-INT32 UpdateInputDescriptionForGamepads();
+INT32 UpdatPCInputsForGamepads();
 
 INT32 RebuildInputSet();
 INT32 SetDefaultGameInputs();

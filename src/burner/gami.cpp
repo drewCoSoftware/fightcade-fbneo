@@ -15,7 +15,7 @@ TCHAR szPlayerDefaultIni[5][MAX_PATH] = { _T(""), _T(""), _T(""), _T(""), _T("")
 // Inputs are broken into logical sets, i.e. 'player', 'system', etc.
 // NOTE: Yes, it is somewhat redundant to have both the input description, and the input set.  I figure this will eventually get merged,
 // but for now it is working so we will leave it be.
-CGameInputDescription GameInputDesc;
+CGamPCInputs GameInputDesc;
 CGameInputSet GameInputSet;
 
 // Mapping of PC inputs to game inputs
@@ -883,7 +883,7 @@ static void GameInpInitMacros()
 // --------------------------------------------------------------------------------------------------------
 INT32 GameInpInit()
 {
-	memset(&GameInputDesc, 0, sizeof(CGameInputDescription));
+	memset(&GameInputDesc, 0, sizeof(CGamPCInputs));
 	memset(&GameInputSet, 0, sizeof(CGameInputSet));
 
 	INT32 nRet = 0;
@@ -912,16 +912,16 @@ INT32 GameInpInit()
 	memset(GameInp, 0, nSize);
 
 
-	//	// This is where we will / can define a default CGameInputDescription instance!
-	//	// So the idea is that we will always use a CGameInputDescription to map onto GameImp for now.
+	//	// This is where we will / can define a default CGamPCInputs instance!
+	//	// So the idea is that we will always use a CGamPCInputs to map onto GameImp for now.
 	//	// Other code that we have... (and eventually a user UI) can change this default, BUT
 	//	// creating it in the first place kind of gives us the best of both worlds...  we can
-	//	// always assume that there is a CGameInputDescription instance that is actually controlling the action...
+	//	// always assume that there is a CGamPCInputs instance that is actually controlling the action...
 	//	// --> NOTE: This still may/probably break compatibility with the input config dialog... figuring out a 
 	//	//      way to keep all of that consistent during the transition will be a big challenge....
 	//	//-- --> Maybe add a button or something on the dialog as a HACK?
 	//	// We can also detect the directional inputs while we are here....
-	//	CGameInputDescription dSet;
+	//	CGamPCInputs dSet;
 	//	dSet.GroupCount = 1;
 	//
 	//	CInputGroupDesc& dGroup = dSet.InputGroups[0];
@@ -938,7 +938,7 @@ INT32 GameInpInit()
 	////			bii.nType
 	//		}
 	//	}
-	//	throw std::exception("Create a default CGameInputDescription instance from the GameInpArray");
+	//	throw std::exception("Create a default CGamPCInputs instance from the GameInpArray");
 
 
 		// cache input directions for clearing opposites
@@ -1961,33 +1961,43 @@ INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 	// in the driver....
 	// See the defintion of 'cps3InputList' in 'd_cps3.cpp' for an example.
 
+	auto offset = playerInputs->Inputs[0].DriverInputIndex;
+
 	// playerInputs->inputCount = 16;
-	playerInputs->Inputs[0] = { GPINPUT_BACK, 0 };
-	playerInputs->Inputs[1] = { GPINPUT_START, 1 };
+	playerInputs->Inputs[0] = { PCINPUT_BACK, 0 };
+	playerInputs->Inputs[1] = { PCINPUT_START, 1 };
 
 	// The directinal inputs need to be mapped onto the DRIVER inputs somehow....
 	// The code that does the SOCD stuff just looks for the BurnInputInfo.szInfo value to decide
 	// what is up/down/left/right..  IMO, not the most robust way, but it can work....
 	// POV HAT (0x10) (NOTE: This is where we would find a way to map multiple inputs->)
-	playerInputs->Inputs[2] = { GPINPUT_DPAD_UP, 2 };			// Up			
-	playerInputs->Inputs[3] = { GPINPUT_DPAD_DOWN, 3 };			// Down		
-	playerInputs->Inputs[4] = { GPINPUT_DPAD_LEFT, 4 };			// Left		
-	playerInputs->Inputs[5] = { GPINPUT_DPAD_RIGHT, 5 };			// Right		
+	playerInputs->Inputs[2] = { PCINPUT_DPAD_UP, 2 };			// Up			
+	playerInputs->Inputs[3] = { PCINPUT_DPAD_DOWN, 3 };			// Down		
+	playerInputs->Inputs[4] = { PCINPUT_DPAD_LEFT, 4 };			// Left		
+	playerInputs->Inputs[5] = { PCINPUT_DPAD_RIGHT, 5 };			// Right		
 
 	// ANALOG STICK (0x0)
-	playerInputs->Inputs[6] = { GPINPUT_LSTICK_UP, 2 };			// Up			
-	playerInputs->Inputs[7] = { GPINPUT_LSTICK_DOWN, 3 };			// Down		
-	playerInputs->Inputs[8] = { GPINPUT_LSTICK_LEFT, 4 };			// Left		
-	playerInputs->Inputs[9] = { GPINPUT_LSTICK_RIGHT, 5 };		// Right		
+	playerInputs->Inputs[6] = { PCINPUT_LSTICK_UP, 2 };			// Up			
+	playerInputs->Inputs[7] = { PCINPUT_LSTICK_DOWN, 3 };			// Down		
+	playerInputs->Inputs[8] = { PCINPUT_LSTICK_LEFT, 4 };			// Left		
+	playerInputs->Inputs[9] = { PCINPUT_LSTICK_RIGHT, 5 };		// Right		
 
-	playerInputs->Inputs[10] = { GPINPUT_X, 6 };
-	playerInputs->Inputs[11] = { GPINPUT_Y, 7 };
-	playerInputs->Inputs[12] = { GPINPUT_RIGHT_BUMPER, 8 };
-	playerInputs->Inputs[13] = { GPINPUT_A, 9 };
-	playerInputs->Inputs[14] = { GPINPUT_B, 10 };
-	playerInputs->Inputs[15] = { GPINPUT_RIGHT_TRIGGER, 11 };
+	playerInputs->Inputs[10] = { PCINPUT_X, 6 };
+	playerInputs->Inputs[11] = { PCINPUT_Y, 7 };
+	playerInputs->Inputs[12] = { PCINPUT_RIGHT_BUMPER, 8 };
+	playerInputs->Inputs[13] = { PCINPUT_A, 9 };
+	playerInputs->Inputs[14] = { PCINPUT_B, 10 };
+	playerInputs->Inputs[15] = { PCINPUT_RIGHT_TRIGGER, 11 };
 
-	playerInputs->InputCount = 16;
+
+	const size_t INPUT_COUNT = 16;
+	playerInputs->InputCount = INPUT_COUNT;
+	
+	for (size_t i = 0; i < INPUT_COUNT; i++)
+	{
+		playerInputs->Inputs[i].DriverInputIndex += offset;
+	}
+
 
 	return 0;
 }
@@ -2000,7 +2010,7 @@ INT32 SetDefaultDescriptionForPlayer(CInputGroupDesc* playerInputs) {
 // In reality, inputs shouldn't be a loose collection of 'buttons', rather there
 // should be a device associated with each player....  A 'mixed-mode' device could even
 // exist that could be mouse + keyboard + etc.
-INT32 UpdateInputDescriptionForGamepads() {
+INT32 UpdatPCInputsForGamepads() {
 
 	// NOTE: Check for specific game that supports this notion.
 	// TODO: Some way to list the games that support this feature.  Probably
@@ -2083,27 +2093,28 @@ INT32 GetGroupIndex(char* szInfo) {
 }
 
 // --------------------------------------------------------------------------------
-EGamepadInput TranslateInput(struct GameInp* pgi) {
+PCInputs TranslateInput(struct GameInp* pgi) {
 
 	UINT8 i = pgi->nInput;
 
 
 	switch (pgi->nInput) {
 	case GIT_CONSTANT:
-		return GPINPUT_CONSTANT;
+		return PCINPUT_CONSTANT;
 
 	case GIT_SWITCH:
 	{
+		// Just use the currently defined code 
 		UINT16 code = pgi->Input.Switch.nCode;
 
 
 		if (code >= MOUSE_LOWER) {
 			// TEMP: We haven't considered a mouse yet.....
-			return EGamepadInput::GPINPUT_UNSUPPORTED;
+			return PCInputs::PCINPUT_UNSUPPORTED;
 		}
 
 		else if (code >= JOYSTICK_LOWER && code < JOYSTICK_UPPER) {
-			// return EGamepadInput::
+			// return PCInputs::
 			UINT16 gpCode = code & 0xFF;
 			UINT16 joyIndex = (code >> 8) & 0x3F;
 
@@ -2111,17 +2122,17 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 				// NOTE: We can't really say what button is what...
 				// because of gamepad mappings, so maybe just punt?
 				size_t useCode = gpCode ^ BURNER_BUTTON;
-				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_BUTTONS | (useCode + 1));
+				PCInputs res = (PCInputs)(PCINPUT_PAD_BUTTONS | (useCode + 1));
 				return res;
 			}
 			else if ((gpCode & BURNER_DPAD) == BURNER_DPAD) {
 				size_t useCode = gpCode ^ BURNER_DPAD;
-				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_DPAD | (useCode + 1));
+				PCInputs res = (PCInputs)(PCINPUT_PAD_DPAD | (useCode + 1));
 				return res;
 			}
 			else if (gpCode < BURNER_DPAD) {
 				// Analog inputs->
-				EGamepadInput res = (EGamepadInput)(GPINPUT_PAD_ANALOG | (gpCode + 1));
+				PCInputs res = (PCInputs)(PCINPUT_PAD_ANALOG | (gpCode + 1));
 				return res;
 			}
 
@@ -2136,7 +2147,7 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 			auto count = ARRAYSIZE(KeyNames);
 			for (INT32 i = 0; count; i++) {
 				if ((code + 1) == KeyNames[i].nCode) {
-					EGamepadInput res = (EGamepadInput)(GPINPUT_KEYB | code);
+					PCInputs res = (PCInputs)(PCINPUT_KEYB | code);
 					return res;
 				}
 			}
@@ -2147,12 +2158,12 @@ EGamepadInput TranslateInput(struct GameInp* pgi) {
 		break;
 	}
 	default:
-		return EGamepadInput::GPINPUT_UNSUPPORTED;
+		return PCInputs::PCINPUT_UNSUPPORTED;
 		break;
 	}
 
 
-	return EGamepadInput::GPINPUT_UNSUPPORTED;
+	return PCInputs::PCINPUT_UNSUPPORTED;
 }
 
 // --------------------------------------------------------------------------------
@@ -2163,7 +2174,7 @@ INT32 CreateDefaultInputDesc() {
 	UINT32 i;
 
 	// nMax
-	ZeroMemory(&GameInputDesc, sizeof(CGameInputDescription));
+	ZeroMemory(&GameInputDesc, sizeof(CGamPCInputs));
 	GameInputDesc.GroupCount = nMaxPlayers + 1;
 
 	if (nMaxPlayers > MAX_PLAYERS) {

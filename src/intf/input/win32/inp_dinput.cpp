@@ -390,7 +390,7 @@ void ReadButtonData(FILE* fp, InputProfileEntry& profile) {
 		GamepadInput& input = profile.Inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		input.type = (EInputType)ReadUint16(fp);
+		input.type = (EInputDeviceType)ReadUint16(fp);
 		input.nCode = ReadUint16(fp);
 	}
 }
@@ -403,7 +403,7 @@ void ReadButtonData(FILE* fp, GamepadInputProfile& profile) {
 		GamepadInput& input = profile.inputs[i];
 
 		// NOTE: I am not supporting macros at this time.
-		input.type = (EInputType)ReadUint16(fp);
+		input.type = (EInputDeviceType)ReadUint16(fp);
 		input.nCode = ReadUint16(fp);
 	}
 
@@ -904,7 +904,7 @@ int init()
 	int xx = 10;
 
 	// NOTE: We might need to pass in some args to remap / not remap current controllers....
-	UpdateInputDescriptionForGamepads();
+	UpdatPCInputsForGamepads();
 	RebuildInputSet();
 
 
