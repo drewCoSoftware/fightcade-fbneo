@@ -2,7 +2,7 @@
  #error This file cannot be edited using the Visual C resource editor
 #endif
 
-#include "build_details.h"
+#include "../../src/generated/build_details.h"
 
 #ifndef FILENAME
  #define FILENAME fba

@@ -308,6 +308,7 @@
     <ClInclude Include="..\..\src\dep\libs\zlib\zconf.h" />
     <ClInclude Include="..\..\src\dep\libs\zlib\zlib.h" />
     <ClInclude Include="..\..\src\dep\libs\zlib\zutil.h" />
+    <ClInclude Include="..\..\src\generated\build_details.h" />
     <ClInclude Include="..\..\src\intf\audio\aud_dsp.h" />
     <ClInclude Include="..\..\src\intf\audio\lowpass2.h" />
     <ClInclude Include="..\..\src\intf\audio\win32\dsound_core.h" />
@@ -568,6 +569,7 @@
     <ClCompile Include="..\..\src\dep\libs\lua\lvm.c" />
     <ClCompile Include="..\..\src\dep\libs\lua\lzio.c" />
     <ClCompile Include="..\..\src\dep\libs\lua\print.c" />
+    <ClCompile Include="..\..\src\generated\m68kops.c" />
     <ClCompile Include="..\..\src\intf\audio\win32\aud_wasapi.cpp" />
     <ClCompile Include="..\..\src\intf\audio\win32\aud_xaudio2.cpp" />
     <ClCompile Include="..\..\src\intf\cd\win32\cd_img.cpp" />
@@ -577,7 +579,6 @@
     <ClCompile Include="..\..\src\intf\video\win32\vid_font.cpp" />
     <ClCompile Include="..\..\src\intf\video\win32\vid_memorybuffer.cpp" />
     <ClCompile Include="..\..\src\intf\video\win32\vid_overlay.cpp" />
-    <ClCompile Include="generated\m68kops.c" />
     <ClCompile Include="..\..\src\burn\drv\capcom\d_cps1.cpp" />
     <ClCompile Include="..\..\src\burn\drv\capcom\d_cps2.cpp" />
     <ClCompile Include="..\..\src\burn\drv\capcom\fcrash_snd.cpp" />
