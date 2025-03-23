@@ -12,3 +12,4 @@ src/dep/generated
 src/intf/video/win32/detector_buffers.h
 src/intf/video/win32/detector_loaders.h
 UPDATE_GIT_IGNORE.BAT
+build/
