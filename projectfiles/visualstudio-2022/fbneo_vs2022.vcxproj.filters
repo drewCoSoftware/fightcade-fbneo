@@ -949,15 +949,6 @@
     <ClInclude Include="..\..\src\burner\GUIDComparer.h">
       <Filter>burner</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\burner\win32\CGamepadState.h">
-      <Filter>burner\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\burner\win32\CGamepadMappingsFile.h">
-      <Filter>burner\win32</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\burner\win32\CGamepadDatabase.h">
-      <Filter>burner\win32</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\burn\burn.cpp">
@@ -4238,15 +4229,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\intf\audio\win32\aud_wasapi.cpp">
       <Filter>interfaces\audio\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp">
-      <Filter>burner\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\burner\win32\CGamepadMappingsFile.cpp">
-      <Filter>burner\win32</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\burner\win32\CGamepadDatabase.cpp">
-      <Filter>burner\win32</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

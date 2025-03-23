@@ -31,10 +31,7 @@
     <ClInclude Include="..\..\src\burner\un7z.h" />
     <ClInclude Include="..\..\src\burner\unzip.h" />
     <ClInclude Include="..\..\src\burner\win32\burner_win32.h" />
-    <ClInclude Include="..\..\src\burner\win32\CGamepadDatabase.h" />
-    <ClInclude Include="..\..\src\burner\win32\CGamepadState.h" />
     <ClInclude Include="..\..\src\burner\win32\d3dkmt_sync.h" />
-    <ClInclude Include="..\..\src\burner\win32\CGamepadMappingsFile.h" />
     <ClInclude Include="..\..\src\burner\win32\resource.h" />
     <ClInclude Include="..\..\src\burner\win32\resource_string.h" />
     <ClInclude Include="..\..\src\burn\bitswap.h" />
@@ -359,8 +356,6 @@
     <ClCompile Include="..\..\src\burner\win32\about.cpp" />
     <ClCompile Include="..\..\src\burner\win32\avi.cpp" />
     <ClCompile Include="..\..\src\burner\win32\bzip.cpp" />
-    <ClCompile Include="..\..\src\burner\win32\CGamepadDatabase.cpp" />
-    <ClCompile Include="..\..\src\burner\win32\CGamepadState.cpp" />
     <ClCompile Include="..\..\src\burner\win32\choose_monitor.cpp" />
     <ClCompile Include="..\..\src\burner\win32\cona.cpp" />
     <ClCompile Include="..\..\src\burner\win32\d3dkmt_sync.cpp" />
@@ -370,7 +365,6 @@
     <ClCompile Include="..\..\src\burner\win32\fbn_ggpo_perfmon.cpp" />
     <ClCompile Include="..\..\src\burner\win32\fbn_network.cpp" />
     <ClCompile Include="..\..\src\burner\win32\gameinfo.cpp" />
-    <ClCompile Include="..\..\src\burner\win32\CGamepadMappingsFile.cpp" />
     <ClCompile Include="..\..\src\burner\win32\image_win32.cpp" />
     <ClCompile Include="..\..\src\burner\win32\inpc.cpp" />
     <ClCompile Include="..\..\src\burner\win32\inpcheat.cpp" />
@@ -1633,7 +1627,7 @@ del build_details.exe
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>generated;..\..\src\dep\libs\zlib;..\..\src\dep\libs\lib7z;..\..\src\dep\libs\libpng;..\..\src\dep\libs\lua;..\..\src\dep\generated;..\..\src\dep\ggpo\include;..\..\src\burner\win32\resource;..\..\src\burn\drv\taito;..\..\src\burn\drv\misc_post90s;..\..\src\burn\devices;..\..\src\intf\audio\win32;..\..\src\intf\audio;..\..\src\intf\;..\..\src\intf\video\scalers;..\..\src\intf\video\win32;..\..\src\intf\video;..\..\src\intf\perfcount\win32;..\..\src\intf\perfcount;..\..\src\intf\input\win32;..\..\src\intf\input;..\..\src\intf\cd\win32;..\..\src\intf\cd;..\..\src\intf;..\..\src\burner\win32;..\..\src\burn\snd;..\..\src\cpu;..\..\src\burner;..\..\src\burn;..\..\src\cpu\z80;..\..\src\cpu\sh2;..\..\src\cpu\s2650;..\..\src\cpu\nec;..\..\src\cpu\m6809;..\..\src\cpu\m6805;..\..\src\cpu\m6800;..\..\src\cpu\m6502;..\..\src\cpu\m68k;..\..\src\cpu\i8039;..\..\src\cpu\konami;..\..\src\cpu\hd6309;..\..\src\cpu\h6280;..\..\src\cpu\arm7;..\..\src\cpu\arm;..\..\src\cpu\g65816;..\..\src\cpu\spc700;..\..\src\cpu\i8051;..\..\src\cpu\tms32010;..\..\src\cpu\tms34;..\..\src\cpu\i8x41;..\..\src\burn\drv\sega;..\..\src\burn\drv\dataeast;..\..\src\burn\drv\konami;..\..\src\cpu\z180;..\..\src\burn\drv\irem;..\..\src\cpu\upd7810;..\..\src\cpu\v60;..\..\src\cpu\upd7725;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src\generated;..\..\src\dep\libs\zlib;..\..\src\dep\libs\lib7z;..\..\src\dep\libs\libpng;..\..\src\dep\libs\lua;..\..\src\dep\generated;..\..\src\dep\ggpo\include;..\..\src\burner\win32\resource;..\..\src\burn\drv\taito;..\..\src\burn\drv\misc_post90s;..\..\src\burn\devices;..\..\src\intf\audio\win32;..\..\src\intf\audio;..\..\src\intf\;..\..\src\intf\video\scalers;..\..\src\intf\video\win32;..\..\src\intf\video;..\..\src\intf\perfcount\win32;..\..\src\intf\perfcount;..\..\src\intf\input\win32;..\..\src\intf\input;..\..\src\intf\cd\win32;..\..\src\intf\cd;..\..\src\intf;..\..\src\burner\win32;..\..\src\burn\snd;..\..\src\cpu;..\..\src\burner;..\..\src\burn;..\..\src\cpu\z80;..\..\src\cpu\sh2;..\..\src\cpu\s2650;..\..\src\cpu\nec;..\..\src\cpu\m6809;..\..\src\cpu\m6805;..\..\src\cpu\m6800;..\..\src\cpu\m6502;..\..\src\cpu\m68k;..\..\src\cpu\i8039;..\..\src\cpu\konami;..\..\src\cpu\hd6309;..\..\src\cpu\h6280;..\..\src\cpu\arm7;..\..\src\cpu\arm;..\..\src\cpu\g65816;..\..\src\cpu\spc700;..\..\src\cpu\i8051;..\..\src\cpu\tms32010;..\..\src\cpu\tms34;..\..\src\cpu\i8x41;..\..\src\burn\drv\sega;..\..\src\burn\drv\dataeast;..\..\src\burn\drv\konami;..\..\src\cpu\z180;..\..\src\burn\drv\irem;..\..\src\cpu\upd7810;..\..\src\cpu\v60;..\..\src\cpu\upd7725;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>Default</CompileAs>
       <PreprocessorDefinitions>BUILD_WIN32;FASTCALL;_DEBUG;FBNEO_DEBUG;LSB_FIRST;INLINE=__inline static;INCLUDE_AVI_RECORDING;INCLUDE_LIB_PNGH;C_INLINE=__inline;MAME_INLINE=__inline static;_CRT_SECURE_NO_WARNINGS;WINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -1665,10 +1659,9 @@ del build_details.exe
       <Message>Doing Custom Stuff!</Message>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)..\..\ui" "$(OutDir)ui" /E /I /Y /D
+      <Command>rem xcopy "$(SolutionDir)..\..\ui" "$(OutDir)ui" /E /I /Y /D
 xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D
-mkdir "$(SolutionDir)..\..\build\config"
-copy "$(SolutionDir)..\..\gamecontrollerdb.txt" "$(SolutionDir)..\..\build\config\gamecontrollerdb.txt"</Command>
+mkdir "$(SolutionDir)..\..\build\config"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Make sure ui/ folder + data is available.</Message>
