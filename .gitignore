@@ -1,4 +1,5 @@
-﻿.vs
+﻿*.vcxproj.user
+.vs
 .vscode
 projectfiles/visualstudio-2019/enc_temp_folder
 projectfiles/visualstudio-2015/m68kmake.exe
