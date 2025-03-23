@@ -1556,7 +1556,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>winspool.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</IgnoreSpecificDefaultLibraries>
-      <OutputFile>$(SolutionDir)\..\..\build\$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(SolutionDir)$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
     </Link>
     <PreBuildEvent>
       <Command>
@@ -1574,8 +1574,7 @@
       <Message>Doing Custom Stuff!</Message>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D
-IF NOT EXIST "$(SolutionDir)..\..\build\config" (mkdir "$(SolutionDir)..\..\build\config")</Command>
+      <Command>XCOPY "$(SolutionDir)$(Configuration)\$(TargetName)$(TargetExt)" "../../build" /Y /D</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Make sure ui/ folder + data is available.</Message>
