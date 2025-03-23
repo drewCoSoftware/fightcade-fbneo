@@ -1659,9 +1659,8 @@ del build_details.exe
       <Message>Doing Custom Stuff!</Message>
     </CustomBuildStep>
     <PostBuildEvent>
-      <Command>rem xcopy "$(SolutionDir)..\..\ui" "$(OutDir)ui" /E /I /Y /D
-xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D
-mkdir "$(SolutionDir)..\..\build\config"</Command>
+      <Command>xcopy "$(SolutionDir)..\..\ui" "$(SolutionDir)..\..\build\ui" /E /I /Y /D
+IF NOT EXIST "$(SolutionDir)..\..\build\config" (mkdir "$(SolutionDir)..\..\build\config")</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Make sure ui/ folder + data is available.</Message>
